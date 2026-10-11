@@ -16,6 +16,12 @@
     },
     "rebuild_prompt": {
       "type": "string"
+    },
+    "white_label_prompt": {
+      "type": "string"
+    },
+    "white_label_brand": {
+      "type": "string"
     }
   },
   "required": [

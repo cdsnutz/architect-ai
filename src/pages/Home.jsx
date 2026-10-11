@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Globe, Loader2, AlertCircle, History, Search } from "lucide-react";
+import { ScanLine, Loader2, AlertCircle, History, Search } from "lucide-react";
 import AnalysisResult from "@/components/analysis/AnalysisResult";
 import RebuildPrompt from "@/components/analysis/RebuildPrompt";
 
@@ -48,12 +48,12 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
         <header className="text-center space-y-2">
-          <h1 className="text-3xl font-display font-bold flex items-center justify-center gap-2">
-            <Globe className="w-7 h-7" />
-            URL Logic Mapper
+          <h1 className="text-4xl font-display font-bold tracking-tight flex items-center justify-center gap-2">
+            <ScanLine className="w-8 h-8 text-primary" />
+            REVENGINE
           </h1>
           <p className="text-muted-foreground">
-            Paste a URL and the app fetches, deconstructs, and maps its logic for your review.
+            Reverse-engineer any full-stack web app into a complete logic breakdown, then generate optimized, white-label clone prompts.
           </p>
         </header>
 
