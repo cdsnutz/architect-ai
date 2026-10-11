@@ -13,6 +13,9 @@
     },
     "logic_map": {
       "type": "object"
+    },
+    "rebuild_prompt": {
+      "type": "string"
     }
   },
   "required": [

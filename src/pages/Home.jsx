@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Globe, Loader2, AlertCircle, History, Search } from "lucide-react";
 import AnalysisResult from "@/components/analysis/AnalysisResult";
+import RebuildPrompt from "@/components/analysis/RebuildPrompt";
 
 export default function Home() {
   const [url, setUrl] = useState("");
@@ -94,6 +95,7 @@ export default function Home() {
         )}
 
         {current && <AnalysisResult analysis={current} />}
+        {current && <RebuildPrompt analysis={current} />}
 
         {!current && !analyzing && !error && (
           <div className="space-y-3">
