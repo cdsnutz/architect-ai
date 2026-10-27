@@ -83,7 +83,14 @@ Deno.serve(async (req: Request) => {
     // Fill this server-owned catalog with the merchant's products. An entity-based catalog
     // is also valid ONLY with admin-only create/update/delete RLS, including prices and currency.
     // Never copy price, currency, plan or entitlement values from the checkout request.
-    const catalog: Record<string, CheckoutProduct> = {};
+    const catalog: Record<string, CheckoutProduct> = {
+      "revengine-lifetime": {
+        name: "REVENGINE — Lifetime License",
+        price: "129.00",
+        currency: "USD",
+        maxQuantity: 1,
+      },
+    };
     const productId = typeof body.productId === "string" ? body.productId : "";
     const product = Object.hasOwn(catalog, productId) ? catalog[productId] : null;
     if (!product) {

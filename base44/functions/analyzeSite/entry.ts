@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { hasLifetimeAccess } from '../../shared/entitlement.ts';
 
 const LOGIC_MAP_SCHEMA = {
   type: 'object',
@@ -115,6 +116,10 @@ export default async function (req) {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    if (!(await hasLifetimeAccess(base44, user))) {
+      return Response.json({ error: 'A lifetime license is required to run analyses.' }, { status: 403 });
+    }
 
     const { url } = await req.json();
     if (!url || typeof url !== 'string' || !/^https?:\/\/.+\..+/i.test(url.trim())) {
