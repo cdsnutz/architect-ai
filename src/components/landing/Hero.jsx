@@ -3,7 +3,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStartCheckout } from "@/hooks/use-start-checkout";
 
-const ASSURANCES = ["No subscription", "Unlimited maps", "Claude Code ready"];
+const ASSURANCES = ["No subscription", "$49.99 per website", "Claude Code ready"];
 
 const OUTPUT = [
   { label: "screens mapped", value: "14" },
@@ -20,7 +20,7 @@ export default function Hero() {
       <div className="relative max-w-6xl mx-auto px-5 pt-16 pb-16 grid lg:grid-cols-[1.05fr_0.95fr] gap-12 items-center">
         <div>
           <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            One-time purchase · Lifetime access
+            One-time purchase · $49.99 per website
           </span>
           <h1 className="mt-5 font-display text-4xl sm:text-5xl font-bold leading-[1.08] tracking-tight">
             Turn any web app into a blueprint you can ship
@@ -31,7 +31,7 @@ export default function Hero() {
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <Button size="lg" className="gap-2" onClick={startCheckout}>
-              Get lifetime access — $129
+              Analyze a website — $49.99
               <ArrowRight className="w-4 h-4" />
             </Button>
             <Button size="lg" variant="outline" asChild>

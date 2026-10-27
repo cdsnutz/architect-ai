@@ -45,8 +45,8 @@ export default function ThankYou() {
       body: "This usually takes a few seconds. Keep this page open.",
     },
     granted: {
-      title: "You're in — lifetime access unlocked",
-      body: "Your workspace is ready. Maps and rebuild prompts are unlimited.",
+      title: "You're in — your website is unlocked",
+      body: "Open the workspace and paste the URL of the site you paid for.",
     },
     pending: {
       title: "Payment received, access is landing",
@@ -54,7 +54,7 @@ export default function ThankYou() {
     },
     signedOut: {
       title: "Payment received — sign in to finish",
-      body: "Sign in with the email you used at checkout to attach your license.",
+      body: "Sign in with the email you used at checkout to attach your website.",
     },
   }[state];
 

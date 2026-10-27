@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
-import { hasLifetimeAccess } from '../../shared/entitlement.ts';
+import { getEntitlement } from '../../shared/entitlement.ts';
 
 export default async function (req) {
   try {
@@ -7,8 +7,9 @@ export default async function (req) {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    if (!(await hasLifetimeAccess(base44, user))) {
-      return Response.json({ error: 'A lifetime license is required to generate prompts.' }, { status: 403 });
+    const entitlement = await getEntitlement(base44, user);
+    if (!entitlement.admin && entitlement.granted === 0) {
+      return Response.json({ error: 'A paid website analysis is required to generate prompts.' }, { status: 403 });
     }
 
     const body = await req.json();

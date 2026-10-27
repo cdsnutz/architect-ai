@@ -84,11 +84,11 @@ Deno.serve(async (req: Request) => {
     // is also valid ONLY with admin-only create/update/delete RLS, including prices and currency.
     // Never copy price, currency, plan or entitlement values from the checkout request.
     const catalog: Record<string, CheckoutProduct> = {
-      "revengine-lifetime": {
-        name: "REVENGINE — Lifetime License",
-        price: "129.00",
+      "revengine-analysis": {
+        name: "REVENGINE — Website Teardown",
+        price: "49.99",
         currency: "USD",
-        maxQuantity: 1,
+        maxQuantity: 5,
       },
     };
     const productId = typeof body.productId === "string" ? body.productId : "";

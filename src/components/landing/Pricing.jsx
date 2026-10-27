@@ -4,12 +4,11 @@ import { Button } from "@/components/ui/button";
 import { useStartCheckout } from "@/hooks/use-start-checkout";
 
 const INCLUDED = [
-  "Unlimited site maps and rebuild prompts",
+  "Full logic map of one website",
+  "Claude Code–ready rebuild prompt",
   "White-label clone generator",
-  "Claude Code–ready prompt exports",
-  "Saved analysis history in your workspace",
-  "All future capability updates",
-  "Use on your own and client projects",
+  "Saved so you can reopen it anytime",
+  "No subscription, no renewal",
 ];
 
 export default function Pricing() {
@@ -21,18 +20,18 @@ export default function Pricing() {
         <div className="max-w-2xl mx-auto text-center">
           <p className="text-sm font-medium text-primary">Pricing</p>
           <h2 className="mt-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">
-            Pay once. Own it for life.
+            $49.99 per website. Paid once.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            No subscriptions, no seats, no renewals. Less than three months of a typical $25/mo dev tool.
+            No subscription, no seats, no renewals. You pay per site you want to reverse-engineer — nothing else.
           </p>
         </div>
 
         <div className="mt-12 max-w-xl mx-auto rounded-2xl border border-primary/40 bg-card p-8 shadow-xl">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="font-display text-lg font-semibold">Lifetime license</h3>
-              <p className="text-sm text-muted-foreground">One payment, permanent access</p>
+              <h3 className="font-display text-lg font-semibold">Website teardown</h3>
+              <p className="text-sm text-muted-foreground">One site, fully reverse-engineered</p>
             </div>
             <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
               One-time
@@ -40,15 +39,15 @@ export default function Pricing() {
           </div>
 
           <div className="mt-6 flex items-end gap-2">
-            <span className="font-display text-5xl font-bold tracking-tight">$129</span>
-            <span className="pb-1.5 text-sm text-muted-foreground">USD, charged once</span>
+            <span className="font-display text-5xl font-bold tracking-tight">$49.99</span>
+            <span className="pb-1.5 text-sm text-muted-foreground">USD per website</span>
           </div>
 
           <Button className="mt-6 w-full" size="lg" onClick={startCheckout}>
-            Unlock lifetime access
+            Analyze a website — $49.99
           </Button>
           <p className="mt-3 text-center text-xs text-muted-foreground">
-            Secure checkout · Instant access · No subscription
+            Secure checkout · Access right after payment · No subscription
           </p>
 
           <ul className="mt-7 space-y-3 border-t border-border/70 pt-7 text-sm">

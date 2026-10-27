@@ -6,11 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, ArrowLeft, Check, Loader2, Lock, ScanLine } from "lucide-react";
 
 const INCLUDED = [
-  "Unlimited site maps and rebuild prompts",
+  "Full logic map of one website",
+  "Claude Code–ready rebuild prompt",
   "White-label clone generator",
-  "Claude Code–ready prompt exports",
-  "Saved analysis history",
-  "All future capability updates",
+  "Saved so you can reopen it anytime",
+  "No subscription, no renewal",
 ];
 
 export default function Checkout() {
@@ -31,7 +31,7 @@ export default function Checkout() {
     setLoading(true);
     try {
       const response = await base44.functions.invoke("create-checkout", {
-        productId: "revengine-lifetime",
+        productId: "revengine-analysis",
         quantity: 1,
       });
       if (!response.data?.redirectUrl) throw new Error("Could not start checkout.");
@@ -59,9 +59,9 @@ export default function Checkout() {
           REVENGINE
         </div>
 
-        <h1 className="mt-6 font-display text-3xl font-bold tracking-tight">Unlock your workspace</h1>
+        <h1 className="mt-6 font-display text-3xl font-bold tracking-tight">Add a website teardown</h1>
         <p className="mt-2 text-muted-foreground">
-          One payment. Lifetime access. No subscription, no renewal.
+          $49.99 once per website. No subscription, no renewal.
         </p>
 
         <div className="mt-8 grid gap-5 md:grid-cols-[1.1fr_0.9fr]">
@@ -69,8 +69,8 @@ export default function Checkout() {
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="font-display text-lg font-semibold">Lifetime license</h2>
-                  <p className="text-sm text-muted-foreground">REVENGINE workspace</p>
+                  <h2 className="font-display text-lg font-semibold">Website teardown</h2>
+                  <p className="text-sm text-muted-foreground">One site, fully reverse-engineered</p>
                 </div>
                 <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                   One-time
@@ -78,8 +78,8 @@ export default function Checkout() {
               </div>
 
               <div className="mt-6 flex items-end gap-2 border-b border-border/70 pb-6">
-                <span className="font-display text-4xl font-bold tracking-tight">$129</span>
-                <span className="pb-1 text-sm text-muted-foreground">USD</span>
+                <span className="font-display text-4xl font-bold tracking-tight">$49.99</span>
+                <span className="pb-1 text-sm text-muted-foreground">USD per website</span>
               </div>
 
               <ul className="mt-5 space-y-2.5 text-sm">
@@ -116,7 +116,7 @@ export default function Checkout() {
                     Starting checkout...
                   </>
                 ) : (
-                  "Pay $129 once"
+                  "Pay $49.99 — one website"
                 )}
               </Button>
 

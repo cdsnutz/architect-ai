@@ -7,8 +7,8 @@ const ITEMS = [
     a: "A workspace where you paste any public URL and get a structured map of screens, entities and flows, plus a reconstruction prompt and a white-label variation you can hand to your coding agent.",
   },
   {
-    q: "Is this really a one-time payment?",
-    a: "Yes. $129 charged once through Base44 Payments. There is no subscription, no renewal date, and no per-seat pricing.",
+    q: "How does pricing work?",
+    a: "It's a one-time $49.99 per website, charged through Base44 Payments. Each website you analyze is its own purchase — there is no subscription, no renewal date, and no per-seat pricing.",
   },
   {
     q: "Do I need Claude Code?",

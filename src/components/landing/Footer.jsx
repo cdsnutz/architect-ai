@@ -15,10 +15,10 @@ export default function Footer() {
             Stop guessing how it was built
           </h2>
           <p className="mt-4 text-muted-foreground">
-            One payment. Every map, every prompt, for as long as you build.
+            One payment per website. Its full map and prompt, yours for good.
           </p>
           <Button size="lg" className="mt-8 gap-2" onClick={startCheckout}>
-            Get lifetime access — $129
+            Analyze a website — $49.99
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>

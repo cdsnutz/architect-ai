@@ -10,6 +10,7 @@ import RebuildPrompt from "@/components/analysis/RebuildPrompt";
 
 export default function Workspace() {
   const [status, setStatus] = useState("loading");
+  const [access, setAccess] = useState(null);
   const [url, setUrl] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState("");
@@ -26,6 +27,14 @@ export default function Workspace() {
     }
   }
 
+  async function loadAccess() {
+    const response = await base44.functions.invoke("checkAccess");
+    const data = response.data || {};
+    setAccess(data);
+    setStatus(data.hasAccess ? "ready" : "locked");
+    return data;
+  }
+
   useEffect(() => {
     (async () => {
       const user = await base44.auth.me().catch(() => null);
@@ -33,13 +42,8 @@ export default function Workspace() {
         setStatus("anonymous");
         return;
       }
-      const access = await base44.functions.invoke("checkAccess");
-      if (access.data?.hasAccess) {
-        setStatus("ready");
-        loadHistory();
-      } else {
-        setStatus("locked");
-      }
+      const data = await loadAccess();
+      if (data.hasAccess) loadHistory();
     })().catch(() => setStatus("locked"));
   }, []);
 
@@ -52,6 +56,7 @@ export default function Workspace() {
     try {
       const response = await base44.functions.invoke("analyzeSite", { url });
       setCurrent(response.data.analysis);
+      loadAccess();
       loadHistory();
     } catch (err) {
       setError(
@@ -62,6 +67,8 @@ export default function Workspace() {
     }
     setAnalyzing(false);
   };
+
+  const canAnalyze = !!access?.admin || (access?.remaining ?? 0) > 0;
 
   if (status === "loading") {
     return (
@@ -86,19 +93,19 @@ export default function Workspace() {
                 <Lock className="w-5 h-5 text-primary" />
               </div>
               <h1 className="mt-5 font-display text-2xl font-bold">
-                {locked ? "Your workspace is locked" : "Sign in to open your workspace"}
+                {locked ? "Buy a website teardown to start" : "Sign in to open your workspace"}
               </h1>
               <p className="mt-3 text-sm text-muted-foreground">
                 {locked
-                  ? "A one-time lifetime license unlocks unlimited site maps and rebuild prompts."
-                  : "Use your account to access your saved analyses and license."}
+                  ? "Each website is a one-time $49.99 — its full logic map, rebuild prompt and white-label clone."
+                  : "Use your account to access your saved analyses and purchases."}
               </p>
               <div className="mt-7 space-y-3">
                 {locked ? (
                   <>
                     <Button className="w-full gap-2" asChild>
                       <Link to="/checkout">
-                        Unlock for $129 — one time
+                        Get started — $49.99 per website
                         <ArrowRight className="w-4 h-4" />
                       </Link>
                     </Button>
@@ -133,24 +140,45 @@ export default function Workspace() {
             REVENGINE
           </Link>
           <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            Lifetime access
+            {access?.admin
+              ? "Admin · unlimited"
+              : `${access?.remaining ?? 0} website${access?.remaining === 1 ? "" : "s"} left`}
           </span>
         </header>
 
-        <form onSubmit={handleAnalyze} className="flex gap-2">
-          <Input
-            type="url"
-            placeholder="https://example.com"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            required
-            className="flex-1"
-          />
-          <Button type="submit" disabled={analyzing}>
-            {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-            {analyzing ? "Mapping..." : "Map logic"}
-          </Button>
-        </form>
+        {canAnalyze ? (
+          <form onSubmit={handleAnalyze} className="flex gap-2">
+            <Input
+              type="url"
+              placeholder="https://example.com"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              required
+              className="flex-1"
+            />
+            <Button type="submit" disabled={analyzing}>
+              {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              {analyzing ? "Mapping..." : "Map logic"}
+            </Button>
+          </form>
+        ) : (
+          <Card className="border-primary/40">
+            <CardContent className="p-6 sm:flex sm:items-center sm:justify-between sm:gap-6">
+              <div>
+                <p className="font-display font-semibold">No websites left on your account</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Each teardown is a one-time $49.99. Add another website to keep mapping.
+                </p>
+              </div>
+              <Button className="mt-4 sm:mt-0 shrink-0 gap-2" asChild>
+                <Link to="/checkout">
+                  Add a website — $49.99
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {analyzing && (
           <Card>

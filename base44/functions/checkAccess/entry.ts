@@ -1,5 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.54";
-import { hasLifetimeAccess } from "../../shared/entitlement.ts";
+import { getEntitlement } from "../../shared/entitlement.ts";
 
 export default async function (req: Request) {
   try {
@@ -13,11 +13,11 @@ export default async function (req: Request) {
       .catch((e: any) => (e.status === 401 ? null : Promise.reject(e)));
 
     if (!user) {
-      return Response.json({ hasAccess: false, signedIn: false });
+      return Response.json({ hasAccess: false, signedIn: false, remaining: 0, granted: 0, used: 0 });
     }
 
-    const access = await hasLifetimeAccess(base44, user);
-    return Response.json({ hasAccess: access, signedIn: true, admin: user.role === "admin" });
+    const access = await getEntitlement(base44, user);
+    return Response.json(access);
   } catch (error: any) {
     console.error("checkAccess: failed", error);
     return Response.json({ error: error.message }, { status: 500 });
