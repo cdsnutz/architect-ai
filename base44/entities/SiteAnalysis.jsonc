@@ -20,6 +20,24 @@
     "white_label_prompt": {
       "type": "string"
     },
+    "access_state": {
+      "type": "string",
+      "enum": ["public", "gated_captured", "gated_blocked", "gated_refused"],
+      "description": "Whether the analyzed value sits behind authentication and whether gated surfaces were captured."
+    },
+    "gate_type": {
+      "type": "string",
+      "enum": ["none", "email_otp", "email_link", "unknown", "paid", "phone", "captcha"],
+      "description": "How the target gates access. paid/phone/captcha are never automated."
+    },
+    "gated_routes": {
+      "type": "number",
+      "description": "Count of authenticated routes captured in this dossier."
+    },
+    "test_account_alias": {
+      "type": "string",
+      "description": "Gmail plus-alias of the authorized test account used for authenticated capture."
+    },
     "white_label_brand": {
       "type": "string"
     }
