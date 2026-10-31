@@ -9,6 +9,7 @@ import AnalysisResult from "@/components/analysis/AnalysisResult";
 import RebuildPrompt from "@/components/analysis/RebuildPrompt";
 import PasteHtmlForm from "@/components/analysis/PasteHtmlForm";
 import QuickActionsMenu from "@/components/analysis/QuickActionsMenu";
+import ReaHandoff from "@/components/analysis/ReaHandoff";
 
 export default function Workspace() {
   const [status, setStatus] = useState("loading");
@@ -275,6 +276,7 @@ export default function Workspace() {
 
         {current && <AnalysisResult analysis={current} />}
         {current && <RebuildPrompt analysis={current} />}
+        {current && <ReaHandoff analysis={current} />}
 
         {!current && !analyzing && !error && (
           <div className="space-y-3">
