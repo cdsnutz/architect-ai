@@ -8,6 +8,7 @@ import { AlertCircle, ArrowRight, ClipboardPaste, GitCompare, History, LayoutDas
 import AnalysisResult from "@/components/analysis/AnalysisResult";
 import RebuildPrompt from "@/components/analysis/RebuildPrompt";
 import PasteHtmlForm from "@/components/analysis/PasteHtmlForm";
+import QuickActionsMenu from "@/components/analysis/QuickActionsMenu";
 
 export default function Workspace() {
   const [status, setStatus] = useState("loading");
@@ -170,6 +171,7 @@ export default function Workspace() {
             REVENGINE
           </Link>
           <div className="flex items-center gap-2">
+            <QuickActionsMenu analyses={history} />
             <Button variant="ghost" size="sm" className="gap-2" asChild>
               <Link to="/dashboard">
                 <LayoutDashboard className="w-4 h-4" />

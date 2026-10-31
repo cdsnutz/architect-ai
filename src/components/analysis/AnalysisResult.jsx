@@ -2,6 +2,8 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Layout, Database, Plug, GitBranch, AlertTriangle, Eye, Globe } from "lucide-react";
+import CopyButton from "@/components/analysis/CopyButton";
+import { logicMapToText } from "@/lib/clipboard";
 
 const severityColor = { high: "destructive", medium: "default", low: "secondary" };
 
@@ -34,13 +36,18 @@ export default function AnalysisResult({ analysis }) {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Globe className="w-5 h-5" />
-            {analysis.title}
-          </CardTitle>
-          <a href={analysis.url} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline break-all">
-            {analysis.url}
-          </a>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 space-y-1.5">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Globe className="w-5 h-5 shrink-0" />
+                <span className="truncate">{analysis.title}</span>
+              </CardTitle>
+              <a href={analysis.url} target="_blank" rel="noreferrer" className="block text-sm text-blue-600 hover:underline break-all">
+                {analysis.url}
+              </a>
+            </div>
+            <CopyButton getText={() => logicMapToText(analysis)} label="Copy logic map" className="shrink-0" />
+          </div>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground leading-relaxed">{analysis.summary}</p>
