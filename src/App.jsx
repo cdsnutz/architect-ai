@@ -10,6 +10,7 @@ import ThankYou from './pages/ThankYou';
 // Add page imports here
 import Home from './pages/Home';
 import Workspace from './pages/Workspace';
+import Compare from './pages/Compare';
 import Checkout from './pages/Checkout';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -57,6 +58,12 @@ const AuthenticatedApp = () => {
         <Route index element={<Checkout />} />
       </Route>
       <Route path="/workspace" element={<Workspace />} />
+      <Route
+        path="/compare"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fcompare" replace />} />}
+      >
+        <Route index element={<Compare />} />
+      </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

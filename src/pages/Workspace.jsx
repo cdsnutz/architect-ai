@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, ArrowRight, ClipboardPaste, History, Link2, Loader2, Lock, ScanLine, Search } from "lucide-react";
+import { AlertCircle, ArrowRight, ClipboardPaste, GitCompare, History, Link2, Loader2, Lock, ScanLine, Search } from "lucide-react";
 import AnalysisResult from "@/components/analysis/AnalysisResult";
 import RebuildPrompt from "@/components/analysis/RebuildPrompt";
 import PasteHtmlForm from "@/components/analysis/PasteHtmlForm";
@@ -161,11 +161,19 @@ export default function Workspace() {
             <ScanLine className="w-6 h-6 text-primary" />
             REVENGINE
           </Link>
-          <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            {access?.admin
-              ? "Admin · unlimited"
-              : `${access?.remaining ?? 0} website${access?.remaining === 1 ? "" : "s"} left`}
-          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" className="gap-2" asChild>
+              <Link to="/compare">
+                <GitCompare className="w-4 h-4" />
+                <span className="hidden sm:inline">Compare</span>
+              </Link>
+            </Button>
+            <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              {access?.admin
+                ? "Admin · unlimited"
+                : `${access?.remaining ?? 0} website${access?.remaining === 1 ? "" : "s"} left`}
+            </span>
+          </div>
         </header>
 
         {canAnalyze ? (
