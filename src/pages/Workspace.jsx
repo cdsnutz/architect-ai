@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, ArrowRight, ClipboardPaste, GitCompare, History, Link2, Loader2, Lock, ScanLine, Search } from "lucide-react";
+import { AlertCircle, ArrowRight, ClipboardPaste, GitCompare, History, LayoutDashboard, Link2, Loader2, Lock, ScanLine, Search } from "lucide-react";
 import AnalysisResult from "@/components/analysis/AnalysisResult";
 import RebuildPrompt from "@/components/analysis/RebuildPrompt";
 import PasteHtmlForm from "@/components/analysis/PasteHtmlForm";
@@ -45,7 +45,15 @@ export default function Workspace() {
         return;
       }
       const data = await loadAccess();
-      if (data.hasAccess) loadHistory();
+      if (!data.hasAccess) return;
+      await loadHistory();
+      const targetId = new URLSearchParams(window.location.search).get("analysis");
+      if (!targetId) return;
+      const record = await base44.entities.SiteAnalysis.get(targetId).catch(() => null);
+      if (record) {
+        setCurrent(record);
+        setUrl(record.url);
+      }
     })().catch(() => setStatus("locked"));
   }, []);
 
@@ -162,6 +170,12 @@ export default function Workspace() {
             REVENGINE
           </Link>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" className="gap-2" asChild>
+              <Link to="/dashboard">
+                <LayoutDashboard className="w-4 h-4" />
+                <span className="hidden sm:inline">Dashboard</span>
+              </Link>
+            </Button>
             <Button variant="ghost" size="sm" className="gap-2" asChild>
               <Link to="/compare">
                 <GitCompare className="w-4 h-4" />

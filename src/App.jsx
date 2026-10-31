@@ -11,6 +11,7 @@ import ThankYou from './pages/ThankYou';
 import Home from './pages/Home';
 import Workspace from './pages/Workspace';
 import Compare from './pages/Compare';
+import Dashboard from './pages/Dashboard';
 import Checkout from './pages/Checkout';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -58,6 +59,12 @@ const AuthenticatedApp = () => {
         <Route index element={<Checkout />} />
       </Route>
       <Route path="/workspace" element={<Workspace />} />
+      <Route
+        path="/dashboard"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fdashboard" replace />} />}
+      >
+        <Route index element={<Dashboard />} />
+      </Route>
       <Route
         path="/compare"
         element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fcompare" replace />} />}
