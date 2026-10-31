@@ -4,14 +4,16 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, ArrowRight, History, Loader2, Lock, ScanLine, Search } from "lucide-react";
+import { AlertCircle, ArrowRight, ClipboardPaste, History, Link2, Loader2, Lock, ScanLine, Search } from "lucide-react";
 import AnalysisResult from "@/components/analysis/AnalysisResult";
 import RebuildPrompt from "@/components/analysis/RebuildPrompt";
+import PasteHtmlForm from "@/components/analysis/PasteHtmlForm";
 
 export default function Workspace() {
   const [status, setStatus] = useState("loading");
   const [access, setAccess] = useState(null);
   const [url, setUrl] = useState("");
+  const [mode, setMode] = useState("url");
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState("");
   const [current, setCurrent] = useState(null);
@@ -55,6 +57,26 @@ export default function Workspace() {
     setAnalyzing(true);
     try {
       const response = await base44.functions.invoke("analyzeSite", { url });
+      setCurrent(response.data.analysis);
+      loadAccess();
+      loadHistory();
+    } catch (err) {
+      setError(
+        (err && err.response && err.response.data && err.response.data.error) ||
+          (err && err.message) ||
+          "Analysis failed."
+      );
+    }
+    setAnalyzing(false);
+  };
+
+  const handleAnalyzeHtml = async (payload) => {
+    if (analyzing) return;
+    setError("");
+    setCurrent(null);
+    setAnalyzing(true);
+    try {
+      const response = await base44.functions.invoke("analyzePastedHtml", payload);
       setCurrent(response.data.analysis);
       loadAccess();
       loadHistory();
@@ -147,20 +169,49 @@ export default function Workspace() {
         </header>
 
         {canAnalyze ? (
-          <form onSubmit={handleAnalyze} className="flex gap-2">
-            <Input
-              type="url"
-              placeholder="https://example.com"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              required
-              className="flex-1"
-            />
-            <Button type="submit" disabled={analyzing}>
-              {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              {analyzing ? "Mapping..." : "Map logic"}
-            </Button>
-          </form>
+          <div className="space-y-4">
+            <div className="inline-flex rounded-lg border p-1">
+              <button
+                type="button"
+                onClick={() => setMode("url")}
+                className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  mode === "url" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Link2 className="w-4 h-4" />
+                Analyze a URL
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("html")}
+                className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  mode === "html" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <ClipboardPaste className="w-4 h-4" />
+                Paste gated page HTML
+              </button>
+            </div>
+
+            {mode === "url" ? (
+              <form onSubmit={handleAnalyze} className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  type="url"
+                  placeholder="https://example.com"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  required
+                  className="flex-1"
+                />
+                <Button type="submit" disabled={analyzing}>
+                  {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  {analyzing ? "Mapping..." : "Map logic"}
+                </Button>
+              </form>
+            ) : (
+              <PasteHtmlForm onSubmit={handleAnalyzeHtml} busy={analyzing} />
+            )}
+          </div>
         ) : (
           <Card className="border-primary/40">
             <CardContent className="p-6 sm:flex sm:items-center sm:justify-between sm:gap-6">
@@ -184,7 +235,7 @@ export default function Workspace() {
           <Card>
             <CardContent className="flex items-center gap-3 py-8 justify-center text-muted-foreground">
               <Loader2 className="w-5 h-5 animate-spin" />
-              Fetching the site and deconstructing its logic — this takes up to a minute.
+              Deconstructing the page logic — this takes up to a minute.
             </CardContent>
           </Card>
         )}
