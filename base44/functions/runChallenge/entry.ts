@@ -86,7 +86,9 @@ export default async function (req) {
 
     await stageRunning(base44, 'ChallengeRun', runRecordId, 'skills');
     await markRunning(base44, telemetry ? telemetry.id : null, 'skills');
-    const pairs = selectProbes(skills, targets, 6);
+    // Bound the pass by the pack's own size so every skill in it actually executes
+    // on a single authorized host instead of the tail being silently dropped.
+    const pairs = selectProbes(skills, targets, Math.max(6, skills.length));
     const results = await Promise.all(pairs.map((pair) => runProbe(pair.probe, pair.skill, pair.target)));
     const reproduced = results.filter((result) => result.reproduced).length;
     const skillsDetail = results.length + ' probes · ' + reproduced + ' reproduced';

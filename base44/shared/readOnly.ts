@@ -527,7 +527,8 @@ const RUNNERS: Record<string, (skill: string, target: string) => Promise<ProbeRe
   conditional: probeConditional,
   variance: probeVariance,
   posture: probePosture,
-  bundle: probeBundle
+  bundle: probeBundle,
+  sourcemap: probeSourcemap
 };
 
 export async function runProbe(probe: string, skill: string, target: string): Promise<ProbeResult> {
