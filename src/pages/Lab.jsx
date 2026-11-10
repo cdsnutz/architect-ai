@@ -13,6 +13,7 @@ import LabHistory from "@/components/lab/LabHistory";
 import LabConductor from "@/components/lab/LabConductor";
 import StewardChat from "@/components/lab/StewardChat";
 import ThreatDashboard from "@/components/lab/ThreatDashboard";
+import ChallengeCoach from "@/components/lab/ChallengeCoach";
 import TriggerJourney from "@/components/analysis/TriggerJourney";
 
 function readError(error) {
@@ -309,6 +310,8 @@ export default function Lab() {
         )}
 
         <DossierPanel run={run} onToggleCapabilityGap={toggleGap} onExport={exportRun} />
+
+        <ChallengeCoach run={run} />
 
         <SkillCatalog
           packs={catalog.packs}
