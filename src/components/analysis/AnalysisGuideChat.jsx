@@ -3,7 +3,8 @@ import ReactMarkdown from "react-markdown";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, Loader2, Send } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, Compass, Loader2, Send } from "lucide-react";
 
 const OPENERS = [
   "Walk me through what this analysis claims.",
@@ -91,7 +92,17 @@ export default function AnalysisGuideChat({ analysis }) {
   };
 
   return (
-    <div className="space-y-3">
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Compass className="h-4 w-4 text-primary" />
+          Analysis Guide
+          <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            agent
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
       {starting && (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -182,6 +193,7 @@ export default function AnalysisGuideChat({ analysis }) {
           <Send className="h-4 w-4" />
         </Button>
       </form>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

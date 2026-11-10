@@ -12,6 +12,7 @@ import PasteHtmlForm from "@/components/analysis/PasteHtmlForm";
 import QuickActionsMenu from "@/components/analysis/QuickActionsMenu";
 import ReaHandoff from "@/components/analysis/ReaHandoff";
 import PodFindings from "@/components/analysis/PodFindings";
+import AnalysisGuideChat from "@/components/analysis/AnalysisGuideChat";
 import ReaConsole from "@/components/rea/ReaConsole";
 import PodTracker from "@/components/rea/PodTracker";
 
@@ -258,6 +259,8 @@ export default function Workspace() {
             )}
           </div>
         )}
+
+        <AnalysisGuideChat analysis={current} />
 
         <ReaConsole analysis={current} onValidated={setCurrent} />
       </div>
