@@ -20,7 +20,8 @@ export type Skill = {
     | 'conditional'
     | 'variance'
     | 'posture'
-    | 'bundle';
+    | 'bundle'
+    | 'sourcemap';
   thesis: string;
   proves: string;
   falsifier: string;
@@ -195,6 +196,17 @@ export const SKILLS: Skill[] = [
       'Reads the same-origin scripts the page loads and flags credential-shaped strings — key formats, private-key blocks, literal bearer tokens and encoded JWTs — by pattern class only, never reproducing the matched value.',
     proves: 'whether the shipped client bundle carries secret-shaped material at all, without extracting it.',
     falsifier: 'Bundles whose scripts carry zero pattern matches void the exposure claim for that window.'
+  },
+  {
+    id: 'sourcemap-exposure',
+    name: 'Source Map Exposure',
+    focus: 'adversarial_integration',
+    pods: ['Perimeter Scout', 'Schema Archaeologist'],
+    probe: 'sourcemap',
+    thesis:
+      'Asks whether the deployment publishes its own .map file beside the shipped bundle — the difference between a minified bundle and a readable copy of the original source sitting one URL away from every reader.',
+    proves: 'whether this build is handing out its own source to anyone who opens devtools, without reading a single line of it.',
+    falsifier: 'A bundle whose .map sibling is absent or does not answer 200 voids the source-map exposure claim for that build.'
   }
 ];
 
@@ -232,7 +244,8 @@ export const PACKS: Pack[] = [
       'cache-poison-surface',
       'variance-key',
       'boundary-posture',
-      'bundle-exposure'
+      'bundle-exposure',
+      'sourcemap-exposure'
     ]
   }
 ];

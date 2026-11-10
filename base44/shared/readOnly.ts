@@ -457,6 +457,65 @@ async function probeBundle(skill: string, target: string): Promise<ProbeResult> 
   };
 }
 
+// Asks only whether the sibling .map exists (HEAD, never the map body): the finding is the
+// publication of the map, not its contents. Nothing is downloaded or reconstructed.
+async function probeSourcemap(skill: string, target: string): Promise<ProbeResult> {
+  const page = await readOnce(target, 'text/html,*/*');
+  const origin = new URL(page.url).origin;
+  const sources = new Set<string>();
+  for (const match of page.body.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)) {
+    try {
+      const resolved = new URL(match[1], origin);
+      if (resolved.origin === origin) sources.add(resolved.origin + resolved.pathname);
+    } catch {
+      continue;
+    }
+  }
+  const chosen = [...sources].slice(0, 2);
+  const checked = await Promise.all(
+    chosen.map(async (url) => {
+      try {
+        const res = await fetch(url + '.map', {
+          method: 'HEAD',
+          headers: { 'User-Agent': UA },
+          redirect: 'follow',
+          signal: AbortSignal.timeout(TIMEOUT_MS)
+        });
+        return {
+          url,
+          status: res.status,
+          type: (res.headers.get('content-type') || 'unknown type').split(';')[0],
+          size: res.headers.get('content-length') || 'unsized'
+        };
+      } catch {
+        return { url, status: 0, type: 'unreadable', size: 'unsized' };
+      }
+    })
+  );
+  const exposed = checked.filter((entry) => entry.status === 200);
+  return {
+    skill,
+    probe: 'sourcemap',
+    target,
+    reproduced: exposed.length > 0,
+    observations: [
+      'Page: ' + describe(page),
+      'Same-origin scripts referenced: ' + sources.size + ' · map siblings asked: ' + checked.length,
+      ...checked.map(
+        (entry) => 'Map beside ' + entry.url.split('/').pop() + ': HTTP ' + entry.status + ' · ' + entry.type + ' · ' + entry.size + 'b'
+      ),
+      'Map bodies withheld: only the HEAD response was read, never the map itself'
+    ],
+    signal:
+      checked.length === 0
+        ? 'No same-origin script on this page could be resolved, so source-map publication is not observable from this surface.'
+        : exposed.length
+          ? 'The deployment publishes its own source map (' + exposed.length + ' of ' + checked.length +
+            ' checked), so anyone holding the bundle URL can reconstruct the original source. This is a leak to remove from the build, not a technique to use on someone else.'
+          : 'No source map answers beside the bundles read, so this build does not hand out its original source.'
+  };
+}
+
 const RUNNERS: Record<string, (skill: string, target: string) => Promise<ProbeResult>> = {
   negotiate: probeNegotiate,
   entropy: probeEntropy,
