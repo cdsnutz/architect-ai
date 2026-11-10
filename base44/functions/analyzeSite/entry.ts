@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
-import { getEntitlement } from '../../shared/entitlement.ts';
 import { extractEvidence, mapLogic } from '../../shared/analysis.ts';
 import { probeContentNegotiation, formatProbe } from '../../shared/probe.ts';
 
@@ -8,14 +7,6 @@ export default async function (req) {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const entitlement = await getEntitlement(base44, user);
-    if (!entitlement.admin && entitlement.remaining <= 0) {
-      return Response.json({
-        error: 'Each website needs its own paid analysis. Buy access for another website to keep mapping.',
-        code: 'payment_required'
-      }, { status: 403 });
-    }
 
     const { url } = await req.json();
     if (!url || typeof url !== 'string' || !/^https?:\/\/.+\..+/i.test(url.trim())) {

@@ -1,9 +1,9 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useStartCheckout } from "@/hooks/use-start-checkout";
 
-const ASSURANCES = ["No subscription", "$49.99 per website", "Claude Code ready"];
+const ASSURANCES = ["No subscription", "Evidence-tagged findings", "Claude Code ready"];
 
 const OUTPUT = [
   { label: "screens mapped", value: "14" },
@@ -12,15 +12,13 @@ const OUTPUT = [
 ];
 
 export default function Hero() {
-  const startCheckout = useStartCheckout();
-
   return (
     <section className="relative overflow-hidden border-b border-border/60">
       <div className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[38rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
       <div className="relative max-w-6xl mx-auto px-5 pt-16 pb-16 grid lg:grid-cols-[1.05fr_0.95fr] gap-12 items-center">
         <div>
           <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            One-time purchase · $49.99 per website
+            Open workspace
           </span>
           <h1 className="mt-5 font-display text-4xl sm:text-5xl font-bold leading-[1.08] tracking-tight">
             Turn any web app into a blueprint you can ship
@@ -30,9 +28,11 @@ export default function Hero() {
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
-            <Button size="lg" className="gap-2" onClick={startCheckout}>
-              Analyze a website — $49.99
-              <ArrowRight className="w-4 h-4" />
+            <Button size="lg" className="gap-2" asChild>
+              <Link to="/workspace">
+                Analyze a website
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
               <a href="#how">See how it works</a>

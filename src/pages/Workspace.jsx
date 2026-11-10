@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, ArrowRight, ClipboardPaste, GitCompare, History, LayoutDashboard, Link2, Loader2, Lock, ScanLine, Search } from "lucide-react";
+import { AlertCircle, ClipboardPaste, GitCompare, History, LayoutDashboard, Link2, Loader2, Lock, ScanLine, Search } from "lucide-react";
 import AnalysisResult from "@/components/analysis/AnalysisResult";
 import RebuildPrompt from "@/components/analysis/RebuildPrompt";
 import PasteHtmlForm from "@/components/analysis/PasteHtmlForm";
@@ -15,7 +15,6 @@ import PodRoster from "@/components/analysis/PodRoster";
 
 export default function Workspace() {
   const [status, setStatus] = useState("loading");
-  const [access, setAccess] = useState(null);
   const [url, setUrl] = useState("");
   const [mode, setMode] = useState("url");
   const [analyzing, setAnalyzing] = useState(false);
@@ -33,14 +32,6 @@ export default function Workspace() {
     }
   }
 
-  async function loadAccess() {
-    const response = await base44.functions.invoke("checkAccess");
-    const data = response.data || {};
-    setAccess(data);
-    setStatus(data.hasAccess ? "ready" : "locked");
-    return data;
-  }
-
   useEffect(() => {
     (async () => {
       const user = await base44.auth.me().catch(() => null);
@@ -48,8 +39,7 @@ export default function Workspace() {
         setStatus("anonymous");
         return;
       }
-      const data = await loadAccess();
-      if (!data.hasAccess) return;
+      setStatus("ready");
       await loadHistory();
       const targetId = new URLSearchParams(window.location.search).get("analysis");
       if (!targetId) return;
@@ -58,7 +48,7 @@ export default function Workspace() {
         setCurrent(record);
         setUrl(record.url);
       }
-    })().catch(() => setStatus("locked"));
+    })().catch(() => setStatus("anonymous"));
   }, []);
 
   const handleAnalyze = async (e) => {
@@ -70,7 +60,6 @@ export default function Workspace() {
     try {
       const response = await base44.functions.invoke("analyzeSite", { url });
       setCurrent(response.data.analysis);
-      loadAccess();
       loadHistory();
     } catch (err) {
       setError(
@@ -90,7 +79,6 @@ export default function Workspace() {
     try {
       const response = await base44.functions.invoke("analyzePastedHtml", payload);
       setCurrent(response.data.analysis);
-      loadAccess();
       loadHistory();
     } catch (err) {
       setError(
@@ -102,8 +90,6 @@ export default function Workspace() {
     setAnalyzing(false);
   };
 
-  const canAnalyze = !!access?.admin || (access?.remaining ?? 0) > 0;
-
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -112,8 +98,7 @@ export default function Workspace() {
     );
   }
 
-  if (status === "anonymous" || status === "locked") {
-    const locked = status === "locked";
+  if (status === "anonymous") {
     return (
       <div className="min-h-screen bg-background">
         <div className="max-w-lg mx-auto px-5 py-20">
@@ -126,37 +111,17 @@ export default function Workspace() {
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
                 <Lock className="w-5 h-5 text-primary" />
               </div>
-              <h1 className="mt-5 font-display text-2xl font-bold">
-                {locked ? "Buy a website teardown to start" : "Sign in to open your workspace"}
-              </h1>
+              <h1 className="mt-5 font-display text-2xl font-bold">Sign in to open your workspace</h1>
               <p className="mt-3 text-sm text-muted-foreground">
-                {locked
-                  ? "Each website is a one-time $49.99 — its full logic map, rebuild prompt and white-label clone."
-                  : "Use your account to access your saved analyses and purchases."}
+                Use your account to access your saved analyses.
               </p>
               <div className="mt-7 space-y-3">
-                {locked ? (
-                  <>
-                    <Button className="w-full gap-2" asChild>
-                      <Link to="/checkout">
-                        Get started — $49.99 per website
-                        <ArrowRight className="w-4 h-4" />
-                      </Link>
-                    </Button>
-                    <Button variant="ghost" className="w-full" asChild>
-                      <Link to="/">Back to overview</Link>
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button className="w-full" asChild>
-                      <Link to="/login?returnTo=%2Fworkspace">Sign in</Link>
-                    </Button>
-                    <Button variant="outline" className="w-full" asChild>
-                      <Link to="/register?returnTo=%2Fworkspace">Create an account</Link>
-                    </Button>
-                  </>
-                )}
+                <Button className="w-full" asChild>
+                  <Link to="/login?returnTo=%2Fworkspace">Sign in</Link>
+                </Button>
+                <Button variant="outline" className="w-full" asChild>
+                  <Link to="/register?returnTo=%2Fworkspace">Create an account</Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -187,16 +152,10 @@ export default function Workspace() {
                 <span className="hidden sm:inline">Compare</span>
               </Link>
             </Button>
-            <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-              {access?.admin
-                ? "Admin · unlimited"
-                : `${access?.remaining ?? 0} website${access?.remaining === 1 ? "" : "s"} left`}
-            </span>
           </div>
         </header>
 
-        {canAnalyze ? (
-          <div className="space-y-4">
+        <div className="space-y-4">
             <div className="inline-flex rounded-lg border p-1">
               <button
                 type="button"
@@ -238,25 +197,7 @@ export default function Workspace() {
             ) : (
               <PasteHtmlForm onSubmit={handleAnalyzeHtml} busy={analyzing} />
             )}
-          </div>
-        ) : (
-          <Card className="border-primary/40">
-            <CardContent className="p-6 sm:flex sm:items-center sm:justify-between sm:gap-6">
-              <div>
-                <p className="font-display font-semibold">No websites left on your account</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Each teardown is a one-time $49.99. Add another website to keep mapping.
-                </p>
-              </div>
-              <Button className="mt-4 sm:mt-0 shrink-0 gap-2" asChild>
-                <Link to="/checkout">
-                  Add a website — $49.99
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        </div>
 
         {analyzing && (
           <Card>

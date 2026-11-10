@@ -8,7 +8,7 @@ const ITEMS = [
   },
   {
     q: "How does pricing work?",
-    a: "It's a one-time $49.99 per website, charged through Base44 Payments. Each website you analyze is its own purchase — there is no subscription, no renewal date, and no per-seat pricing.",
+    a: "No. Sign in and map as many websites as you need — there is no subscription, no renewal date, and no per-seat pricing.",
   },
   {
     q: "Do I need Claude Code?",

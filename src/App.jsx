@@ -6,13 +6,11 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
-import ThankYou from './pages/ThankYou';
 // Add page imports here
 import Home from './pages/Home';
 import Workspace from './pages/Workspace';
 import Compare from './pages/Compare';
 import Dashboard from './pages/Dashboard';
-import Checkout from './pages/Checkout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -45,19 +43,12 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      <Route path="/ThankYou" element={<ThankYou />} />
       {/* Add your page Route elements here */}
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route
-        path="/checkout"
-        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fcheckout" replace />} />}
-      >
-        <Route index element={<Checkout />} />
-      </Route>
       <Route path="/workspace" element={<Workspace />} />
       <Route
         path="/dashboard"

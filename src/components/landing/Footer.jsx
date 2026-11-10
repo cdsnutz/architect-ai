@@ -2,11 +2,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ScanLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useStartCheckout } from "@/hooks/use-start-checkout";
 
 export default function Footer() {
-  const startCheckout = useStartCheckout();
-
   return (
     <>
       <section className="border-b border-border/60">
@@ -15,11 +12,13 @@ export default function Footer() {
             Stop guessing how it was built
           </h2>
           <p className="mt-4 text-muted-foreground">
-            One payment per website. Its full map and prompt, yours for good.
+            Its full map and prompt, yours for good.
           </p>
-          <Button size="lg" className="mt-8 gap-2" onClick={startCheckout}>
-            Analyze a website — $49.99
-            <ArrowRight className="w-4 h-4" />
+          <Button size="lg" className="mt-8 gap-2" asChild>
+            <Link to="/workspace">
+              Analyze a website
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </Button>
         </div>
       </section>
@@ -31,11 +30,10 @@ export default function Footer() {
             REVENGINE
           </Link>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
             <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
             <Link to="/login" className="hover:text-foreground transition-colors">Sign in</Link>
           </div>
-          <p className="text-xs text-muted-foreground">Payments by Base44 Payments</p>
+          <p className="text-xs text-muted-foreground">Evidence in, blueprint out</p>
         </div>
       </footer>
     </>

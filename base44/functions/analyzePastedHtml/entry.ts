@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
-import { getEntitlement } from '../../shared/entitlement.ts';
 import { extractEvidence, mapLogic } from '../../shared/analysis.ts';
 
 const MAX_HTML = 900000;
@@ -9,14 +8,6 @@ export default async function (req) {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch((e) => (e.status === 401 ? null : Promise.reject(e)));
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const entitlement = await getEntitlement(base44, user);
-    if (!entitlement.admin && entitlement.remaining <= 0) {
-      return Response.json({
-        error: 'Each website needs its own paid analysis. Buy access for another website to keep mapping.',
-        code: 'payment_required'
-      }, { status: 403 });
-    }
 
     const body = await req.json().catch(() => ({}));
     const html = typeof body.html === 'string' ? body.html : '';

@@ -4,7 +4,6 @@ import Hero from "@/components/landing/Hero";
 import ValueProof from "@/components/landing/ValueProof";
 import HowItWorks from "@/components/landing/HowItWorks";
 import Features from "@/components/landing/Features";
-import Pricing from "@/components/landing/Pricing";
 import Faq from "@/components/landing/Faq";
 import Footer from "@/components/landing/Footer";
 
@@ -16,7 +15,6 @@ export default function Home() {
       <ValueProof />
       <HowItWorks />
       <Features />
-      <Pricing />
       <Faq />
       <Footer />
     </div>

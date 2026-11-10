@@ -2,11 +2,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ScanLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useStartCheckout } from "@/hooks/use-start-checkout";
 
 export default function LandingNav() {
-  const startCheckout = useStartCheckout();
-
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur">
       <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
@@ -18,7 +15,6 @@ export default function LandingNav() {
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
           <a href="#how" className="hover:text-foreground transition-colors">How it works</a>
           <a href="#features" className="hover:text-foreground transition-colors">Capabilities</a>
-          <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
           <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
         </nav>
 
@@ -26,7 +22,7 @@ export default function LandingNav() {
           <Link to="/login" className="hidden sm:block text-sm text-muted-foreground hover:text-foreground transition-colors">
             Sign in
           </Link>
-          <Button size="sm" onClick={startCheckout}>Get access</Button>
+          <Button size="sm" asChild><Link to="/workspace">Get access</Link></Button>
         </div>
       </div>
     </header>

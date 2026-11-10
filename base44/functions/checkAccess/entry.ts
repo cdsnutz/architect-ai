@@ -13,7 +13,7 @@ export default async function (req: Request) {
       .catch((e: any) => (e.status === 401 ? null : Promise.reject(e)));
 
     if (!user) {
-      return Response.json({ hasAccess: false, signedIn: false, remaining: 0, granted: 0, used: 0 });
+      return Response.json({ hasAccess: false, signedIn: false, admin: false, analysesRun: 0 });
     }
 
     const access = await getEntitlement(base44, user);
