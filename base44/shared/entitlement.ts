@@ -3,6 +3,12 @@
 export const PRODUCT_ID = "revengine-analysis";
 export const PRICE_USD = "49.99";
 
+// ===== TEMPORARY TESTING SWITCH =====
+// Paywall bypass for testing: every signed-in user is treated as having unlimited analyses.
+// Payment, webhook and purchase code stay fully intact underneath.
+// Set to false (or delete this block) before publishing to paying customers.
+export const TESTING_PAYWALL_BYPASS = true;
+
 export type Entitlement = {
   signedIn: boolean;
   admin: boolean;
@@ -19,6 +25,18 @@ export async function getEntitlement(base44: any, user: any): Promise<Entitlemen
 
   const db = base44.asServiceRole;
   const admin = user.role === "admin";
+
+  if (TESTING_PAYWALL_BYPASS) {
+    const used = await db.entities.SiteAnalysis.count({ created_by_id: user.id });
+    return {
+      signedIn: true,
+      admin: true,
+      granted: 999,
+      used,
+      remaining: 999,
+      hasAccess: true,
+    };
+  }
 
   const [byUser, byEmail] = await Promise.all([
     db.entities.Base44Purchase.filter({
