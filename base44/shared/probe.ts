@@ -13,7 +13,21 @@ type Hit = {
   content_type: string;
   bytes: number;
   shape: string;
+  latency_ms: number;
+  cache: string;
 };
+
+// Cache and revalidation signals are the only honest timing evidence a single
+// anonymous pass can collect; inter-update cadence needs a series over time.
+function cacheSignals(headers: Headers): string {
+  const parts = [
+    'cache-control=' + (headers.get('cache-control') || 'none'),
+    'etag=' + (headers.get('etag') ? 'present' : 'none'),
+    'age=' + (headers.get('age') || 'none'),
+    'last-modified=' + (headers.get('last-modified') ? 'present' : 'none'),
+  ];
+  return parts.join('; ');
+}
 
 export type ProbeResult = {
   url: string;
@@ -40,18 +54,22 @@ function shapeOf(text: string, contentType: string): string {
 }
 
 async function hit(url: string, headers: Record<string, string>): Promise<Hit> {
+  const started = Date.now();
   const res = await fetch(url, {
     headers: { 'User-Agent': UA, ...headers },
     redirect: 'follow',
     signal: AbortSignal.timeout(TIMEOUT_MS)
   });
   const text = (await res.text()).slice(0, BODY_CAP);
+  const latency = Date.now() - started;
   const contentType = (res.headers.get('content-type') || '').split(';')[0];
   return {
     status: res.status,
     content_type: contentType,
     bytes: text.length,
-    shape: shapeOf(text, contentType)
+    shape: shapeOf(text, contentType),
+    latency_ms: latency,
+    cache: cacheSignals(res.headers)
   };
 }
 
@@ -126,13 +144,14 @@ export function formatProbe(results: ProbeResult[]): string {
     return 'Header probe: not run — no live endpoint was queried for this analysis (pasted HTML).';
   }
   const lines = results.map((r) => {
-    const base = r.baseline
-      ? r.baseline.status + '/' + (r.baseline.content_type || 'unknown') + '/' + r.baseline.bytes + 'b'
-      : 'no response';
-    const variant = r.variant
-      ? r.variant.status + '/' + (r.variant.content_type || 'unknown') + '/' + r.variant.bytes + 'b'
-      : 'no response';
-    return '- ' + r.url + ' :: ' + r.verdict + ' — HTML request ' + base + ' vs XHR request ' + variant + '. ' + r.note;
+    const describe = (h: Hit | null) =>
+      h
+        ? h.status + '/' + (h.content_type || 'unknown') + '/' + h.bytes + 'b/' + h.latency_ms + 'ms [' + h.cache + ']'
+        : 'no response';
+    return (
+      '- ' + r.url + ' :: ' + r.verdict + ' — HTML request ' + describe(r.baseline) +
+      ' vs XHR request ' + describe(r.variant) + '. ' + r.note
+    );
   });
   return (
     'Header probe (anonymous GET, two header variants per path; no cookies, no credentials, no payloads):\n' +

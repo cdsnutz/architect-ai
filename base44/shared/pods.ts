@@ -1,6 +1,8 @@
 // Pod-based reverse-engineering framework.
 // One definition feeds both the analysis engine and the copyable master prompt.
 
+import { LAYERS, SYNC_SEQUENCE } from './layers.ts';
+
 export const SCOPE_GUARDRAIL =
   "Scope: analyze only applications you own or are authorised to test. The pods work from observable evidence " +
   "(public pages, public bundles, anonymous GET content-negotiation checks, and flows inside your own account). No " +
@@ -123,6 +125,27 @@ export function masterPrompt(): string {
       pod.steps.map((step) => "- " + step).join("\n")
   ).join("\n\n");
 
+  const layers = LAYERS.map(
+    (layer, index) =>
+      "### Layer " +
+      (index + 1) +
+      ": " +
+      layer.name +
+      "\nConcept: " +
+      layer.concept +
+      "\nGoal: " +
+      layer.goal +
+      "\nMethod: " +
+      layer.method +
+      "\nWrites: `" +
+      layer.output +
+      "`"
+  ).join("\n\n");
+
+  const sequence = SYNC_SEQUENCE.map(
+    (phase, i) => i + 1 + ". " + phase.phase + ": " + phase.steps.join(" -> ") + ". Result: " + phase.result
+  ).join("\n");
+
   const methods = TECHNIQUES.map((t) => "- " + t.name + ": " + t.use).join("\n");
   const cycle = REV_CYCLE.map((step, i) => i + 1 + ". " + step).join("\n");
 
@@ -135,6 +158,11 @@ export function masterPrompt(): string {
     "\n\n## I. Pod structure\nEach pod runs its own pass and writes to one shared System State Ledger; a later pod may not contradict " +
     "an earlier finding without naming the evidence that overturns it.\n\n" +
     pods +
+    "\n\n## I.b Intelligence layers\nEach layer reads the ledger the pods built and adds one dimension to it. " +
+    "A layer never overrides an observed fact with an inference; it records the gap instead.\n\n" +
+    layers +
+    "\n\n## I.c Synchronisation sequence\nRun the pods in this order so each layer inherits validated input.\n" +
+    sequence +
     "\n\n## II. Unconventional methods\n" +
     methods +
     "\n\n## III. Execution cycle\n" +
@@ -249,6 +277,115 @@ export const POD_SCHEMA = {
         required: ["ui_trigger", "endpoint", "table", "evidence"],
       },
     },
+    temporal_profile: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          endpoint: { type: "string" },
+          freshness: { type: "string", enum: ["cached", "revalidated", "live", "unknown"] },
+          cadence: { type: "string" },
+          signals: { type: "array", items: { type: "string" } },
+          evidence: { type: "string" },
+          confidence: { type: "string", enum: ["observed", "inferred"] },
+        },
+        required: ["endpoint", "freshness", "cadence", "signals", "evidence", "confidence"],
+      },
+    },
+    dependency_graph: {
+      type: "object",
+      properties: {
+        nodes: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              kind: { type: "string", enum: ["table", "endpoint", "identifier", "screen"] },
+              label: { type: "string" },
+            },
+            required: ["id", "kind", "label"],
+          },
+        },
+        edges: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              from: { type: "string" },
+              to: { type: "string" },
+              relation: { type: "string" },
+            },
+            required: ["from", "to", "relation"],
+          },
+        },
+        blast_radius: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              identifier: { type: "string" },
+              affected_tables: { type: "array", items: { type: "string" } },
+              affected_endpoints: { type: "array", items: { type: "string" } },
+              cascade: { type: "string" },
+              evidence: { type: "string" },
+            },
+            required: ["identifier", "affected_tables", "affected_endpoints", "cascade", "evidence"],
+          },
+        },
+      },
+      required: ["nodes", "edges", "blast_radius"],
+    },
+    archetype_matches: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          archetype: { type: "string" },
+          strength: { type: "string", enum: ["strong", "partial", "weak"] },
+          matched_on: { type: "string" },
+          filled_blanks: { type: "array", items: { type: "string" } },
+          caveat: { type: "string" },
+        },
+        required: ["archetype", "strength", "matched_on", "filled_blanks", "caveat"],
+      },
+    },
+    logic_mirror: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          input: { type: "string" },
+          rule: { type: "string" },
+          output: { type: "string" },
+          parity_check: { type: "string" },
+          confidence: { type: "string", enum: ["observed", "inferred", "unverified"] },
+        },
+        required: ["name", "input", "rule", "output", "parity_check", "confidence"],
+      },
+    },
+    parity_map: {
+      type: "object",
+      properties: {
+        target_mermaid: { type: "string" },
+        mirror_mermaid: { type: "string" },
+        gaps: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              area: { type: "string" },
+              target_state: { type: "string" },
+              mirror_state: { type: "string" },
+              action: { type: "string" },
+            },
+            required: ["area", "target_state", "mirror_state", "action"],
+          },
+        },
+      },
+      required: ["target_mermaid", "mirror_mermaid", "gaps"],
+    },
     logic_flows: {
       type: "array",
       items: {
@@ -267,7 +404,16 @@ export const POD_SCHEMA = {
         properties: {
           pod: {
             type: "string",
-            enum: ["Perimeter Scout", "Protocol Analyst", "Schema Archaeologist", "Logic Reconstructor"],
+            enum: [
+              "Perimeter Scout",
+              "Protocol Analyst",
+              "Schema Archaeologist",
+              "Logic Reconstructor",
+              "Temporal Delta Observer",
+              "Dependency Graph Mapper",
+              "Heuristic Archetype Matcher",
+              "Cognitive Logic Mirror",
+            ],
           },
           finding: { type: "string" },
           evidence: { type: "string" },
@@ -283,6 +429,11 @@ export const POD_SCHEMA = {
     "inferred_schema",
     "state_transitions",
     "ledger_traces",
+    "temporal_profile",
+    "dependency_graph",
+    "archetype_matches",
+    "logic_mirror",
+    "parity_map",
     "logic_flows",
     "pod_findings",
   ],

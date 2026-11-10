@@ -7,6 +7,11 @@ import InferredSchema from "@/components/analysis/InferredSchema";
 import StateTransitionTable from "@/components/analysis/StateTransitionTable";
 import HeaderProbe from "@/components/analysis/HeaderProbe";
 import PodLedger from "@/components/analysis/PodLedger";
+import TemporalProfile from "@/components/analysis/TemporalProfile";
+import DependencyGraph from "@/components/analysis/DependencyGraph";
+import ArchetypeMatches from "@/components/analysis/ArchetypeMatches";
+import LogicMirror from "@/components/analysis/LogicMirror";
+import ParityMap from "@/components/analysis/ParityMap";
 import CopyButton from "@/components/analysis/CopyButton";
 
 export default function PodFindings({ analysis }) {
@@ -17,9 +22,24 @@ export default function PodFindings({ analysis }) {
   const findings = analysis.pod_findings || [];
   const traces = analysis.ledger_traces || [];
   const probe = analysis.header_probe || [];
+  const temporal = analysis.temporal_profile || [];
+  const graph = analysis.dependency_graph || null;
+  const matches = analysis.archetype_matches || [];
+  const mirrors = analysis.logic_mirror || [];
+  const parity = analysis.parity_map || null;
 
   const empty =
-    !contracts.length && !schema.length && !flows.length && !transitions.length && !findings.length && !probe.length;
+    !contracts.length &&
+    !schema.length &&
+    !flows.length &&
+    !transitions.length &&
+    !findings.length &&
+    !probe.length &&
+    !temporal.length &&
+    !matches.length &&
+    !mirrors.length &&
+    !graph?.nodes?.length &&
+    !parity?.gaps?.length;
 
   if (empty) return null;
 
@@ -29,6 +49,12 @@ export default function PodFindings({ analysis }) {
       <ApiContracts contracts={contracts} />
       <InferredSchema schema={schema} />
       <StateTransitionTable transitions={transitions} />
+
+      <TemporalProfile rows={temporal} />
+      <DependencyGraph graph={graph} />
+      <ArchetypeMatches matches={matches} />
+      <LogicMirror mirrors={mirrors} />
+      <ParityMap map={parity} />
 
       {flows.length > 0 && (
         <PodBlock title="Logic flows" icon={Workflow}>

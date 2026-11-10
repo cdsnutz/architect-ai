@@ -132,6 +132,18 @@ export function buildPodPrompt(evidence) {
     '- Fill `state_transitions` as a matrix: current_state, trigger, action, next_state, endpoint, table. Use ' +
     '"(initial)" for creation and "(terminal)" for archival or deletion.\n' +
     '- Fill `ledger_traces` so each behaviour reads UI trigger -> endpoint -> table.\n' +
+    '- Fill `temporal_profile` from the header probe block above: quote the cache-control and validation headers you ' +
+    'were given, and set freshness to cached when a max-age or immutable directive is present, revalidated when ETag or ' +
+    'Last-Modified appears, live only when the bundle shows a socket or event stream, and unknown otherwise. Cadence is ' +
+    'inferred unless a header states it, and inter-update timing is never measured from one pass.\n' +
+    '- Fill `dependency_graph` with one node per table, endpoint, screen and shared identifier, the edges between them, ' +
+    'and a blast_radius row for each identifier that appears in more than one trace.\n' +
+    '- Fill `archetype_matches` only where route shape, status vocabulary or field naming really matches a documented ' +
+    'standard. `filled_blanks` lists the fields or rules the archetype supplies, and each one is inferred, never ' +
+    'reported as observed. A weak match fills nothing.\n' +
+    '- Fill `logic_mirror` with one replacement function per traced behaviour: input, rule as short pseudocode, output, ' +
+    'the observed case it was replayed against, and confidence. Use "unverified" when no observed case exercises it.\n' +
+    '- Fill `parity_map` with two Mermaid flowcharts (target and mirror) and the gaps between them.\n' +
     '- Also record the page/section structure, the data entities, third-party integrations, user flows, bottlenecks ' +
     'and UX gaps.\n' +
     'Every claim must cite the evidence it came from; where the evidence does not settle a question, write ' +

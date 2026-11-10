@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { PODS, TECHNIQUES, REV_CYCLE, SCOPE_GUARDRAIL, masterPrompt } from '../../shared/pods.ts';
+import { LAYERS, SYNC_SEQUENCE } from '../../shared/layers.ts';
 
 export default async function (req) {
   try {
@@ -9,6 +10,8 @@ export default async function (req) {
 
     return Response.json({
       pods: PODS,
+      layers: LAYERS,
+      sequence: SYNC_SEQUENCE,
       techniques: TECHNIQUES,
       revCycle: REV_CYCLE,
       scope: SCOPE_GUARDRAIL,

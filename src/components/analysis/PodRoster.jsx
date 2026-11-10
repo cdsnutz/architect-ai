@@ -56,6 +56,39 @@ export default function PodRoster() {
           ))}
         </div>
 
+        {framework.layers?.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Intelligence layers</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {framework.layers.map((layer) => (
+                <div key={layer.id} className="rounded-lg border bg-muted/30 p-3">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold">{layer.name}</p>
+                    <Badge variant="secondary" className="text-xs font-normal">
+                      {layer.phase}
+                    </Badge>
+                  </div>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{layer.goal}</p>
+                  <p className="mt-1.5 font-mono text-xs text-muted-foreground">writes {layer.output}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {framework.sequence?.length > 0 && (
+          <div className="rounded-lg border bg-muted/30 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Sync sequence</p>
+            <ol className="mt-1.5 space-y-1 text-sm text-muted-foreground">
+              {framework.sequence.map((phase) => (
+                <li key={phase.phase}>
+                  <span className="font-medium text-foreground">{phase.phase}:</span> {phase.steps.join(" → ")}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
         <div className="rounded-lg border bg-muted/30 p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Rev-cycle</p>
           <ol className="mt-1.5 list-decimal list-inside space-y-0.5 text-sm text-muted-foreground">
