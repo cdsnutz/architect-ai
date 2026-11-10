@@ -22,6 +22,13 @@ export default async function (req) {
     }
     const targetUrl = url.trim();
 
+    const host = new URL(targetUrl).hostname.toLowerCase();
+    if (host === 'base44.com' || host.endsWith('.base44.com')) {
+      return Response.json({
+        error: 'The Base44 platform itself is out of scope. Analyze your own app or a site you are authorised to test.'
+      }, { status: 400 });
+    }
+
     let html = '';
     try {
       const res = await fetch(targetUrl, {

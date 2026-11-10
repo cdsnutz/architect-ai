@@ -1,3 +1,5 @@
+import { POD_SCHEMA, masterPrompt } from './pods.ts';
+
 export const LOGIC_MAP_SCHEMA = {
   type: 'object',
   properties: {
@@ -108,16 +110,26 @@ export function extractEvidence(url, html) {
   };
 }
 
+export const ANALYSIS_SCHEMA = {
+  type: 'object',
+  properties: { ...LOGIC_MAP_SCHEMA.properties, ...POD_SCHEMA.properties },
+  required: [...LOGIC_MAP_SCHEMA.required, ...POD_SCHEMA.required]
+};
+
+export function buildPodPrompt(evidence) {
+  return (
+    masterPrompt() +
+    '\n\n## V. Run\nApply the pods to the evidence below, then fill every field of the response schema. Also record the ' +
+    'page/section structure, the data entities, third-party integrations, user flows, bottlenecks and UX gaps. ' +
+    'Every claim must cite the evidence it came from; where the evidence does not settle a question, write ' +
+    '"not observable from this evidence". Each Mermaid diagram must start with "flowchart TD".\n\n' +
+    'EVIDENCE:\n' + evidence
+  );
+}
+
 export async function mapLogic(base44, evidence) {
   return await base44.asServiceRole.integrations.Core.InvokeLLM({
-    prompt:
-      'You are a senior full-stack engineer and systems architect performing a reverse-engineering audit of a website. ' +
-      'Below is evidence extracted from one page of the site (title, meta, scripts, forms, internal links, and visible text). ' +
-      'Infer the application: what it does, its likely page/section structure, the data entities it must manage behind the scenes, ' +
-      'any third-party APIs or services it integrates (infer from script URLs and content), its core user flows, likely technical ' +
-      'bottlenecks and code smells (with severity), and UX or accessibility issues visible from the content. ' +
-      'Base every claim on the evidence; mark inferences as likely, never invent specifics that contradict the evidence.\n\n' +
-      'EVIDENCE:\n' + evidence,
-    response_json_schema: LOGIC_MAP_SCHEMA
+    prompt: buildPodPrompt(evidence),
+    response_json_schema: ANALYSIS_SCHEMA
   });
 }
