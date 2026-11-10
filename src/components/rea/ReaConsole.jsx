@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bot, Layers, Loader2, Terminal } from "lucide-react";
+import { Bot, ClipboardCheck, Layers, Loader2, Terminal } from "lucide-react";
 import PodRoster from "@/components/analysis/PodRoster";
 import ReaToolList from "./ReaToolList";
 import ReaSkillList from "./ReaSkillList";
@@ -10,6 +10,7 @@ import ReaWorkflowList from "./ReaWorkflowList";
 import ReaChat from "./ReaChat";
 import ReaRunner from "./ReaRunner";
 import StructureAdvisorChat from "./StructureAdvisorChat";
+import RunReviewChat from "./RunReviewChat";
 
 export default function ReaConsole({ analysis, onValidated }) {
   const [registry, setRegistry] = useState(null);
@@ -53,7 +54,7 @@ export default function ReaConsole({ analysis, onValidated }) {
 
         {registry && (
           <Tabs defaultValue="run" className="w-full">
-            <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-3 xl:grid-cols-7">
+            <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4 xl:grid-cols-8">
               <TabsTrigger value="run" className="text-xs">Run</TabsTrigger>
               <TabsTrigger value="tools" className="text-xs">Tools</TabsTrigger>
               <TabsTrigger value="skills" className="text-xs">Skills</TabsTrigger>
@@ -66,6 +67,10 @@ export default function ReaConsole({ analysis, onValidated }) {
               <TabsTrigger value="structure" className="gap-1 text-xs">
                 <Layers className="w-3.5 h-3.5" />
                 Structure
+              </TabsTrigger>
+              <TabsTrigger value="review" className="gap-1 text-xs">
+                <ClipboardCheck className="w-3.5 h-3.5" />
+                Review
               </TabsTrigger>
             </TabsList>
 
@@ -95,6 +100,10 @@ export default function ReaConsole({ analysis, onValidated }) {
 
             <TabsContent value="structure" className="mt-4">
               <StructureAdvisorChat analysis={analysis} />
+            </TabsContent>
+
+            <TabsContent value="review" className="mt-4">
+              <RunReviewChat analysis={analysis} />
             </TabsContent>
           </Tabs>
         )}
