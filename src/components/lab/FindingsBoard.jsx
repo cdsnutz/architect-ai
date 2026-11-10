@@ -3,9 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import CopyButton from "@/components/analysis/CopyButton";
+import ThreatBadge from "@/components/lab/ThreatBadge";
+import ThreatTally from "@/components/lab/ThreatTally";
+import { groupFindings } from "@/lib/threatLevel";
 import { GitBranch, Telescope } from "lucide-react";
 
-function Finding({ finding }) {
+function Finding({ finding, verdict }) {
   const observed = Boolean(finding.observed);
   const evidence = Array.isArray(finding.evidence) ? finding.evidence : [];
 
@@ -21,6 +24,7 @@ function Finding({ finding }) {
         >
           {observed ? "observed" : "inferred"}
         </Badge>
+        <ThreatBadge verdict={verdict} />
         <span className="font-mono text-[11px] text-primary">{finding.skill}</span>
         <span className="ml-auto font-mono text-[10px] text-muted-foreground">{finding.pod}</span>
       </div>
@@ -66,6 +70,7 @@ export default function FindingsBoard({ request }) {
   const findings = Array.isArray(request.findings) ? request.findings : [];
   if (findings.length === 0) return null;
 
+  const groups = groupFindings(findings);
   const observed = findings.filter((finding) => finding.observed).length;
   const gaps = Array.isArray(request.gaps) ? request.gaps : [];
   const unverified = Array.isArray(request.unverified) ? request.unverified : [];
@@ -83,11 +88,13 @@ export default function FindingsBoard({ request }) {
             <CopyButton
               label="Copy findings"
               getText={() =>
-                findings
-                  .map(
-                    (finding) =>
-                      "[" + (finding.observed ? "observed" : "inferred") + "] " + finding.skill + " — " + finding.claim +
-                      (finding.evidence && finding.evidence.length ? "\n  evidence: " + finding.evidence.join(" | ") : "")
+                groups
+                  .flatMap((group) =>
+                    group.rows.map(
+                      ({ finding, verdict }) =>
+                        "[" + verdict.label + " · " + (finding.observed ? "observed" : "inferred") + "] " + finding.skill + " — " + finding.claim +
+                        (finding.evidence && finding.evidence.length ? "\n  evidence: " + finding.evidence.join(" | ") : "")
+                    )
                   )
                   .join("\n")
               }
@@ -106,9 +113,18 @@ export default function FindingsBoard({ request }) {
           </p>
         )}
 
-        <div className="space-y-2">
-          {findings.map((finding, index) => (
-            <Finding key={index} finding={finding} />
+        <ThreatTally groups={groups} />
+
+        <div className="space-y-4">
+          {groups.map((group) => (
+            <div key={group.level.key} className="space-y-2">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                {group.level.label} · {group.rows.length}
+              </p>
+              {group.rows.map(({ finding, verdict }, index) => (
+                <Finding key={group.level.key + "-" + index} finding={finding} verdict={verdict} />
+              ))}
+            </div>
           ))}
         </div>
 
