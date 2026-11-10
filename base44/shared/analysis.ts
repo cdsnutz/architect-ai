@@ -131,7 +131,7 @@ export function buildPodPrompt(evidence) {
     'domain and its allowed values, nullability, uniqueness, length or numeric bounds.\n' +
     '- Fill `state_transitions` as a matrix: current_state, trigger, action, next_state, endpoint, table. Use ' +
     '"(initial)" for creation and "(terminal)" for archival or deletion.\n' +
-    '- Fill `ledger_traces` so each behaviour reads UI trigger -> endpoint -> table.\n' +
+    '- Fill `ledger_traces` with one row per distinct user-visible action — every button, form submit, navigation and filter — up to 8, each naming the exact endpoint it calls and the single table it reads or writes. Never merge two actions into one row, and never leave `table` empty for an action that changes stored data: the journey view draws one path per row.\n' +
     '- Fill `temporal_profile` from the header probe block above: quote the cache-control and validation headers you ' +
     'were given, and set freshness to cached when a max-age or immutable directive is present, revalidated when ETag or ' +
     'Last-Modified appears, live only when the bundle shows a socket or event stream, and unknown otherwise. Cadence is ' +

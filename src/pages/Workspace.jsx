@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, ClipboardPaste, GitCompare, History, LayoutDashboard, Link2, Loader2, Lock, ScanLine, Search } from "lucide-react";
 import AnalysisResult from "@/components/analysis/AnalysisResult";
+import TriggerJourney from "@/components/analysis/TriggerJourney";
 import RebuildPrompt from "@/components/analysis/RebuildPrompt";
 import PasteHtmlForm from "@/components/analysis/PasteHtmlForm";
 import QuickActionsMenu from "@/components/analysis/QuickActionsMenu";
@@ -218,6 +219,7 @@ export default function Workspace() {
         )}
 
         {current && <AnalysisResult analysis={current} />}
+        {current && <TriggerJourney analysis={current} />}
         {current && <PodFindings analysis={current} />}
         {current && <RebuildPrompt analysis={current} />}
         {current && <ReaHandoff analysis={current} />}
