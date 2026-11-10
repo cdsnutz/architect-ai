@@ -11,6 +11,7 @@ import DossierPanel from "@/components/lab/DossierPanel";
 import SkillCatalog from "@/components/lab/SkillCatalog";
 import LabHistory from "@/components/lab/LabHistory";
 import LabConductor from "@/components/lab/LabConductor";
+import ThreatDashboard from "@/components/lab/ThreatDashboard";
 import TriggerJourney from "@/components/analysis/TriggerJourney";
 
 function readError(error) {
@@ -318,6 +319,8 @@ export default function Lab() {
         />
 
         <LabConductor requestId={current ? current.id : ""} />
+
+        <ThreatDashboard />
 
         <LabHistory
           requests={requests}
