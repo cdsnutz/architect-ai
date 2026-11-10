@@ -9,7 +9,7 @@ export type Skill = {
   name: string;
   focus: SkillFocus;
   pods: string[];
-  probe: 'negotiate' | 'entropy' | 'silence' | 'clock' | 'surface' | 'cache';
+  probe: 'negotiate' | 'entropy' | 'silence' | 'clock' | 'surface' | 'cache' | 'generator' | 'conditional' | 'variance';
   thesis: string;
   proves: string;
   falsifier: string;
@@ -129,6 +129,39 @@ export const SKILLS: Skill[] = [
       'Observes how a response is keyed and aged, and whether a client-supplied header changes what the next reader gets — the read-only shadow of a cache-poisoning bug.',
     proves: 'whether a shared cache sits between the client and the origin, and on what key.',
     falsifier: 'A response marked private or no-store voids the shared-cache claim.'
+  },
+  {
+    id: 'framework-archaeology',
+    name: 'Framework Archaeology',
+    focus: 'legacy_migration',
+    pods: ['Schema Archaeologist', 'Logic Reconstructor'],
+    probe: 'generator',
+    thesis:
+      'Dates the running build from what the page admits about itself — generator meta, framework markers and content-hashed bundles — and flags a surface whose shell was served by a framework the migration was supposed to replace.',
+    proves: 'which generation of the app is actually answering in production, and whether the old one is still live behind the new route.',
+    falsifier: 'A surface with no generator meta, no framework marker and no hashed bundle is hand-served and cannot be dated this way.'
+  },
+  {
+    id: 'validator-integrity',
+    name: 'Validator Integrity Check',
+    focus: 'production_incident',
+    pods: ['Protocol Analyst', 'Perimeter Scout'],
+    probe: 'conditional',
+    thesis:
+      'Sends the route its own validator back and watches for a 304, separating an edge that truly revalidates from one holding a decorative ETag — the reason an incident appears to fix itself until a hard refresh.',
+    proves: 'whether staleness is detectable by any client, or only by a reader who happens to bypass the cache.',
+    falsifier: 'A conditional re-read that returns 304 proves the validator is real and voids the decorative-tag claim.'
+  },
+  {
+    id: 'variance-key',
+    name: 'Variance Key Audit',
+    focus: 'adversarial_integration',
+    pods: ['Perimeter Scout', 'Protocol Analyst'],
+    probe: 'variance',
+    thesis:
+      'Reads the same route under two different language preferences and checks the Vary declaration, exposing content that changes per reader while the cache key pretends it does not.',
+    proves: 'whether two readers can receive each other\'s representation from a shared cache on this route.',
+    falsifier: 'An identical body for both preferences, or a Vary header that declares the varied header, voids the key-mismatch claim.'
   }
 ];
 
@@ -144,23 +177,23 @@ export const PACKS: Pack[] = [
   {
     id: 'legacy_migration',
     name: 'Legacy migration',
-    objective: 'Find hidden writes, orphaned reads and type drift before anything is carried over.',
+    objective: 'Find hidden writes, orphaned reads, type drift and stale generations before anything is carried over.',
     question: 'What in this system would a migration silently carry over, drop, or break on real data?',
-    skills: ['ghost-write', 'orphaned-read', 'type-drift']
+    skills: ['ghost-write', 'orphaned-read', 'type-drift', 'framework-archaeology']
   },
   {
     id: 'production_incident',
     name: 'Production incident',
     objective: 'Trace a failure from the action to the row, including the windows caching hides.',
     question: 'Where can this system fail in a way its own surface cannot show?',
-    skills: ['retry-entropy', 'clock-skew', 'cascade-cartography']
+    skills: ['retry-entropy', 'clock-skew', 'cascade-cartography', 'validator-integrity']
   },
   {
     id: 'adversarial_integration',
     name: 'Adversarial integration',
-    objective: 'Expose silent 200s, contract erosion and cache-key assumptions.',
+    objective: 'Expose silent 200s, contract erosion, cache-key assumptions and per-reader leakage.',
     question: 'What would this integration store as valid that is actually empty or wrong?',
-    skills: ['silence-mapper', 'contract-erosion', 'cache-poison-surface']
+    skills: ['silence-mapper', 'contract-erosion', 'cache-poison-surface', 'variance-key']
   }
 ];
 

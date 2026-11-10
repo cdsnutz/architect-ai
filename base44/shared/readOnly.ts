@@ -92,7 +92,11 @@ async function readOnce(url: string, accept: string, extra: Record<string, strin
       etag: res.headers.get('etag') ? 'present' : 'none',
       date: res.headers.get('date') || 'none',
       x_cache: res.headers.get('x-cache') || res.headers.get('cf-cache-status') || 'none',
-      server: res.headers.get('server') || 'none'
+      server: res.headers.get('server') || 'none',
+      vary: res.headers.get('vary') || 'none',
+      last_modified: res.headers.get('last-modified') || 'none',
+      content_range: res.headers.get('content-range') || 'none',
+      etag_raw: res.headers.get('etag') || ''
     },
     body
   };
@@ -236,13 +240,118 @@ async function probeCache(skill: string, target: string): Promise<ProbeResult> {
   };
 }
 
+const FRAMEWORK_MARKERS: { label: string; test: RegExp }[] = [
+  { label: 'Next.js', test: /__NEXT_DATA__|\/_next\/static\//i },
+  { label: 'Nuxt', test: /__NUXT__|\/_nuxt\//i },
+  { label: 'React shell', test: /data-reactroot|id=["']root["']/i },
+  { label: 'Vue', test: /data-v-[0-9a-f]{8}|__VUE__/i },
+  { label: 'SvelteKit', test: /__sveltekit|_app\/immutable\//i },
+  { label: 'Astro', test: /astro-island|astro-slot/i },
+  { label: 'WordPress', test: /wp-content|wp-includes/i },
+  { label: 'Drupal', test: /Drupal\.settings|sites\/default\/files/i },
+  { label: 'Shopify', test: /cdn\.shopify\.com/i },
+  { label: 'Django', test: /csrfmiddlewaretoken/i },
+  { label: 'Rails', test: /csrf-token/i }
+];
+
+async function probeGenerator(skill: string, target: string): Promise<ProbeResult> {
+  const hit = await readOnce(target, 'text/html,*/*');
+  const meta = hit.body.match(/<meta[^>]+name=["']generator["'][^>]*content=["']([^"']+)["']/i);
+  const detected = FRAMEWORK_MARKERS.filter((marker) => marker.test.test(hit.body)).map((marker) => marker.label);
+  const hashed = new Set(
+    [...hit.body.matchAll(/(?:src|href)=["'][^"']*?[.-]([0-9a-f]{8,})\.(?:js|css)["']/gi)].map((match) => match[1])
+  );
+  const reproduced = detected.length > 0 || hashed.size > 0 || Boolean(meta);
+  return {
+    skill,
+    probe: 'generator',
+    target,
+    reproduced,
+    observations: [
+      describe(hit),
+      'Generator meta: ' + (meta ? meta[1] : 'none'),
+      'Build markers: ' + (detected.length ? detected.join(', ') : 'none'),
+      'Content-hashed bundles: ' + hashed.size
+    ],
+    signal: reproduced
+      ? 'The surface fingerprints its own build (' +
+        (detected.length ? detected.join(', ') : 'no framework marker') +
+        ', ' + hashed.size + ' hashed bundle(s)), so the running generation can be dated without source access.'
+      : 'No generator meta, framework marker or hashed bundle is visible, so this surface is hand-served and cannot be dated this way.'
+  };
+}
+
+async function probeConditional(skill: string, target: string): Promise<ProbeResult> {
+  const first = await readOnce(target, 'text/html,application/json,*/*');
+  const etag = first.headers.etag_raw;
+  const validator = etag || (first.headers.last_modified !== 'none' ? first.headers.last_modified : '');
+  if (!validator) {
+    return {
+      skill,
+      probe: 'conditional',
+      target,
+      reproduced: true,
+      observations: [describe(first), 'ETag: none · Last-Modified: ' + first.headers.last_modified],
+      signal:
+        'No validator is served at all, so a client cannot tell a fresh render from a stale copy and staleness is invisible on this route.'
+    };
+  }
+  const header = etag ? { 'If-None-Match': etag } : { 'If-Modified-Since': validator };
+  const second = await readOnce(target, 'text/html,application/json,*/*', header);
+  const revalidated = second.status === 304;
+  return {
+    skill,
+    probe: 'conditional',
+    target,
+    reproduced: !revalidated,
+    observations: [
+      describe(first),
+      'Validator sent back: ' + (etag ? 'If-None-Match: ' + etag : 'If-Modified-Since: ' + validator),
+      'Conditional re-read: HTTP ' + second.status + ' · ' + second.bytes + 'b'
+    ],
+    signal: revalidated
+      ? 'The validator is real: the conditional re-read returned 304, so the edge revalidates and a stale copy would be detectable.'
+      : 'The validator is decorative: a conditional re-read still returned a full body, so a masked stale copy cannot be told apart from a fresh one.'
+  };
+}
+
+async function probeVariance(skill: string, target: string): Promise<ProbeResult> {
+  const [first, second] = await Promise.all([
+    readOnce(target, 'text/html,application/json,*/*', { 'Accept-Language': 'en-US,en;q=0.9' }),
+    readOnce(target, 'text/html,application/json,*/*', { 'Accept-Language': 'fr-FR,fr;q=0.9' })
+  ]);
+  const declared = /accept-language|\*/i.test(first.headers.vary) || /accept-language|\*/i.test(second.headers.vary);
+  const differ = first.body !== second.body || first.bytes !== second.bytes;
+  const reproduced = differ && !declared;
+  return {
+    skill,
+    probe: 'variance',
+    target,
+    reproduced,
+    observations: [
+      'Read one (en): ' + describe(first) + ' · vary=' + first.headers.vary,
+      'Read two (fr): ' + describe(second) + ' · vary=' + second.headers.vary,
+      'Bodies differ: ' + (differ ? 'yes' : 'no')
+    ],
+    signal: !differ
+      ? 'Both language preferences returned the same body, so this route does not vary on the client language header.'
+      : reproduced
+        ? 'The body changes with Accept-Language while the response declares vary=' + first.headers.vary +
+          ', so a shared cache can hand one reader the representation meant for another.'
+        : 'The body changes with Accept-Language and the response declares it in vary, so the cache key is honest.'
+  };
+}
+
 const RUNNERS: Record<string, (skill: string, target: string) => Promise<ProbeResult>> = {
   negotiate: probeNegotiate,
   entropy: probeEntropy,
   silence: probeSilence,
   clock: probeClock,
   surface: probeSurface,
-  cache: probeCache
+  cache: probeCache,
+  generator: probeGenerator,
+  conditional: probeConditional,
+  variance: probeVariance
 };
 
 export async function runProbe(probe: string, skill: string, target: string): Promise<ProbeResult> {
