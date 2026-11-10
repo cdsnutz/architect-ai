@@ -1,0 +1,123 @@
+{
+  "name": "RebuildSpec",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Human label for the rebuild spec."
+    },
+    "target_url": {
+      "type": "string",
+      "description": "Surface whose captured contracts this spec compiles."
+    },
+    "source_analysis_id": {
+      "type": "string",
+      "description": "SiteAnalysis dossier the contracts were read from."
+    },
+    "source_request_id": {
+      "type": "string",
+      "description": "DataRequest record the contracts were read from, when built from a lab request."
+    },
+    "stack": {
+      "type": "string",
+      "description": "Target stack for the rebuild."
+    },
+    "contracts": {
+      "type": "object",
+      "description": "Normalized captured contracts: api_contracts, inferred_schema, state_transitions, ledger_traces, entities, flows."
+    },
+    "contract_counts": {
+      "type": "object",
+      "description": "Counts per contract class, for quick evidence checks."
+    },
+    "spec_markdown": {
+      "type": "string",
+      "description": "The Claude Code handoff document."
+    },
+    "runnable_spec": {
+      "type": "object",
+      "description": "Run contract: ordered stages, commands, expected artifacts and capture targets."
+    },
+    "deploy_bundle": {
+      "type": "array",
+      "description": "Deployable files: Dockerfile, railway.json, fly.toml, neon schema, env template, deploy notes.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ready",
+        "running",
+        "captured",
+        "failed"
+      ],
+      "enumColors": [
+        "blue",
+        "yellow",
+        "green",
+        "red"
+      ],
+      "default": "ready"
+    },
+    "run_output": {
+      "type": "object",
+      "description": "Captured run: exit code, stdout excerpt, captured_at."
+    },
+    "performance": {
+      "type": "object",
+      "description": "Derived performance read: verdict, test pass rate, latency, endpoint health."
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

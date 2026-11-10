@@ -10,6 +10,7 @@ import ScrollToTop from './components/ScrollToTop';
 import Home from './pages/Home';
 import Workspace from './pages/Workspace';
 import Compare from './pages/Compare';
+import Spec from './pages/Spec';
 import Lab from './pages/Lab';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
@@ -68,6 +69,12 @@ const AuthenticatedApp = () => {
         element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fcompare" replace />} />}
       >
         <Route index element={<Compare />} />
+      </Route>
+      <Route
+        path="/spec"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fspec" replace />} />}
+      >
+        <Route index element={<Spec />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, FlaskConical, LayoutDashboard, ScanLine } from "lucide-react";
+import { AlertCircle, FlaskConical, GitBranch, LayoutDashboard, ScanLine } from "lucide-react";
 import RequestComposer from "@/components/lab/RequestComposer";
 import PlanReview from "@/components/lab/PlanReview";
 import RunTelemetry from "@/components/lab/RunTelemetry";
@@ -243,6 +243,12 @@ export default function Lab() {
               <Link to="/dashboard">
                 <LayoutDashboard className="h-4 w-4" />
                 Dashboard
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" className="gap-2" asChild>
+              <Link to="/spec">
+                <GitBranch className="h-4 w-4" />
+                Rebuild spec
               </Link>
             </Button>
           </div>
