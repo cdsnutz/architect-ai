@@ -13,6 +13,7 @@ import QuickActionsMenu from "@/components/analysis/QuickActionsMenu";
 import ReaHandoff from "@/components/analysis/ReaHandoff";
 import PodFindings from "@/components/analysis/PodFindings";
 import AnalysisGuideChat from "@/components/analysis/AnalysisGuideChat";
+import OnboardingGuide from "@/components/analysis/OnboardingGuide";
 import ReaConsole from "@/components/rea/ReaConsole";
 import PodTracker from "@/components/rea/PodTracker";
 
@@ -163,6 +164,8 @@ export default function Workspace() {
             </Button>
           </div>
         </header>
+
+        <OnboardingGuide />
 
         <div className="space-y-4">
             <div className="inline-flex rounded-lg border p-1">
