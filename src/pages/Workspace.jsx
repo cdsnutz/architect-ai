@@ -13,6 +13,7 @@ import QuickActionsMenu from "@/components/analysis/QuickActionsMenu";
 import ReaHandoff from "@/components/analysis/ReaHandoff";
 import PodFindings from "@/components/analysis/PodFindings";
 import ReaConsole from "@/components/rea/ReaConsole";
+import PodTracker from "@/components/rea/PodTracker";
 
 export default function Workspace() {
   const [status, setStatus] = useState("loading");
@@ -200,14 +201,7 @@ export default function Workspace() {
             )}
         </div>
 
-        {analyzing && (
-          <Card>
-            <CardContent className="flex items-center gap-3 py-8 justify-center text-muted-foreground">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Deconstructing the page logic — this takes up to a minute.
-            </CardContent>
-          </Card>
-        )}
+        <PodTracker analyzing={analyzing} />
 
         {error && (
           <Card className="border-destructive">

@@ -1,9 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { extractEvidence, mapLogic } from '../../shared/analysis.ts';
+import { PASTED_POD_STAGES, mapDetail, startRun, markRunning, markComplete, markSkipped, finishRun } from '../../shared/runTracker.ts';
 
 const MAX_HTML = 900000;
 
 export default async function (req) {
+  let runId = null;
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch((e) => (e.status === 401 ? null : Promise.reject(e)));
@@ -24,9 +26,25 @@ export default async function (req) {
     const slug = (label || 'gated-page').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const url = /^https?:\/\/.+\..+/i.test(rawUrl) ? rawUrl : 'pasted://' + (slug || 'gated-page');
 
-    const { title, evidence } = extractEvidence(url, html);
-    const llm = await mapLogic(base44, evidence);
+    const run = await startRun(base44, url, 'pasted', PASTED_POD_STAGES);
+    runId = run ? run.id : null;
 
+    await markRunning(base44, runId, 'perimeter');
+    const { title, evidence } = extractEvidence(url, html);
+    await markComplete(
+      base44,
+      runId,
+      'perimeter',
+      (label || title || 'pasted page') + ' · ' + Math.round(html.length / 1000) + 'k chars pasted'
+    );
+
+    await markSkipped(base44, runId, 'protocol', 'Pasted capture — no live endpoint to probe');
+
+    await markRunning(base44, runId, 'map');
+    const llm = await mapLogic(base44, evidence);
+    await markComplete(base44, runId, 'map', mapDetail(llm));
+
+    await markRunning(base44, runId, 'write');
     const record = await base44.entities.SiteAnalysis.create({
       url,
       title: label || title || 'Pasted page',
@@ -34,10 +52,14 @@ export default async function (req) {
       logic_map: llm,
       access_state: 'gated_captured'
     });
+    await markComplete(base44, runId, 'write', 'Dossier saved');
+    await finishRun(base44, runId, 'complete', { analysis_id: record.id });
 
     return Response.json({ analysis: record });
   } catch (error) {
-    console.log('analyzePastedHtml failed: ' + (error && error.message ? error.message : 'unknown'));
-    return Response.json({ error: 'Analysis failed: ' + (error && error.message ? error.message : 'Unknown error') }, { status: 500 });
+    const reason = error && error.message ? error.message : 'Unknown error';
+    await finishRun(base44, runId, 'failed', { error: reason });
+    console.log('analyzePastedHtml failed: ' + reason);
+    return Response.json({ error: 'Analysis failed: ' + reason }, { status: 500 });
   }
 }

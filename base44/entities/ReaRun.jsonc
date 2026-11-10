@@ -1,0 +1,124 @@
+{
+  "name": "ReaRun",
+  "type": "object",
+  "properties": {
+    "target_url": {
+      "type": "string",
+      "description": "The surface this pod pass is reading."
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "live",
+        "pasted"
+      ],
+      "enumColors": [
+        "green",
+        "purple"
+      ],
+      "default": "live",
+      "description": "Live fetch or a pasted capture."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "running",
+        "complete",
+        "failed"
+      ],
+      "enumColors": [
+        "yellow",
+        "green",
+        "red"
+      ],
+      "default": "running"
+    },
+    "stages": {
+      "type": "array",
+      "description": "Ordered stages of the pass, each reporting which pods own it.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "pods": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "label": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "complete",
+              "skipped",
+              "failed"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          },
+          "started_at": {
+            "type": "string"
+          },
+          "finished_at": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "analysis_id": {
+      "type": "string",
+      "description": "Dossier this pass produced, once written."
+    },
+    "error": {
+      "type": "string"
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "target_url",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
