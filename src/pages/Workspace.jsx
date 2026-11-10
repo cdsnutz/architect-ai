@@ -11,7 +11,7 @@ import PasteHtmlForm from "@/components/analysis/PasteHtmlForm";
 import QuickActionsMenu from "@/components/analysis/QuickActionsMenu";
 import ReaHandoff from "@/components/analysis/ReaHandoff";
 import PodFindings from "@/components/analysis/PodFindings";
-import PodRoster from "@/components/analysis/PodRoster";
+import ReaConsole from "@/components/rea/ReaConsole";
 
 export default function Workspace() {
   const [status, setStatus] = useState("loading");
@@ -257,7 +257,7 @@ export default function Workspace() {
           </div>
         )}
 
-        <PodRoster />
+        <ReaConsole analysis={current} onValidated={setCurrent} />
       </div>
     </div>
   );

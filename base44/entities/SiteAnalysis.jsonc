@@ -22,12 +22,25 @@
     },
     "access_state": {
       "type": "string",
-      "enum": ["public", "gated_captured", "gated_blocked", "gated_refused"],
+      "enum": [
+        "public",
+        "gated_captured",
+        "gated_blocked",
+        "gated_refused"
+      ],
       "description": "Whether the analyzed value sits behind authentication and whether gated surfaces were captured."
     },
     "gate_type": {
       "type": "string",
-      "enum": ["none", "email_otp", "email_link", "unknown", "paid", "phone", "captcha"],
+      "enum": [
+        "none",
+        "email_otp",
+        "email_link",
+        "unknown",
+        "paid",
+        "phone",
+        "captcha"
+      ],
       "description": "How the target gates access. paid/phone/captcha are never automated."
     },
     "gated_routes": {
@@ -40,6 +53,43 @@
     },
     "white_label_brand": {
       "type": "string"
+    },
+    "pipeline_status": {
+      "type": "string",
+      "enum": [
+        "mapped",
+        "validated",
+        "needs_review",
+        "failed"
+      ],
+      "default": "mapped",
+      "description": "Position of this dossier in the REA pipeline."
+    },
+    "validation": {
+      "type": "object",
+      "description": "Output of the REA validation pass: parity score, verified and unverified claims, contradictions, next probe."
+    },
+    "pipeline_log": {
+      "type": "array",
+      "description": "Ordered record of pipeline steps run against this dossier.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
     }
   },
   "required": [
@@ -64,7 +114,16 @@
       "created_by_id": "{{user.id}}"
     },
     "update": {
-      "created_by_id": "{{user.id}}"
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     },
     "delete": {
       "created_by_id": "{{user.id}}"
