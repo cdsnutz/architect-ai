@@ -16,7 +16,7 @@
     },
     {
       "function_name": "reaValidate",
-      "description": "Run the validation pass on a dossier to produce a parity score and contradiction list"
+      "description": "Run the validation pass on a dossier"
     }
   ],
   "context_files": [],
@@ -29,7 +29,7 @@
   "line_greeting": null,
   "memory_config": {
     "enabled": true,
-    "scope": "conversation",
+    "scope": "both",
     "include_other_conversation_context": false,
     "instructions": null
   },

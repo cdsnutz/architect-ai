@@ -10,15 +10,15 @@
     },
     {
       "function_name": "analyzeSite",
-      "description": "Map a public URL into the operator's first dossier"
+      "description": "Map a public URL into the first dossier"
     },
     {
       "function_name": "analyzePastedHtml",
-      "description": "Map HTML the operator captured from a login-gated surface"
+      "description": "Map HTML captured from a gated surface"
     },
     {
       "function_name": "generateRebuildPrompt",
-      "description": "Write the reconstruction prompt the operator launches their project with"
+      "description": "Write the reconstruction prompt for the first build"
     }
   ],
   "context_files": [],
@@ -31,7 +31,7 @@
   "line_greeting": null,
   "memory_config": {
     "enabled": true,
-    "scope": "conversation",
+    "scope": "both",
     "include_other_conversation_context": false,
     "instructions": null
   },

@@ -19,11 +19,11 @@
     },
     {
       "function_name": "planDataRequest",
-      "description": "Draft a reviewable read-only probe plan for a DataRequest that has no plan yet"
+      "description": "Draft a reviewable read-only probe plan"
     },
     {
       "function_name": "runDataRequest",
-      "description": "Execute an authorized read-only probe pass for one DataRequest id and write findings tagged observed or inferred"
+      "description": "Execute an authorized read-only probe pass for one DataRequest id"
     }
   ],
   "context_files": [],
@@ -36,7 +36,7 @@
   "line_greeting": null,
   "memory_config": {
     "enabled": true,
-    "scope": "conversation",
+    "scope": "both",
     "include_other_conversation_context": false,
     "instructions": null
   },

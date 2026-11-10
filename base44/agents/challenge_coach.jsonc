@@ -31,7 +31,7 @@
   "line_greeting": null,
   "memory_config": {
     "enabled": true,
-    "scope": "conversation",
+    "scope": "both",
     "include_other_conversation_context": false,
     "instructions": null
   },
