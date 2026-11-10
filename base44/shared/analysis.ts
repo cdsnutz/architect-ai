@@ -143,7 +143,16 @@ export function buildPodPrompt(evidence) {
     'reported as observed. A weak match fills nothing.\n' +
     '- Fill `logic_mirror` with one replacement function per traced behaviour: input, rule as short pseudocode, output, ' +
     'the observed case it was replayed against, and confidence. Use "unverified" when no observed case exercises it.\n' +
-    '- Fill `parity_map` with two Mermaid flowcharts (target and mirror) and the gaps between them.\n' +
+    '- Fill `parity_map` with two Mermaid flowcharts (target and mirror) and the gaps between them. A gap row may ' +
+    'only contrast the target against the mirror on the axis you actually observed. If the target side of the axis was ' +
+    'never observed (for example an unknown transport such as websocket versus polling), write "not observable from ' +
+    'this evidence" for that cell instead of naming a mechanism, and never describe the target as live, streaming or ' +
+    'socket-based without bundle evidence of a socket or event stream.\n' +
+    '- Never cite a mechanism you did not see. A dependency edge or blast-radius row must name the identifier, route or ' +
+    'payload position that links it; "foreign key", "full refresh" and similar backend facts are not observable from a ' +
+    'client surface, so mark them inferred or omit the row.\n' +
+    '- Every entry in `filled_blanks` is a deduction, not a finding: keep it short, and if the archetype match is only ' +
+    'the app category rather than a technical contract, set strength to "weak" and fill nothing.\n' +
     '- Also record the page/section structure, the data entities, third-party integrations, user flows, bottlenecks ' +
     'and UX gaps.\n' +
     'Every claim must cite the evidence it came from; where the evidence does not settle a question, write ' +
