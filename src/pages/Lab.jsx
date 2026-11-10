@@ -11,6 +11,7 @@ import DossierPanel from "@/components/lab/DossierPanel";
 import SkillCatalog from "@/components/lab/SkillCatalog";
 import LabHistory from "@/components/lab/LabHistory";
 import LabConductor from "@/components/lab/LabConductor";
+import StewardChat from "@/components/lab/StewardChat";
 import ThreatDashboard from "@/components/lab/ThreatDashboard";
 import TriggerJourney from "@/components/analysis/TriggerJourney";
 
@@ -317,6 +318,8 @@ export default function Lab() {
           onSelectPack={runPack}
           busy={packBusy}
         />
+
+        <StewardChat requestId={current ? current.id : ""} />
 
         <LabConductor requestId={current ? current.id : ""} />
 
