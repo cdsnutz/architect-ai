@@ -1,0 +1,187 @@
+{
+  "name": "DataRequest",
+  "type": "object",
+  "properties": {
+    "request": {
+      "type": "string",
+      "description": "The operator's natural-language engineering request, verbatim."
+    },
+    "title": {
+      "type": "string",
+      "description": "Short label derived from the request."
+    },
+    "focus": {
+      "type": "string",
+      "enum": [
+        "legacy_migration",
+        "production_incident",
+        "adversarial_integration",
+        "custom"
+      ],
+      "enumColors": [
+        "purple",
+        "red",
+        "yellow",
+        "gray"
+      ],
+      "description": "Challenge focus the request is run against."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "authorized",
+        "running",
+        "complete",
+        "failed"
+      ],
+      "enumColors": [
+        "gray",
+        "blue",
+        "yellow",
+        "green",
+        "red"
+      ],
+      "default": "planned"
+    },
+    "plan": {
+      "type": "object",
+      "description": "Reviewable plan: intent, targets, questions, evidence needed, read-only probe steps, pods and skills."
+    },
+    "authorized_targets": {
+      "type": "array",
+      "description": "URLs the operator explicitly authorized for read-only probing.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "findings": {
+      "type": "array",
+      "description": "Pod findings, each tagged observed or inferred with its evidence and gap.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "skill": {
+            "type": "string"
+          },
+          "pod": {
+            "type": "string"
+          },
+          "claim": {
+            "type": "string"
+          },
+          "observed": {
+            "type": "boolean"
+          },
+          "confidence": {
+            "type": "number"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "gap": {
+            "type": "string"
+          },
+          "next_probe": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "description": "Overall confidence across findings, 0-100."
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unverified": {
+      "type": "array",
+      "description": "What the read surface cannot settle.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ledger_traces": {
+      "type": "array",
+      "description": "Action -> data request -> database writes traced from evidence.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ui_trigger": {
+            "type": "string"
+          },
+          "endpoint": {
+            "type": "string"
+          },
+          "table": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "string"
+    },
+    "capability_gap": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this request exposed a capability the engine could not reach."
+    },
+    "capability_note": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "ReaRun telemetry record for the pass."
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "request",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

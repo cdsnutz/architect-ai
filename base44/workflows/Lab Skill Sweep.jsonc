@@ -1,0 +1,79 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "lab_skill_sweep",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "legacy_pack": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runChallenge",
+            "args": {
+              "pack_id": "legacy_migration"
+            }
+          },
+          "then": "incident_pack",
+          "x-base44": {
+            "title": "Legacy migration pack",
+            "description": "Orphaned writes and type drift"
+          }
+        }
+      },
+      {
+        "incident_pack": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runChallenge",
+            "args": {
+              "pack_id": "production_incident"
+            }
+          },
+          "then": "adversarial_pack",
+          "x-base44": {
+            "title": "Production incident pack",
+            "description": "Retry entropy and cache windows"
+          }
+        }
+      },
+      {
+        "adversarial_pack": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runChallenge",
+            "args": {
+              "pack_id": "adversarial_integration"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Adversarial integration pack",
+            "description": "Silent 200s and contract erosion"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Lab Skill Sweep",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 7 * * 1",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Weekly read-only sweep: runs each challenge pack against the most recently authorized data request and records the dossier."
+}

@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, ClipboardPaste, GitCompare, History, LayoutDashboard, Link2, Loader2, Lock, ScanLine, Search } from "lucide-react";
+import { AlertCircle, ClipboardPaste, FlaskConical, GitCompare, History, LayoutDashboard, Link2, Loader2, Lock, ScanLine, Search } from "lucide-react";
 import AnalysisResult from "@/components/analysis/AnalysisResult";
 import TriggerJourney from "@/components/analysis/TriggerJourney";
 import RebuildPrompt from "@/components/analysis/RebuildPrompt";
@@ -142,6 +142,12 @@ export default function Workspace() {
           </Link>
           <div className="flex items-center gap-2">
             <QuickActionsMenu analyses={history} />
+            <Button variant="ghost" size="sm" className="gap-2" asChild>
+              <Link to="/lab">
+                <FlaskConical className="w-4 h-4" />
+                <span className="hidden sm:inline">Lab</span>
+              </Link>
+            </Button>
             <Button variant="ghost" size="sm" className="gap-2" asChild>
               <Link to="/dashboard">
                 <LayoutDashboard className="w-4 h-4" />

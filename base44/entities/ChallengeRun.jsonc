@@ -1,0 +1,150 @@
+{
+  "name": "ChallengeRun",
+  "type": "object",
+  "properties": {
+    "pack_id": {
+      "type": "string",
+      "description": "Challenge pack that was exercised."
+    },
+    "pack_name": {
+      "type": "string"
+    },
+    "focus": {
+      "type": "string",
+      "enum": [
+        "legacy_migration",
+        "production_incident",
+        "adversarial_integration"
+      ],
+      "enumColors": [
+        "purple",
+        "red",
+        "yellow"
+      ]
+    },
+    "data_request_id": {
+      "type": "string",
+      "description": "Data request whose authorized targets this run probed."
+    },
+    "target_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "complete",
+        "failed"
+      ],
+      "enumColors": [
+        "gray",
+        "yellow",
+        "green",
+        "red"
+      ],
+      "default": "queued"
+    },
+    "stages": {
+      "type": "array",
+      "description": "Ordered stages of the challenge pass with the pods that own each.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "pods": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "complete",
+              "skipped",
+              "failed"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          },
+          "started_at": {
+            "type": "string"
+          },
+          "finished_at": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "dossier": {
+      "type": "object",
+      "description": "Verdict, observed vs inferred, skill results, falsifiers, risks and next probes."
+    },
+    "capability_gap": {
+      "type": "boolean",
+      "default": false
+    },
+    "capability_note": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "ReaRun telemetry record for the pass."
+    },
+    "error": {
+      "type": "string"
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "pack_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

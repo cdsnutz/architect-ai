@@ -10,6 +10,7 @@ import ScrollToTop from './components/ScrollToTop';
 import Home from './pages/Home';
 import Workspace from './pages/Workspace';
 import Compare from './pages/Compare';
+import Lab from './pages/Lab';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -50,6 +51,12 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/workspace" element={<Workspace />} />
+      <Route
+        path="/lab"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Flab" replace />} />}
+      >
+        <Route index element={<Lab />} />
+      </Route>
       <Route
         path="/dashboard"
         element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fdashboard" replace />} />}
