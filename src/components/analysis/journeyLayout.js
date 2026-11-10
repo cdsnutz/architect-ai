@@ -1,26 +1,18 @@
-// Geometry and normalisation for the trigger → API path → table journey graph.
+// Geometry and normalisation for the action journey map: user action → data request → database update.
 
-export const LANES = [
-  { key: "trigger", title: "UI trigger", x: 12, w: 184 },
-  { key: "endpoint", title: "API path", x: 244, w: 236 },
-  { key: "table", title: "Table", x: 548, w: 190 }
+export const COLUMNS = [
+  { key: "trigger", title: "User action", x: 12, w: 176 },
+  { key: "endpoint", title: "Data request", x: 232, w: 212 },
+  { key: "table", title: "Database update", x: 488, w: 200 }
 ];
 
-export const NODE_H = 36;
-const ROW = 52;
-const TOP = 30;
-export const WIDTH = 750;
+export const NODE_H = 34;
+const ROW = 50;
+const TOP = 34;
+export const WIDTH = 700;
 
 function text(value) {
   return typeof value === "string" ? value.trim() : "";
-}
-
-function unique(values) {
-  const out = [];
-  values.forEach((value) => {
-    if (!out.includes(value)) out.push(value);
-  });
-  return out;
 }
 
 export function wrapLabel(label, perLine, maxLines) {
@@ -113,60 +105,29 @@ export function buildJourneys(analysis) {
     .map((journey, index) => ({ ...journey, index }));
 }
 
-function keyFor(journey, lane) {
-  if (lane === "trigger") return journey.trigger || "unmapped";
-  if (lane === "endpoint") return journey.endpoint || "not observable";
-  return journey.table || "not observable";
-}
+// One horizontal track per journey, so every line runs left to right without crossing another journey's.
+export function buildTracks(journeys) {
+  const tracks = journeys.map((journey, row) => {
+    const y = TOP + row * ROW;
+    const nodes = COLUMNS.map((column) => ({
+      lane: column.key,
+      x: column.x,
+      y,
+      width: column.w,
+      label: journey[column.key] || "not observed",
+      mapped: Boolean(journey[column.key])
+    }));
 
-export function buildLaneGraph(journeys) {
-  const keys = {
-    trigger: unique(journeys.map((journey) => keyFor(journey, "trigger"))),
-    endpoint: unique(journeys.map((journey) => keyFor(journey, "endpoint"))),
-    table: unique(journeys.map((journey) => keyFor(journey, "table")))
-  };
-
-  const rowCount = Math.max(keys.trigger.length, keys.endpoint.length, keys.table.length, 1);
-  const height = TOP + rowCount * ROW - (ROW - NODE_H) + 10;
-
-  const nodes = [];
-  LANES.forEach((lane) => {
-    keys[lane.key].forEach((key, rowIndex) => {
-      nodes.push({
-        lane: lane.key,
-        key,
-        label: key,
-        x: lane.x,
-        y: TOP + rowIndex * ROW,
-        width: lane.w,
-        mapped: key !== "unmapped" && key !== "not observable",
-        journeys: journeys.filter((journey) => keyFor(journey, lane.key) === key).map((journey) => journey.index)
-      });
-    });
+    return {
+      journey,
+      y,
+      nodes,
+      links: [
+        { from: nodes[0], to: nodes[1], mapped: Boolean(journey.trigger && journey.endpoint) },
+        { from: nodes[1], to: nodes[2], mapped: Boolean(journey.endpoint && journey.table) }
+      ]
+    };
   });
 
-  const byKey = {};
-  nodes.forEach((node) => {
-    byKey[node.lane + ":" + node.key] = node;
-  });
-
-  const edges = [];
-  journeys.forEach((journey) => {
-    const trigger = byKey["trigger:" + keyFor(journey, "trigger")];
-    const endpoint = byKey["endpoint:" + keyFor(journey, "endpoint")];
-    const table = byKey["table:" + keyFor(journey, "table")];
-    if (trigger && endpoint) edges.push({ journey: journey.index, from: trigger, to: endpoint });
-    if (endpoint && table) edges.push({ journey: journey.index, from: endpoint, to: table });
-  });
-
-  return { width: WIDTH, height, nodes, edges };
-}
-
-export function edgePath(from, to) {
-  const x1 = from.x + from.width;
-  const y1 = from.y + NODE_H / 2;
-  const x2 = to.x;
-  const y2 = to.y + NODE_H / 2;
-  const mid = (x1 + x2) / 2;
-  return "M " + x1 + " " + y1 + " C " + mid + " " + y1 + ", " + mid + " " + y2 + ", " + x2 + " " + y2;
+  return { width: WIDTH, height: TOP + journeys.length * ROW + 6, tracks };
 }
