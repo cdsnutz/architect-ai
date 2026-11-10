@@ -96,6 +96,11 @@ async function readOnce(url: string, accept: string, extra: Record<string, strin
       vary: res.headers.get('vary') || 'none',
       last_modified: res.headers.get('last-modified') || 'none',
       content_range: res.headers.get('content-range') || 'none',
+      csp: res.headers.get('content-security-policy') || 'none',
+      hsts: res.headers.get('strict-transport-security') || 'none',
+      x_frame: res.headers.get('x-frame-options') || 'none',
+      x_content_type: res.headers.get('x-content-type-options') || 'none',
+      referrer: res.headers.get('referrer-policy') || 'none',
       etag_raw: res.headers.get('etag') || ''
     },
     body
@@ -342,6 +347,116 @@ async function probeVariance(skill: string, target: string): Promise<ProbeResult
   };
 }
 
+async function probePosture(skill: string, target: string): Promise<ProbeResult> {
+  const page = await readOnce(target, 'text/html,application/json,*/*');
+  const origin = new URL(page.url).origin;
+  const read = async (url: string) => {
+    try {
+      return await readOnce(url, 'text/plain,application/xml,*/*');
+    } catch {
+      return null;
+    }
+  };
+  const [robots, sitemap] = await Promise.all([read(origin + '/robots.txt'), read(origin + '/sitemap.xml')]);
+  const controls = [
+    { name: 'content-security-policy', value: page.headers.csp },
+    { name: 'strict-transport-security', value: page.headers.hsts },
+    { name: 'x-frame-options', value: page.headers.x_frame },
+    { name: 'x-content-type-options', value: page.headers.x_content_type },
+    { name: 'referrer-policy', value: page.headers.referrer }
+  ];
+  const missing = controls.filter((control) => control.value === 'none').map((control) => control.name);
+  const declared = controls.filter((control) => control.value !== 'none').map((control) => control.name);
+  const disallow = robots && robots.status === 200 ? (robots.body.match(/^\s*Disallow:/gim) || []).length : 0;
+  const hintPaths =
+    robots && robots.status === 200
+      ? [...robots.body.matchAll(/^\s*Disallow:\s*(\S+)/gim)]
+          .map((match) => match[1])
+          .filter((path) => path !== '/')
+          .slice(0, 4)
+      : [];
+  return {
+    skill,
+    probe: 'posture',
+    target,
+    reproduced: missing.length > 0,
+    observations: [
+      describe(page),
+      'Declared controls: ' + (declared.length ? declared.join(', ') : 'none'),
+      'Missing controls: ' + (missing.length ? missing.join(', ') : 'none'),
+      'robots.txt: ' + (robots ? 'HTTP ' + robots.status + ' · ' + disallow + ' disallow entries' : 'unreadable'),
+      'Advertised paths: ' + (hintPaths.length ? JSON.stringify(hintPaths) : 'none'),
+      'sitemap.xml: ' + (sitemap ? 'HTTP ' + sitemap.status : 'unreadable')
+    ],
+    signal: missing.length
+      ? 'The response leaves ' + missing.length + ' of 5 boundary controls undeclared (' + missing.join(', ') +
+        '), so the browser enforces nothing there and the surface is free to be framed, sniffed or inline-scripted.'
+      : 'All five boundary controls are declared, so the edge is setting an enforceable browser policy on this route.'
+  };
+}
+
+const SECRET_SHAPES: { label: string; test: RegExp }[] = [
+  { label: 'provider secret key', test: /\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{10,}/g },
+  { label: 'aws access key id', test: /\bAKIA[0-9A-Z]{16}\b/g },
+  { label: 'google api key', test: /\bAIza[0-9A-Za-z_-]{35}\b/g },
+  { label: 'literal bearer token', test: /Bearer\s+[A-Za-z0-9._-]{20,}/g },
+  { label: 'private key block', test: /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/g },
+  { label: 'encoded jwt', test: /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g }
+];
+
+async function probeBundle(skill: string, target: string): Promise<ProbeResult> {
+  const page = await readOnce(target, 'text/html,*/*');
+  const origin = new URL(page.url).origin;
+  const sources = new Set<string>();
+  for (const match of page.body.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)) {
+    try {
+      const resolved = new URL(match[1], origin);
+      if (resolved.origin === origin) sources.add(resolved.origin + resolved.pathname + resolved.search);
+    } catch {
+      continue;
+    }
+  }
+  const chosen = [...sources].slice(0, 2);
+  const reads = await Promise.all(
+    chosen.map(async (url) => {
+      try {
+        return await readOnce(url, 'application/javascript,text/javascript,*/*');
+      } catch {
+        return null;
+      }
+    })
+  );
+  const hits: string[] = [];
+  let scanned = 0;
+  for (const hit of reads) {
+    if (!hit) continue;
+    scanned += 1;
+    for (const shape of SECRET_SHAPES) {
+      const count = (hit.body.match(shape.test) || []).length;
+      if (count > 0) hits.push(shape.label + ' x' + count);
+    }
+  }
+  return {
+    skill,
+    probe: 'bundle',
+    target,
+    reproduced: hits.length > 0,
+    observations: [
+      'Page: ' + describe(page),
+      'Same-origin scripts referenced: ' + sources.size + ' · read: ' + scanned,
+      'Credential-shaped patterns: ' + (hits.length ? hits.join(', ') : 'none'),
+      'Values withheld: no matched string is recorded, only its pattern class'
+    ],
+    signal:
+      scanned === 0
+        ? 'No same-origin script on this page could be read, so what the client bundle carries is not observable from this surface.'
+        : hits.length
+          ? 'The shipped bundle carries credential-shaped strings (' + hits.join(', ') +
+            '). The pattern is present; whether the value is live is not observable from a read surface, and the value itself is deliberately not retained.'
+          : 'The scripts read carried no credential-shaped string, so the client bundle is not shipping a key in this window.'
+  };
+}
+
 const RUNNERS: Record<string, (skill: string, target: string) => Promise<ProbeResult>> = {
   negotiate: probeNegotiate,
   entropy: probeEntropy,
@@ -351,7 +466,9 @@ const RUNNERS: Record<string, (skill: string, target: string) => Promise<ProbeRe
   cache: probeCache,
   generator: probeGenerator,
   conditional: probeConditional,
-  variance: probeVariance
+  variance: probeVariance,
+  posture: probePosture,
+  bundle: probeBundle
 };
 
 export async function runProbe(probe: string, skill: string, target: string): Promise<ProbeResult> {
@@ -373,7 +490,7 @@ export async function runProbe(probe: string, skill: string, target: string): Pr
   }
 }
 
-// One probe pair per skill, bounded so a run never exceeds four executions.
+// One probe pair per skill, bounded by the cap so a run stays predictable.
 export function selectProbes(
   skills: { name: string; probe: string }[],
   targets: string[],
@@ -381,7 +498,7 @@ export function selectProbes(
 ): { skill: string; probe: string; target: string }[] {
   const pairs: { skill: string; probe: string; target: string }[] = [];
   const hosts = targets.slice(0, 2);
-  for (const skill of skills.slice(0, 4)) {
+  for (const skill of skills.slice(0, cap)) {
     for (const target of hosts) {
       if (pairs.length >= cap) return pairs;
       pairs.push({ skill: skill.name, probe: skill.probe, target });

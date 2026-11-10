@@ -86,7 +86,7 @@ export default async function (req) {
 
     await stageRunning(base44, 'ChallengeRun', runRecordId, 'skills');
     await markRunning(base44, telemetry ? telemetry.id : null, 'skills');
-    const pairs = selectProbes(skills, targets, 4);
+    const pairs = selectProbes(skills, targets, 6);
     const results = await Promise.all(pairs.map((pair) => runProbe(pair.probe, pair.skill, pair.target)));
     const reproduced = results.filter((result) => result.reproduced).length;
     const skillsDetail = results.length + ' probes · ' + reproduced + ' reproduced';

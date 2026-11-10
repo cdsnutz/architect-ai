@@ -9,7 +9,18 @@ export type Skill = {
   name: string;
   focus: SkillFocus;
   pods: string[];
-  probe: 'negotiate' | 'entropy' | 'silence' | 'clock' | 'surface' | 'cache' | 'generator' | 'conditional' | 'variance';
+  probe:
+    | 'negotiate'
+    | 'entropy'
+    | 'silence'
+    | 'clock'
+    | 'surface'
+    | 'cache'
+    | 'generator'
+    | 'conditional'
+    | 'variance'
+    | 'posture'
+    | 'bundle';
   thesis: string;
   proves: string;
   falsifier: string;
@@ -162,6 +173,28 @@ export const SKILLS: Skill[] = [
       'Reads the same route under two different language preferences and checks the Vary declaration, exposing content that changes per reader while the cache key pretends it does not.',
     proves: 'whether two readers can receive each other\'s representation from a shared cache on this route.',
     falsifier: 'An identical body for both preferences, or a Vary header that declares the varied header, voids the key-mismatch claim.'
+  },
+  {
+    id: 'boundary-posture',
+    name: 'Boundary Posture Read',
+    focus: 'adversarial_integration',
+    pods: ['Perimeter Scout'],
+    probe: 'posture',
+    thesis:
+      'Reads the surface\'s own boundary declarations — CSP, HSTS, framing and sniffing controls — beside the public robots and sitemap hints, placing what the edge is actually willing to enforce and which paths it advertises anyway.',
+    proves: 'which browser-side controls are declared on this route, and which paths the surface publishes about itself.',
+    falsifier: 'A response declaring all five controls voids the undeclared-control claim; a robots file with no disallow entries voids the route-hint claim.'
+  },
+  {
+    id: 'bundle-exposure',
+    name: 'Bundle Exposure Scan',
+    focus: 'adversarial_integration',
+    pods: ['Perimeter Scout', 'Schema Archaeologist'],
+    probe: 'bundle',
+    thesis:
+      'Reads the same-origin scripts the page loads and flags credential-shaped strings — key formats, private-key blocks, literal bearer tokens and encoded JWTs — by pattern class only, never reproducing the matched value.',
+    proves: 'whether the shipped client bundle carries secret-shaped material at all, without extracting it.',
+    falsifier: 'Bundles whose scripts carry zero pattern matches void the exposure claim for that window.'
   }
 ];
 
@@ -191,9 +224,16 @@ export const PACKS: Pack[] = [
   {
     id: 'adversarial_integration',
     name: 'Adversarial integration',
-    objective: 'Expose silent 200s, contract erosion, cache-key assumptions and per-reader leakage.',
+    objective: 'Expose silent 200s, contract erosion, cache-key assumptions, per-reader leakage and shipped secrets.',
     question: 'What would this integration store as valid that is actually empty or wrong?',
-    skills: ['silence-mapper', 'contract-erosion', 'cache-poison-surface', 'variance-key']
+    skills: [
+      'silence-mapper',
+      'contract-erosion',
+      'cache-poison-surface',
+      'variance-key',
+      'boundary-posture',
+      'bundle-exposure'
+    ]
   }
 ];
 
