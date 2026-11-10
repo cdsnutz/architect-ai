@@ -1,0 +1,74 @@
+{
+  "name": "ReaConnection",
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "What this token is for, e.g. Local Claude Code agent."
+    },
+    "agent_name": {
+      "type": "string"
+    },
+    "token_hash": {
+      "type": "string",
+      "description": "SHA-256 of the agent token. The token itself is never stored."
+    },
+    "token_prefix": {
+      "type": "string",
+      "description": "First characters of the token, for masked display."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "revoked"
+      ],
+      "enumColors": [
+        "green",
+        "red"
+      ],
+      "default": "active"
+    },
+    "last_seen_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "label",
+    "token_hash",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

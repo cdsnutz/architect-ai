@@ -10,14 +10,16 @@
       "type": "string",
       "enum": [
         "live",
-        "pasted"
+        "pasted",
+        "source"
       ],
       "enumColors": [
         "green",
-        "purple"
+        "purple",
+        "blue"
       ],
       "default": "live",
-      "description": "Live fetch or a pasted capture."
+      "description": "Live fetch, a pasted capture, or a source-level pass."
     },
     "status": {
       "type": "string",

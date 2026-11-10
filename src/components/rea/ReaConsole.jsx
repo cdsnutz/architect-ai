@@ -8,6 +8,7 @@ import ReaToolList from "./ReaToolList";
 import ReaSkillList from "./ReaSkillList";
 import ReaWorkflowList from "./ReaWorkflowList";
 import ReaChat from "./ReaChat";
+import ReaRunner from "./ReaRunner";
 
 export default function ReaConsole({ analysis, onValidated }) {
   const [registry, setRegistry] = useState(null);
@@ -50,8 +51,9 @@ export default function ReaConsole({ analysis, onValidated }) {
         )}
 
         {registry && (
-          <Tabs defaultValue="tools" className="w-full">
-            <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-5">
+          <Tabs defaultValue="run" className="w-full">
+            <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-3 xl:grid-cols-6">
+              <TabsTrigger value="run" className="text-xs">Run</TabsTrigger>
               <TabsTrigger value="tools" className="text-xs">Tools</TabsTrigger>
               <TabsTrigger value="skills" className="text-xs">Skills</TabsTrigger>
               <TabsTrigger value="pods" className="text-xs">Pods</TabsTrigger>
@@ -61,6 +63,10 @@ export default function ReaConsole({ analysis, onValidated }) {
                 Agent
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="run" className="mt-4">
+              <ReaRunner analysis={analysis} onAnalyzed={onValidated} />
+            </TabsContent>
 
             <TabsContent value="tools" className="mt-4">
               <ReaToolList tools={registry.tools} />

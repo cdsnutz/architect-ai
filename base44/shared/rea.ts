@@ -4,32 +4,32 @@
 
 export const REA_TOOLS = [
   {
-    id: "rea.setup",
+    id: "rea.connect",
     label: "Connect REA",
-    kind: "local",
-    command: "npx rea-agents@latest setup --client claude_code",
-    purpose: "Installs the REA CLI and MCP server locally and registers them with your coding agent."
+    kind: "in-app",
+    command: "REA layer → Run → Connect REA",
+    purpose: "Mints an agent token and returns the web endpoint the local agent calls. Revocable at any time."
   },
   {
     id: "rea.doctor",
     label: "Doctor",
-    kind: "local",
-    command: "npx rea-agents@latest doctor",
-    purpose: "Verifies every REA tool, MCP connection and credential is reachable. All checks should pass."
+    kind: "in-app",
+    command: "REA layer → Run → Doctor",
+    purpose: "Checks the pod registry, agent token, pod telemetry, dossier coverage and the mapping engine against live app data."
   },
   {
-    id: "rea.analyze-js",
-    label: "Analyze local app",
-    kind: "local",
-    command: 'npx -y rea-agents@latest analyze-javascript-application "<local-checkout-path>" --json',
-    purpose: "Source-level pass over a local checkout: real modules, real fetches, dead code."
+    id: "rea.analyze-source",
+    label: "Analyze checkout",
+    kind: "in-app",
+    command: "REA layer → Run → Analyze checkout",
+    purpose: "Source-level pass over your own modules: imports, outbound requests, route handlers, models and env usage."
   },
   {
     id: "rea.job",
     label: "Job spec",
-    kind: "local",
-    command: "rea-job.json",
-    purpose: "The dossier bundle this app writes for REA: target, objectives, logic map, rebuild prompt."
+    kind: "in-app",
+    command: "REA layer → Run → Job spec",
+    purpose: "Builds the job JSON for a dossier, downloadable, and served to an agent holding a token."
   },
   { id: "engine.map", label: "Map a URL", kind: "in-app", command: "analyzeSite", purpose: "Fetches a public page, extracts evidence, runs the pods and writes a dossier." },
   { id: "engine.map-gated", label: "Map pasted HTML", kind: "in-app", command: "analyzePastedHtml", purpose: "Runs the same mapping over HTML you captured from an authenticated surface." },

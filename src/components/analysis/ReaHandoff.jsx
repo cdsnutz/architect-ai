@@ -47,9 +47,9 @@ export default function ReaHandoff({ analysis }) {
           Continue in REA
         </CardTitle>
         <CardDescription>
-          REA is a local CLI and MCP server, so the setup and its checks run on your machine, not here. Approve the
-          setup plan, restart your agent, then confirm it is connected with the doctor command. The bundle carries
-          this analysis and its rebuild prompt.
+          Connect, doctor, the source-level analyze pass and the job spec now run inside this app — open the REA layer
+          and choose Run. The local CLI commands below still work if you would rather run them on your machine. The
+          bundle carries this analysis and its rebuild prompt.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
