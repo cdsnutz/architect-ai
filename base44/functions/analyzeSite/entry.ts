@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { getEntitlement } from '../../shared/entitlement.ts';
 import { extractEvidence, mapLogic } from '../../shared/analysis.ts';
+import { probeContentNegotiation, formatProbe } from '../../shared/probe.ts';
 
 export default async function (req) {
   try {
@@ -49,14 +50,15 @@ export default async function (req) {
       return Response.json({ error: 'Could not fetch that URL. ' + reason }, { status: 502 });
     }
 
-    const { title, evidence } = extractEvidence(targetUrl, html);
-    const llm = await mapLogic(base44, evidence);
+    const { title, evidence, links } = extractEvidence(targetUrl, html);
+    const probe = await probeContentNegotiation(targetUrl, links);
+    const llm = await mapLogic(base44, evidence + '\n\n' + formatProbe(probe));
 
     const record = await base44.entities.SiteAnalysis.create({
       url: targetUrl,
       title: title || targetUrl,
       summary: (llm && llm.app_summary) || '',
-      logic_map: llm
+      logic_map: { ...(llm || {}), header_probe: probe }
     });
 
     return Response.json({ analysis: record });

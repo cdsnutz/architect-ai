@@ -3,9 +3,9 @@
 
 export const SCOPE_GUARDRAIL =
   "Scope: analyze only applications you own or are authorised to test. The pods work from observable evidence " +
-  "(public pages, public bundles, and flows inside your own account). No credential or session extraction, no " +
-  "authentication or paywall bypass, no forced-error probing of infrastructure you do not own, and no mapping of " +
-  "internal hosts or secrets.";
+  "(public pages, public bundles, anonymous GET content-negotiation checks, and flows inside your own account). No " +
+  "credential or session extraction, no authentication or paywall bypass, no forced-error probing of infrastructure " +
+  "you do not own, and no mapping of internal hosts or secrets.";
 
 export type Pod = {
   id: string;
@@ -41,6 +41,8 @@ export const PODS: Pod[] = [
       "Describe the advertised auth model (session cookie, bearer token, OAuth provider) without attempting to defeat it.",
       "Note rate-limit and gateway signals only as they appear in observable responses.",
       "Record what the client asks for versus what a response must contain to render the screen.",
+      "Vary one header on an anonymous GET (Accept, X-Requested-With) and diff the two representations: a changed payload identifies the machine-readable surface the UI calls, found by observation rather than intrusion.",
+      "Tag every endpoint with the table it reads or writes, so the ledger stays a relational map from UI trigger to endpoint to table.",
     ],
   },
   {
@@ -54,6 +56,7 @@ export const PODS: Pod[] = [
       "Infer primary and foreign keys from identifier shapes and nesting.",
       "Deduce storage type (relational versus document) from nesting, ordering and query behaviour on screen.",
       "Flag fields that exist in the model but are never shown, as clone requirements.",
+      "Infer a constraint for every column and cite it: identifier format (UUID v4, nanoid, integer sequence), enum domain and its allowed values, nullability, uniqueness, length or numeric bounds, and timestamps that look server-owned.",
     ],
   },
   {
@@ -67,6 +70,7 @@ export const PODS: Pod[] = [
       "Write the transformation logic as pseudocode the rebuild can implement directly.",
       "Name the edge cases the current implementation implies but does not handle.",
       "End every flow with a diagram of the data journey UI to API to data and back.",
+      "Emit the transition matrix as rows of Current State → Trigger → Action → Next State, each naming the endpoint and table that own the row.",
     ],
   },
 ];
@@ -87,6 +91,10 @@ export const TECHNIQUES = [
   {
     name: "Bundle archaeology",
     use: "Search the target's own public bundles for framework markers, route names and library versions that reveal architecture.",
+  },
+  {
+    name: "Content-negotiation probe",
+    use: "Request the same path twice over anonymous GET, once with an HTML Accept header and once with an XHR-style Accept plus X-Requested-With. A difference in representation reveals the JSON surface the UI already consumes.",
   },
 ];
 
@@ -131,12 +139,13 @@ export function masterPrompt(): string {
     methods +
     "\n\n## III. Execution cycle\n" +
     cycle +
-    "\n\n## IV. Output contract\nFor every component extracted, output:\n" +
+    "\n\n## IV. Output contract\nThe ledger is a relational map, not a log. For every component extracted, output:\n" +
     "1. Functional specification: what it does, and for whom.\n" +
-    "2. API contract: Method | Endpoint | Request payload | Response body.\n" +
-    "3. Inferred schema: table, columns, keys and relations required to support it.\n" +
+    "2. API contract: Method | Endpoint | Request payload | Response body | the UI trigger that fires it | the table it reads or writes.\n" +
+    "3. Inferred schema: table, columns with type-inference constraints, keys and relations required to support it.\n" +
     "4. Logic flow: a Mermaid `flowchart` of the data journey from UI to API to data and back.\n" +
-    "5. State transitions: each status and the trigger that moves the object between them.\n\n" +
+    "5. State transition matrix: Current State → Trigger → Action → Next State, with the endpoint and table.\n" +
+    "6. Ledger trace: the full path UI Trigger → API Endpoint → Database Table for each traced behaviour.\n\n" +
     "Mark every statement as observed or inferred. Where the evidence does not settle a question, write " +
     '"not observable from this evidence" instead of guessing.'
   );
@@ -155,9 +164,20 @@ export const POD_SCHEMA = {
           endpoint: { type: "string" },
           request_shape: { type: "string" },
           response_shape: { type: "string" },
+          ui_trigger: { type: "string" },
+          linked_table: { type: "string" },
+          related_tables: { type: "array", items: { type: "string" } },
           evidence: { type: "string" },
         },
-        required: ["method", "endpoint", "request_shape", "response_shape", "evidence"],
+        required: [
+          "method",
+          "endpoint",
+          "request_shape",
+          "response_shape",
+          "ui_trigger",
+          "linked_table",
+          "evidence",
+        ],
       },
     },
     inferred_schema: {
@@ -166,6 +186,7 @@ export const POD_SCHEMA = {
         type: "object",
         properties: {
           table: { type: "string" },
+          purpose: { type: "string" },
           columns: {
             type: "array",
             items: {
@@ -173,15 +194,18 @@ export const POD_SCHEMA = {
               properties: {
                 name: { type: "string" },
                 type: { type: "string" },
+                constraints: { type: "array", items: { type: "string" } },
+                evidence: { type: "string" },
                 note: { type: "string" },
               },
-              required: ["name", "type"],
+              required: ["name", "type", "constraints", "evidence"],
             },
           },
           keys: { type: "array", items: { type: "string" } },
           relations: { type: "array", items: { type: "string" } },
+          written_by: { type: "array", items: { type: "string" } },
         },
-        required: ["table", "columns", "keys", "relations"],
+        required: ["table", "purpose", "columns", "keys", "relations", "written_by"],
       },
     },
     state_transitions: {
@@ -190,11 +214,39 @@ export const POD_SCHEMA = {
         type: "object",
         properties: {
           entity: { type: "string" },
-          from_state: { type: "string" },
-          to_state: { type: "string" },
+          table: { type: "string" },
+          current_state: { type: "string" },
           trigger: { type: "string" },
+          action: { type: "string" },
+          endpoint: { type: "string" },
+          next_state: { type: "string" },
+          evidence: { type: "string" },
+          confidence: { type: "string", enum: ["observed", "inferred"] },
         },
-        required: ["entity", "from_state", "to_state", "trigger"],
+        required: [
+          "entity",
+          "table",
+          "current_state",
+          "trigger",
+          "action",
+          "endpoint",
+          "next_state",
+          "evidence",
+          "confidence",
+        ],
+      },
+    },
+    ledger_traces: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          ui_trigger: { type: "string" },
+          endpoint: { type: "string" },
+          table: { type: "string" },
+          evidence: { type: "string" },
+        },
+        required: ["ui_trigger", "endpoint", "table", "evidence"],
       },
     },
     logic_flows: {
@@ -230,6 +282,7 @@ export const POD_SCHEMA = {
     "api_contracts",
     "inferred_schema",
     "state_transitions",
+    "ledger_traces",
     "logic_flows",
     "pod_findings",
   ],

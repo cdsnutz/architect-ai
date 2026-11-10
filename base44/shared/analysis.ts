@@ -98,6 +98,7 @@ export function extractEvidence(url, html) {
 
   return {
     title,
+    links,
     evidence: [
       'URL: ' + url,
       'Page title: ' + (title || 'none'),
@@ -119,8 +120,20 @@ export const ANALYSIS_SCHEMA = {
 export function buildPodPrompt(evidence) {
   return (
     masterPrompt() +
-    '\n\n## V. Run\nApply the pods to the evidence below, then fill every field of the response schema. Also record the ' +
-    'page/section structure, the data entities, third-party integrations, user flows, bottlenecks and UX gaps. ' +
+    '\n\n## V. Run\nApply the pods to the evidence below, then fill every field of the response schema.\n' +
+    '- Keep every array to at most 8 entries, highest value first.\n' +
+    '- Tag each API contract with the UI trigger that fires it and the exact table it reads or writes in ' +
+    '`linked_table`; that name must match a `table` in `inferred_schema`. Use "unlinked" only when no table can be ' +
+    'justified from the evidence.\n' +
+    '- Fill `written_by` on each table with the endpoints that write to it, so the relation is readable in both ' +
+    'directions.\n' +
+    '- Infer a constraint for every column and cite it: identifier format (UUID v4, nanoid, integer sequence), enum ' +
+    'domain and its allowed values, nullability, uniqueness, length or numeric bounds.\n' +
+    '- Fill `state_transitions` as a matrix: current_state, trigger, action, next_state, endpoint, table. Use ' +
+    '"(initial)" for creation and "(terminal)" for archival or deletion.\n' +
+    '- Fill `ledger_traces` so each behaviour reads UI trigger -> endpoint -> table.\n' +
+    '- Also record the page/section structure, the data entities, third-party integrations, user flows, bottlenecks ' +
+    'and UX gaps.\n' +
     'Every claim must cite the evidence it came from; where the evidence does not settle a question, write ' +
     '"not observable from this evidence". Each Mermaid diagram must start with "flowchart TD".\n\n' +
     'EVIDENCE:\n' + evidence
