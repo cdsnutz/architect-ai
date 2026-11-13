@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck } from "lucide-react";
-import ReplicaSkillGrid from "./ReplicaSkillGrid";
+import ReplicaSkillBoard from "./ReplicaSkillBoard";
+import CloneHandoff from "./CloneHandoff";
 import ParityCard from "./ParityCard";
 import SweepCard from "./SweepCard";
 import ContrastCard from "./ContrastCard";
@@ -18,20 +19,12 @@ const TONE = {
 
 export default function ReplicaChecks({ spec, onUpdated }) {
   const { toast } = useToast();
-  const [skills, setSkills] = useState([]);
   const [matrix, setMatrix] = useState(spec.replica?.matrix_csv || "");
   const [tokens, setTokens] = useState(spec.replica?.tokens_json || "");
   const [avoid, setAvoid] = useState(((spec.replica?.sweep?.avoid) || []).join(", "));
   const [busy, setBusy] = useState("");
 
   const replica = spec.replica || null;
-
-  useEffect(() => {
-    base44.functions
-      .invoke("replicaSkill", { action: "catalog" })
-      .then((response) => setSkills(response.data?.skills || []))
-      .catch(() => setSkills([]));
-  }, []);
 
   useEffect(() => {
     setMatrix(spec.replica?.matrix_csv || "");
@@ -102,7 +95,7 @@ export default function ReplicaChecks({ spec, onUpdated }) {
               </Badge>
             )}
             <Button size="sm" variant="secondary" disabled={Boolean(busy)} onClick={runAll}>
-              {busy === "run_all" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Run all gates"}
+              {busy === "run_all" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Run all skills"}
             </Button>
           </div>
         </CardHeader>
@@ -128,7 +121,8 @@ export default function ReplicaChecks({ spec, onUpdated }) {
         </CardContent>
       </Card>
 
-      <ReplicaSkillGrid skills={skills} />
+      <ReplicaSkillBoard stages={replica?.stages} counts={replica?.stage_counts} />
+      <CloneHandoff handoff={replica?.clone_handoff} />
 
       <ParityCard
         matrix={matrix}

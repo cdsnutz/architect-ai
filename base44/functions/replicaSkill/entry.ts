@@ -8,7 +8,8 @@ import {
   contrastCheck,
   sweepArtifacts,
   deriveSweepTargets,
-  gateSummary
+  gateSummary,
+  runSkillPipeline
 } from '../../shared/replicaSkill.ts';
 
 const ACTIONS = ['catalog', 'derive', 'parity', 'contrast', 'sweep', 'run_all'];
@@ -146,6 +147,20 @@ export default async function (req) {
     next.verdict = gates.verdict;
     next.checked_at = new Date().toISOString();
     next.checked_by = user.email || user.id;
+
+    if (action === 'run_all') {
+      const pipeline = runSkillPipeline({
+        spec,
+        contracts: (spec && spec.contracts) || {},
+        parity: next.parity || null,
+        sweep: next.sweep || null,
+        contrast: next.contrast || null
+      });
+      next.stages = pipeline.stages;
+      next.stage_counts = pipeline.stage_counts;
+      next.ready_to_ship = pipeline.ready_to_ship;
+      next.clone_handoff = pipeline.clone_handoff.slice(0, 100000);
+    }
 
     if (!spec) {
       return Response.json({ replica: next });

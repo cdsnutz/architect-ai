@@ -469,3 +469,297 @@ export function gateSummary({ parity, sweep, contrast, threshold = 80 }) {
   const verdict = !gates.length ? 'unchecked' : gates.every((gate) => gate.pass) ? 'pass' : 'blocked';
   return { gates, score, verdict, threshold };
 }
+
+// --- The eleven-stage pipeline -------------------------------------------------
+
+function stage(key, label, status, summary, details = []) {
+  return { key, label, status, summary, details: details.filter(Boolean).slice(0, 12) };
+}
+
+function lists(contracts) {
+  return {
+    apis: Array.isArray(contracts.api_contracts) ? contracts.api_contracts : [],
+    tables: Array.isArray(contracts.inferred_schema) ? contracts.inferred_schema : [],
+    traces: Array.isArray(contracts.ledger_traces) ? contracts.ledger_traces : [],
+    transitions: Array.isArray(contracts.state_transitions) ? contracts.state_transitions : [],
+    entities: Array.isArray(contracts.entities) ? contracts.entities : [],
+    flows: Array.isArray(contracts.flows) ? contracts.flows : [],
+    pages: Array.isArray(contracts.pages) ? contracts.pages : []
+  };
+}
+
+function contractText(contracts) {
+  try {
+    return JSON.stringify(contracts || {}).toLowerCase();
+  } catch (error) {
+    return '';
+  }
+}
+
+function reconStage(contracts) {
+  const info = lists(contracts);
+  const observed = info.apis.length + info.traces.length + info.tables.length + info.pages.length + info.flows.length;
+  const details = [];
+  info.pages.slice(0, 5).forEach((page) => details.push('screen: ' + String(page.name || page.path || page.url || 'unnamed')));
+  info.flows.slice(0, 4).forEach((flow) => details.push('flow: ' + String(flow.name || flow.title || flow.trigger || 'unnamed')));
+  info.traces.slice(0, 4).forEach((trace) => details.push('flow: ' + String(trace.ui_trigger || 'action') + ' -> ' + String(trace.endpoint || 'unobserved')));
+  info.tables.forEach((table) => details.push('data: ' + String(table.table || 'unnamed') + ' (' + (table.columns || []).length + ' columns)'));
+  return stage(
+    'recon',
+    'Recon',
+    observed ? 'pass' : 'needs_input',
+    observed
+      ? info.apis.length + ' endpoints, ' + info.traces.length + ' action paths, ' + info.tables.length + ' tables mapped from captured evidence'
+      : 'No captured contracts yet: run a lab pass or compile a spec first',
+    details
+  );
+}
+
+function architectStage(contracts, spec) {
+  const info = lists(contracts);
+  const stack = (spec && spec.stack) || 'Node 20 + TypeScript + Fastify + Postgres (Neon) + Docker';
+  const routes = info.apis.length
+    ? info.apis.slice(0, 6).map((api) => String(api.method || 'UNKNOWN').toUpperCase() + ' ' + String(api.endpoint || 'endpoint')).join(', ')
+    : 'none captured';
+  return stage(
+    'architect',
+    'Architect',
+    info.apis.length && info.tables.length ? 'pass' : 'attention',
+    info.tables.length + ' tables and ' + info.apis.length + ' endpoints planned on ' + stack,
+    [
+      'stack: ' + stack,
+      'migrations: neon/schema.sql (' + info.tables.length + ' tables)',
+      'routes: ' + routes,
+      'tests: Vitest units plus supertest against the real routes',
+      'deploy: Docker image to Railway or Fly.io'
+    ]
+  );
+}
+
+function designStage(contrast) {
+  if (!contrast) {
+    return stage('design', 'Design', 'needs_input', 'Paste the token file to check the palette', [
+      'required roles: background, surface, text/base, text/muted, border, primary, primary-foreground',
+      'normal text needs 4.5:1, large text 3:1, UI parts and focus rings 3:1'
+    ]);
+  }
+  return stage(
+    'design',
+    'Design',
+    contrast.clean ? 'pass' : 'attention',
+    contrast.failing + ' of ' + contrast.pairs + ' token pairs fail AA',
+    contrast.rows
+      .filter((row) => row.error || !row.aa)
+      .slice(0, 6)
+      .map((row) => (row.error ? 'unknown token ' + row.fg : row.ratio + ':1 ' + row.fg + ' on ' + row.bg))
+  );
+}
+
+function buildStage(parity) {
+  if (!parity) {
+    return stage('build', 'Build', 'needs_input', 'Score parity first so the build order exists', []);
+  }
+  const order = parity.missing.slice(0, 8).map((item, index) => (index + 1) + '. [' + item.priority + '] ' + (item.area || '-') + ': ' + item.feature);
+  const mustsOpen = parity.must_have_total - parity.must_have_done;
+  return stage(
+    'build',
+    'Build',
+    mustsOpen ? 'attention' : 'pass',
+    mustsOpen ? mustsOpen + ' must-have features still open' : 'Every counted must-have is built',
+    order.length ? order : ['nothing missing across the counted matrix']
+  );
+}
+
+function backendStage(contracts) {
+  const info = lists(contracts);
+  const text = contractText(contracts);
+  const auth = /(auth|login|session|signin|sign-in|oauth|sso|token)/.test(text);
+  const payments = /(stripe|payment|checkout|subscription|billing|invoice|price)/.test(text);
+  const hosts = [];
+  info.apis.forEach((api) => {
+    const match = String(api.endpoint || '').match(/^https?:\/\/([^/"']+)/);
+    if (match && !hosts.includes(match[1])) hosts.push(match[1]);
+  });
+  return stage(
+    'backend',
+    'Backend',
+    info.apis.length ? 'pass' : 'attention',
+    info.apis.length + ' routes, ' + info.tables.length + ' tables' + (auth ? ', auth surface detected' : ', no auth surface observed'),
+    [
+      'database: ' + (info.tables.length ? info.tables.map((table) => String(table.table || 'unnamed')).join(', ') : 'none captured'),
+      'auth: ' + (auth ? 'required, model it explicitly rather than reusing the target login' : 'not observed in the captured contracts'),
+      'payments: ' + (payments ? 'billing surface detected, use your own provider account' : 'none observed'),
+      'integrations: ' + (hosts.length ? hosts.join(', ') : 'no external hosts observed'),
+      'ownership: rebuild behaviour only, never the target credentials or private APIs'
+    ]
+  );
+}
+
+function testStage(contracts) {
+  const info = lists(contracts);
+  const cases = [];
+  info.traces.slice(0, 5).forEach((trace) => cases.push('happy: ' + String(trace.ui_trigger || 'action') + ' writes ' + String(trace.table || 'the documented table')));
+  info.apis.slice(0, 4).forEach((api) => cases.push('contract: ' + String(api.endpoint || 'endpoint') + ' returns the captured shape and rejects a malformed body'));
+  info.transitions.slice(0, 4).forEach((edge) => cases.push('state: ' + String(edge.current_state || '?') + ' + ' + String(edge.trigger || '?') + ' -> ' + String(edge.next_state || '?') + ', every other trigger rejected'));
+  cases.push('edge: double submit on the primary action creates no duplicate row');
+  const total = info.traces.length + info.apis.length + info.transitions.length;
+  return stage(
+    'test',
+    'Test',
+    total ? 'pass' : 'needs_input',
+    cases.length + ' planned cases from ' + total + ' captured contracts',
+    cases
+  );
+}
+
+function diffStage(parity) {
+  if (!parity) return stage('diff', 'Diff', 'needs_input', 'Run the parity matrix to score the clone', []);
+  const mustsDone = parity.must_have_total > 0 && parity.must_have_done === parity.must_have_total;
+  return stage(
+    'diff',
+    'Diff',
+    mustsDone && parity.feature_score >= 80 ? 'pass' : 'attention',
+    parity.feature_score + '/100 parity, must-haves ' + parity.must_have_done + '/' + parity.must_have_total,
+    parity.by_area.slice(0, 6).map((area) => area.area + ': ' + area.score + ' (' + area.features + ')')
+  );
+}
+
+function entrepreneurStage() {
+  return stage(
+    'entrepreneur',
+    'Entrepreneur',
+    'needs_input',
+    'Needs real review rows; nothing is invented here',
+    [
+      'paste a CSV with review, source, url, rating and date columns',
+      'every quoted complaint keeps its row link, themes under three reviews are marked thin',
+      'output: ranked complaints, fix plan and a positioning angle for the clone'
+    ]
+  );
+}
+
+function brandStage(sweep) {
+  if (!sweep) return stage('brand', 'Brand', 'needs_input', 'Run the brand sweep to see what still carries the original', []);
+  const hits = sweep.hits || [];
+  return stage(
+    'brand',
+    'Brand',
+    hits.length ? 'attention' : 'pass',
+    hits.length ? hits.length + ' artifacts still carry the original name, domain or colours' : 'Clean: nothing of the original found in the artifacts',
+    [
+      ...hits.slice(0, 6).map((hit) => hit.kind + ' ' + hit.file + (hit.line ? ':' + hit.line : '') + ' -> ' + hit.match),
+      'rename checklist: app name, package name, fly app, image tag, domain, palette'
+    ]
+  );
+}
+
+function launchStage(spec) {
+  const title = String((spec && spec.title) || 'the rebuilt app');
+  return stage(
+    'launch',
+    'Launch',
+    'attention',
+    'Landing scaffold written; the listing copy is yours to own',
+    [
+      'headline: rebuild of ' + title + ', in your own words',
+      'sections: hero, proof, pricing, FAQ, footer',
+      'App Store name 30 chars, subtitle 30, keywords 100; Play title 30, short description 80',
+      'no ranking claims in the title, no competitor name in the listing'
+    ]
+  );
+}
+
+function deployStage(stages, bundle, sweep, parity, contrast) {
+  const blockers = stages.filter((item) => item.status === 'attention').map((item) => item.key);
+  const pending = stages.filter((item) => item.status === 'needs_input').map((item) => item.key);
+  const files = Array.isArray(bundle) ? bundle.map((file) => file.path).filter(Boolean) : [];
+  const ready = !blockers.length && sweep && sweep.clean && parity && contrast && contrast.failing === 0;
+  return stage(
+    'deploy',
+    'Deploy',
+    ready ? 'pass' : 'attention',
+    ready ? 'Preflight clear: ship from your own Railway or Fly account' : 'Blocked by ' + (blockers.join(', ') || 'missing gates'),
+    [
+      'bundle: ' + (files.length ? files.join(', ') : 'none compiled'),
+      blockers.length ? 'blocking stages: ' + blockers.join(', ') : 'no blocking stage',
+      pending.length ? 'waiting on input: ' + pending.join(', ') : 'no stage waiting on input',
+      'deploy runs from your accounts; this app holds no deployment credentials'
+    ]
+  );
+}
+
+function cloneHandoff(spec, contracts, stages) {
+  const info = lists(contracts);
+  const title = String((spec && spec.title) || 'Untitled rebuild');
+  const lines = [
+    '# ' + title + ' - 1:1 clone handoff',
+    '',
+    'Source surface: ' + ((spec && spec.target_url) || 'not stated'),
+    'Compiled from captured contracts plus the eleven replica skill stages. Rebuild behaviour and flows, never code,',
+    'assets, copy or private APIs from the source.',
+    '',
+    '## Stage board',
+    '',
+    '| stage | status | read |',
+    '| --- | --- | --- |',
+    ...stages.map((item) => '| ' + item.label + ' | ' + item.status + ' | ' + item.summary + ' |'),
+    '',
+    '## Captured surface',
+    '',
+    '- endpoints: ' + info.apis.length,
+    '- action paths: ' + info.traces.length,
+    '- lifecycle edges: ' + info.transitions.length,
+    '- tables: ' + info.tables.length,
+    ''
+  ];
+  stages.forEach((item) => {
+    lines.push('## ' + item.label);
+    lines.push('');
+    lines.push(item.summary);
+    if (item.details.length) {
+      lines.push('');
+      item.details.forEach((detail) => lines.push('- ' + detail));
+    }
+    lines.push('');
+  });
+  lines.push('## Build order');
+  lines.push('');
+  lines.push('1. Apply the schema and seeds, then boot /api/health.');
+  lines.push('2. Implement every captured endpoint and its action path.');
+  lines.push('3. Enforce the lifecycle edges and reject every other trigger.');
+  lines.push('4. Cover the planned test cases, then post the run transcript to the lab to capture performance.');
+  lines.push('5. Clear the parity, brand and contrast gates before deploying.');
+  return lines.join('\n');
+}
+
+export function runSkillPipeline(context) {
+  const spec = context.spec || null;
+  const contracts = context.contracts || {};
+  const stages = [
+    reconStage(contracts),
+    architectStage(contracts, spec),
+    designStage(context.contrast || null),
+    buildStage(context.parity || null),
+    backendStage(contracts),
+    testStage(contracts),
+    diffStage(context.parity || null),
+    entrepreneurStage(),
+    brandStage(context.sweep || null),
+    launchStage(spec)
+  ];
+  stages.push(deployStage(stages, spec && spec.deploy_bundle, context.sweep || null, context.parity || null, context.contrast || null));
+
+  const counts = {
+    pass: stages.filter((item) => item.status === 'pass').length,
+    attention: stages.filter((item) => item.status === 'attention').length,
+    needs_input: stages.filter((item) => item.status === 'needs_input').length
+  };
+  const ready = stages.every((item) => item.status === 'pass');
+
+  return {
+    stages,
+    stage_counts: counts,
+    ready_to_ship: ready,
+    clone_handoff: cloneHandoff(spec, contracts, stages)
+  };
+}
