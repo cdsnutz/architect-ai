@@ -49,6 +49,14 @@ export default function ReplicaSkillBoard({ stages, counts }) {
                 {item.probes_run ? " · " + item.probes_reproduced + "/" + item.probes_run + " probes" : ""}
               </p>
             )}
+            {item.agent_verdict && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                <span className="font-mono text-[10px] uppercase tracking-wide text-foreground">
+                  agent · {item.agent_verdict.verdict}
+                </span>{" "}
+                {item.agent_verdict.note}
+              </p>
+            )}
             {item.details?.length > 0 && (
               <ul className="mt-1.5 space-y-0.5 border-t border-border/40 pt-1.5 text-[11px] text-muted-foreground">
                 {item.details.map((detail, index) => (

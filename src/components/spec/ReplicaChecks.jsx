@@ -65,6 +65,29 @@ export default function ReplicaChecks({ spec, onUpdated }) {
     }
   };
 
+  const reviewStages = async () => {
+    setBusy("review");
+    try {
+      const response = await base44.functions.invoke("agentStageReview", { spec_id: spec.id });
+      const counts = response.data?.stage_counts;
+      if (response.data?.spec && onUpdated) onUpdated(response.data.spec);
+      toast({
+        title: "Stage sign-off recorded",
+        description: counts
+          ? counts.needs_input + " stage(s) need input · " + (response.data?.reviews?.length || 0) + " owners answered."
+          : "Owner verdicts saved against the stage board."
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Sign-off failed",
+        description: error?.response?.data?.error || error.message
+      });
+    } finally {
+      setBusy("");
+    }
+  };
+
   const runAll = async () => {
     const data = await run("run_all", { tokens: tokens || undefined });
     if (data?.replica) {
@@ -94,6 +117,9 @@ export default function ReplicaChecks({ spec, onUpdated }) {
                 {replica.verdict} · {replica.score}
               </Badge>
             )}
+            <Button size="sm" variant="outline" disabled={Boolean(busy)} onClick={reviewStages}>
+              {busy === "review" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Agent sign-off"}
+            </Button>
             <Button size="sm" variant="secondary" disabled={Boolean(busy)} onClick={runAll}>
               {busy === "run_all" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Run all skills"}
             </Button>
