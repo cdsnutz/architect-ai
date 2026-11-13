@@ -11,7 +11,6 @@ import DossierPanel from "@/components/lab/DossierPanel";
 import SkillCatalog from "@/components/lab/SkillCatalog";
 import CrossWireMatrix from "@/components/lab/CrossWireMatrix";
 import CrossWirePanel from "@/components/lab/CrossWirePanel";
-import LabHistory from "@/components/lab/LabHistory";
 import LabConductor from "@/components/lab/LabConductor";
 import StewardChat from "@/components/lab/StewardChat";
 import ThreatDashboard from "@/components/lab/ThreatDashboard";
@@ -47,10 +46,6 @@ export default function Lab() {
   const [stages, setStages] = useState([]);
   const [run, setRun] = useState(null);
 
-  const [requests, setRequests] = useState([]);
-  const [runs, setRuns] = useState([]);
-  const [loadingHistory, setLoadingHistory] = useState(true);
-
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const pollRef = useRef(null);
@@ -62,19 +57,6 @@ export default function Lab() {
     }
   }, []);
 
-  const loadHistory = useCallback(async () => {
-    try {
-      const [requestPage, runPage] = await Promise.all([
-        base44.entities.DataRequest.filter({}, { sort: "-created_date", limit: 10 }),
-        base44.entities.ChallengeRun.filter({}, { sort: "-created_date", limit: 8 })
-      ]);
-      setRequests(requestPage.items || []);
-      setRuns(runPage.items || []);
-    } finally {
-      setLoadingHistory(false);
-    }
-  }, []);
-
   useEffect(() => {
     (async () => {
       const catalogResponse = await base44.functions.invoke("labCatalog", {}).catch(() => null);
@@ -82,9 +64,8 @@ export default function Lab() {
         setCatalog({ packs: catalogResponse.data.packs || [], skills: catalogResponse.data.skills || [] });
         setWiring(catalogResponse.data.wiring || null);
       }
-      await loadHistory();
     })();
-  }, [loadHistory]);
+  }, []);
 
   useEffect(() => () => stopPolling(), [stopPolling]);
 
@@ -120,7 +101,6 @@ export default function Lab() {
       const record = response.data.request;
       setCurrent(record);
       setAuthorized(Array.isArray(record.authorized_targets) ? record.authorized_targets : []);
-      loadHistory();
     } catch (err) {
       setError(readError(err));
     }
@@ -148,7 +128,6 @@ export default function Lab() {
         const telemetry = await base44.entities.ReaRun.get(saved.run_id).catch(() => null);
         if (telemetry) setStages(telemetry.stages || []);
       }
-      loadHistory();
     } catch (err) {
       setError(readError(err));
       const fresh = await base44.entities.DataRequest.get(current.id).catch(() => null);
@@ -171,7 +150,6 @@ export default function Lab() {
         setError(response.data.reason || "No authorized host yet.");
       } else {
         setRun(response.data.run);
-        loadHistory();
       }
     } catch (err) {
       setError(readError(err));
@@ -204,7 +182,6 @@ export default function Lab() {
     if (!run) return;
     const updated = await base44.entities.ChallengeRun.update(run.id, { capability_gap: value });
     setRun(updated);
-    loadHistory();
   };
 
   const exportRun = () => {
@@ -226,26 +203,6 @@ export default function Lab() {
     link.download = "challenge-" + run.pack_id + ".json";
     link.click();
     URL.revokeObjectURL(url);
-  };
-
-  const openRequest = async (record) => {
-    stopPolling();
-    setError("");
-    setRun(null);
-    setStages([]);
-    setCurrent(record);
-    setAuthorized(Array.isArray(record.authorized_targets) ? record.authorized_targets : []);
-    if (record.run_id) {
-      const telemetry = await base44.entities.ReaRun.get(record.run_id).catch(() => null);
-      if (telemetry) setStages(telemetry.stages || []);
-    }
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const openRun = (record) => {
-    setRun(record);
-    setError("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const planTargets = current && current.plan && Array.isArray(current.plan.targets) ? current.plan.targets : [];
@@ -371,14 +328,6 @@ export default function Lab() {
         <LabConductor requestId={current ? current.id : ""} />
 
         <ThreatDashboard />
-
-        <LabHistory
-          requests={requests}
-          runs={runs}
-          loading={loadingHistory}
-          onOpenRequest={openRequest}
-          onOpenRun={openRun}
-        />
       </div>
     </div>
   );
