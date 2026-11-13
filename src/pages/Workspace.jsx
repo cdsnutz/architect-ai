@@ -33,10 +33,14 @@ export default function Workspace() {
   const [current, setCurrent] = useState(null);
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [userId, setUserId] = useState(null);
 
-  async function loadHistory() {
+  async function loadHistory(ownerId) {
     try {
-      const page = await base44.entities.SiteAnalysis.filter({}, { sort: "-created_date", limit: 20 });
+      const page = await base44.entities.SiteAnalysis.filter(
+        { created_by_id: ownerId },
+        { sort: "-created_date", limit: 20 }
+      );
       setHistory(page.items);
     } finally {
       setLoadingHistory(false);
@@ -51,11 +55,12 @@ export default function Workspace() {
         return;
       }
       setStatus("ready");
-      await loadHistory();
+      setUserId(user.id);
+      await loadHistory(user.id);
       const targetId = new URLSearchParams(window.location.search).get("analysis");
       if (!targetId) return;
       const record = await base44.entities.SiteAnalysis.get(targetId).catch(() => null);
-      if (record) {
+      if (record && record.created_by_id === user.id) {
         setCurrent(record);
         setUrl(record.url);
       }
@@ -71,7 +76,7 @@ export default function Workspace() {
     try {
       const response = await base44.functions.invoke("analyzeSite", { url });
       setCurrent(response.data.analysis);
-      loadHistory();
+      loadHistory(userId);
     } catch (err) {
       setError(
         (err && err.response && err.response.data && err.response.data.error) ||
@@ -90,7 +95,7 @@ export default function Workspace() {
     try {
       const response = await base44.functions.invoke("analyzePastedHtml", payload);
       setCurrent(response.data.analysis);
-      loadHistory();
+      loadHistory(userId);
     } catch (err) {
       setError(
         (err && err.response && err.response.data && err.response.data.error) ||
