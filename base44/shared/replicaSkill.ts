@@ -9,6 +9,8 @@
 // The rest are operator-run stages: they need a build, screenshots, store
 // listings or real reviews, which this surface deliberately does not fabricate.
 
+import { STAGE_WIRING } from './crossWire.ts';
+
 export const SKILL_CATALOG = [
   { id: 'recon', command: '/replica-recon', label: 'Recon', purpose: 'Map screens, flows, components and the inferred data model from public pages and your own account.', runner: null },
   { id: 'architect', command: '/replica-architect', label: 'Architect', purpose: 'Plan the stack, schema and API for the rebuild. This engine compiles the same artifacts as a spec.', runner: null },
@@ -715,6 +717,7 @@ function cloneHandoff(spec, contracts, stages) {
   stages.forEach((item) => {
     lines.push('## ' + item.label);
     lines.push('');
+    if (item.agent) lines.push('owner: ' + item.agent + (item.pods && item.pods.length ? ' · pods: ' + item.pods.join(', ') : ''));
     lines.push(item.summary);
     if (item.details.length) {
       lines.push('');
@@ -749,17 +752,38 @@ export function runSkillPipeline(context) {
   ];
   stages.push(deployStage(stages, spec && spec.deploy_bundle, context.sweep || null, context.parity || null, context.contrast || null));
 
+  // Every stage carries its wired pods, owning agent and the probes its own
+  // skills produced, so the board shows who ran what and on what evidence.
+  const evidence = context.evidence || {};
+  const wired = stages.map((item) => {
+    const row = STAGE_WIRING.find((entry) => entry.stage === item.key);
+    const observed = evidence[item.key];
+    const details = [...item.details];
+    if (observed && observed.ran) {
+      details.push('probes: ' + observed.reproduced + '/' + observed.ran + ' reproduced');
+      observed.lines.forEach((line) => details.push(line));
+    }
+    return {
+      ...item,
+      agent: row ? row.agent : '',
+      pods: row ? row.pods : [],
+      probes_run: observed ? observed.ran : 0,
+      probes_reproduced: observed ? observed.reproduced : 0,
+      details: details.slice(0, 12)
+    };
+  });
+
   const counts = {
-    pass: stages.filter((item) => item.status === 'pass').length,
-    attention: stages.filter((item) => item.status === 'attention').length,
-    needs_input: stages.filter((item) => item.status === 'needs_input').length
+    pass: wired.filter((item) => item.status === 'pass').length,
+    attention: wired.filter((item) => item.status === 'attention').length,
+    needs_input: wired.filter((item) => item.status === 'needs_input').length
   };
-  const ready = stages.every((item) => item.status === 'pass');
+  const ready = wired.every((item) => item.status === 'pass');
 
   return {
-    stages,
+    stages: wired,
     stage_counts: counts,
     ready_to_ship: ready,
-    clone_handoff: cloneHandoff(spec, contracts, stages)
+    clone_handoff: cloneHandoff(spec, contracts, wired)
   };
 }

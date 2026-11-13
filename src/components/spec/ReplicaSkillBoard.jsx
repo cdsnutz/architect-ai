@@ -42,6 +42,13 @@ export default function ReplicaSkillBoard({ stages, counts }) {
                 {item.status.replace("_", " ")}
               </Badge>
             </summary>
+            {(item.agent || item.pods?.length > 0) && (
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+                {item.agent}
+                {item.pods?.length > 0 ? " · " + item.pods.join(", ") : ""}
+                {item.probes_run ? " · " + item.probes_reproduced + "/" + item.probes_run + " probes" : ""}
+              </p>
+            )}
             {item.details?.length > 0 && (
               <ul className="mt-1.5 space-y-0.5 border-t border-border/40 pt-1.5 text-[11px] text-muted-foreground">
                 {item.details.map((detail, index) => (

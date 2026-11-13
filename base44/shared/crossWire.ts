@@ -143,6 +143,39 @@ export function wiredSkillIds(): string[] {
   return ids;
 }
 
+export type ProbeResultRow = {
+  skill: string;
+  reproduced: boolean;
+  observations: string[];
+  signal: string;
+};
+
+// Attributes each probe to the stages whose wiring names its skill, so a stage
+// reports the evidence its own pods produced rather than a summary of everything.
+export function stageEvidenceFromProbes(results: ProbeResultRow[]) {
+  const byStage: Record<string, { pods: string[]; agent: string; lines: string[]; ran: number; reproduced: number }> = {};
+  STAGE_WIRING.forEach((row) => {
+    byStage[row.stage] = { pods: row.pods, agent: row.agent, lines: [], ran: 0, reproduced: 0 };
+  });
+
+  results.forEach((result) => {
+    const skill = SKILLS.find((item) => item.name === result.skill);
+    if (!skill) return;
+    STAGE_WIRING.filter((row) => row.skills.includes(skill.id)).forEach((row) => {
+      const entry = byStage[row.stage];
+      entry.ran += 1;
+      if (result.reproduced) entry.reproduced += 1;
+      if (entry.lines.length < 4) {
+        entry.lines.push(
+          (result.reproduced ? 'reproduced: ' : 'no signal: ') + skill.name + ' — ' + String(result.signal || '').slice(0, 220)
+        );
+      }
+    });
+  });
+
+  return byStage;
+}
+
 export function crossWireMatrix() {
   const pods = LAB_PODS.map((pod) => {
     const rows = stagesForPod(pod);

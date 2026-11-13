@@ -1,10 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
-import { CLONE_STAGES, STAGE_WIRING, crossWireMatrix, wiredSkillIds } from '../../shared/crossWire.ts';
+import { CLONE_STAGES, STAGE_WIRING, crossWireMatrix, wiredSkillIds, stageEvidenceFromProbes } from '../../shared/crossWire.ts';
 import { SKILLS } from '../../shared/labSkills.ts';
 import { selectProbes, runProbe, formatProbes, assertPublicUrl } from '../../shared/readOnly.ts';
 import { captureSite } from '../../shared/siteCapture.ts';
 import { compileSpec } from '../../shared/rebuildSpec.ts';
-import { deriveFeatureMatrix, scoreParity, sweepArtifacts, deriveSweepTargets, runSkillPipeline } from '../../shared/replicaSkill.ts';
+import { contrastCheck, deriveFeatureMatrix, scoreParity, sweepArtifacts, deriveSweepTargets, runSkillPipeline } from '../../shared/replicaSkill.ts';
 import { startRun, markRunning, markComplete, finishRun } from '../../shared/runTracker.ts';
 import { seedStages, stageRunning, stageComplete } from '../../shared/lab.ts';
 
@@ -102,6 +102,28 @@ const CONTRACTS_SCHEMA = {
 
 function asArray(value) {
   return Array.isArray(value) ? value.filter((item) => item && typeof item === 'object') : [];
+}
+
+// Turns the colours the captured CSS actually declares into a token file the
+// contrast runner can score. Returns null when the capture found no pair.
+function tokensFromStyles(styles) {
+  const colors = (styles && styles.colors) || [];
+  if (!colors.length) return null;
+  const color: Record<string, string> = {};
+  const byHex: Record<string, string> = {};
+  colors.forEach((entry, index) => {
+    const name = 'color-' + index;
+    color[name] = entry.hex;
+    byHex[entry.hex] = name;
+  });
+  const pairs = [];
+  ((styles && styles.pairs) || []).forEach((pair) => {
+    const fg = byHex[pair.fg];
+    const bg = byHex[pair.bg];
+    if (fg && bg && fg !== bg) pairs.push([fg, bg]);
+  });
+  if (!pairs.length) return null;
+  return { color, pairs };
 }
 
 function buildPrompt(capture, probes, target) {
@@ -247,6 +269,12 @@ export default async function (req) {
         bundles: capture.bundles,
         external_hosts: capture.external_hosts,
         total_bytes: capture.total_bytes,
+        stylesheets: {
+          files: capture.stylesheets.files,
+          rules: capture.stylesheets.rules,
+          colors: capture.stylesheets.colors.slice(0, 8),
+          pairs: capture.stylesheets.pairs.slice(0, 8)
+        },
         limits: capture.limits,
         captured_at: capture.captured_at
       }
@@ -271,7 +299,17 @@ export default async function (req) {
     await markRunning(base44, telemetryId, 'clone');
     const parity = scoreParity(deriveFeatureMatrix(contracts));
     const sweep = sweepArtifacts(compiled.deploy_bundle, deriveSweepTargets({ title: meta.title, target_url: wanted }));
-    const pipeline = runSkillPipeline({ spec: { ...meta, deploy_bundle: compiled.deploy_bundle }, contracts, parity, sweep, contrast: null });
+    const tokens = tokensFromStyles(capture.stylesheets);
+    const contrast = tokens ? contrastCheck(tokens, tokens.pairs) : null;
+    const evidence = stageEvidenceFromProbes(results);
+    const pipeline = runSkillPipeline({
+      spec: { ...meta, deploy_bundle: compiled.deploy_bundle },
+      contracts,
+      parity,
+      sweep,
+      contrast,
+      evidence
+    });
 
     const cloneDetail =
       pipeline.stage_counts.pass + '/' + pipeline.stages.length + ' stages pass · parity ' + parity.feature_score +

@@ -24,6 +24,39 @@ type PageRow = {
   external_links: number;
 };
 
+const HEX_ANY = /#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b/g;
+
+function normHex(raw: string): string {
+  let hex = raw.replace('#', '').toLowerCase();
+  if (hex.length === 3) hex = hex.split('').map((c) => c + c).join('');
+  return '#' + hex;
+}
+
+// Reads the stylesheets a page actually links. Colours and colour/background
+// pairs are quoted from the CSS; nothing is guessed from a screenshot.
+function collectCss(text: string, colors: Map<string, number>, pairs: Map<string, { fg: string; bg: string; count: number }>) {
+  const found = text.match(HEX_ANY) || [];
+  found.forEach((raw) => {
+    const hex = normHex(raw);
+    colors.set(hex, (colors.get(hex) || 0) + 1);
+  });
+  const rules = [...text.matchAll(/([^{}]{1,300})\{([^{}]{0,900})\}/g)];
+  rules.forEach((match) => {
+    const body = match[2] || '';
+    const fg = /(?:^|;)\s*color\s*:\s*(#[0-9a-fA-F]{3,6})/i.exec(body);
+    const bg = /(?:^|;)\s*background(?:-color)?\s*:\s*(#[0-9a-fA-F]{3,6})/i.exec(body);
+    if (!fg || !bg) return;
+    const key = normHex(fg[1]) + '|' + normHex(bg[1]);
+    const seen = pairs.get(key);
+    if (seen) {
+      seen.count += 1;
+    } else {
+      pairs.set(key, { fg: normHex(fg[1]), bg: normHex(bg[1]), count: 1 });
+    }
+  });
+  return rules.length;
+}
+
 function decode(value: string): string {
   return String(value || '')
     .replace(/&amp;/g, '&')
@@ -134,7 +167,9 @@ export async function captureSite(startUrl: string, options: { maxPages?: number
   const origin = new URL(entry).origin;
   const maxPages = Math.min(MAX_PAGES, Math.max(1, options.maxPages || MAX_PAGES));
 
+  const cssLinks = new Set<string>();
   const queue: string[] = [entry];
+  let inlineCss = '';
   const seen = new Set<string>([entry]);
   const pages: PageRow[] = [];
   const externalHosts = new Set<string>();
@@ -148,6 +183,13 @@ export async function captureSite(startUrl: string, options: { maxPages?: number
       routePaths.add(row.path || '/');
       const parsed = parsePage(html, next);
       parsed.external.forEach((host) => externalHosts.add(host));
+      inlineCss += (html.match(/<style[^>]*>[\s\S]*?<\/style>/gi) || []).join('\n');
+      [...html.matchAll(/<link\b[^>]*>/gi)].forEach((match) => {
+        if (cssLinks.size >= 4 || !/rel\s*=\s*["']?stylesheet/i.test(match[0])) return;
+        const href = attr(match[0], 'href');
+        const cssUrl = href ? safeUrl(href, next) : null;
+        if (cssUrl && cssUrl.startsWith(origin)) cssLinks.add(cssUrl);
+      });
       parsed.internal.forEach((url) => {
         if (seen.has(url) || pages.length + queue.length >= maxPages) return;
         seen.add(url);
@@ -172,6 +214,23 @@ export async function captureSite(startUrl: string, options: { maxPages?: number
     }
   }
 
+  const colors = new Map<string, number>();
+  const colorPairs = new Map<string, { fg: string; bg: string; count: number }>();
+  let ruleCount = collectCss(inlineCss.slice(0, 120000), colors, colorPairs);
+  for (const cssUrl of [...cssLinks]) {
+    try {
+      const response = await fetch(cssUrl, {
+        method: 'GET',
+        redirect: 'follow',
+        headers: { 'User-Agent': 'ArchitectAI-lab/1.0 (read-only capture)' }
+      });
+      const text = (await response.text()).slice(0, 150000);
+      ruleCount += collectCss(text, colors, colorPairs);
+    } catch (error) {
+      // A stylesheet that will not load carries no evidence.
+    }
+  }
+
   const forms: { action: string; method: string; fields: number; page: string }[] = [];
   const bundles = new Set<string>();
   pages.forEach((page) => {
@@ -191,6 +250,12 @@ export async function captureSite(startUrl: string, options: { maxPages?: number
     route_paths: [...routePaths],
     forms: forms.slice(0, 20),
     bundles: [...bundles].slice(0, 20),
+    stylesheets: {
+      files: [...cssLinks],
+      rules: ruleCount,
+      colors: [...colors.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12).map(([hex, count]) => ({ hex, count })),
+      pairs: [...colorPairs.values()].sort((a, b) => b.count - a.count).slice(0, 12)
+    },
     external_hosts: [...externalHosts].slice(0, 20),
     total_bytes: pages.reduce((sum, page) => sum + page.bytes, 0),
     limits: 'Same-origin GET only, ' + maxPages + ' page cap, bodies trimmed to ' + MAX_BYTES + ' bytes, forms never submitted.',
