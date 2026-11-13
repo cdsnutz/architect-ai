@@ -9,6 +9,8 @@ import RunTelemetry from "@/components/lab/RunTelemetry";
 import FindingsBoard from "@/components/lab/FindingsBoard";
 import DossierPanel from "@/components/lab/DossierPanel";
 import SkillCatalog from "@/components/lab/SkillCatalog";
+import CrossWireMatrix from "@/components/lab/CrossWireMatrix";
+import CrossWirePanel from "@/components/lab/CrossWirePanel";
 import LabHistory from "@/components/lab/LabHistory";
 import LabConductor from "@/components/lab/LabConductor";
 import StewardChat from "@/components/lab/StewardChat";
@@ -36,6 +38,10 @@ export default function Lab() {
   const [hosts, setHosts] = useState("");
 
   const [catalog, setCatalog] = useState({ packs: [], skills: [] });
+  const [wiring, setWiring] = useState(null);
+  const [clone, setClone] = useState(null);
+  const [cloneBusy, setCloneBusy] = useState(false);
+  const [cloneError, setCloneError] = useState("");
   const [current, setCurrent] = useState(null);
   const [authorized, setAuthorized] = useState([]);
   const [stages, setStages] = useState([]);
@@ -74,6 +80,7 @@ export default function Lab() {
       const catalogResponse = await base44.functions.invoke("labCatalog", {}).catch(() => null);
       if (catalogResponse && catalogResponse.data) {
         setCatalog({ packs: catalogResponse.data.packs || [], skills: catalogResponse.data.skills || [] });
+        setWiring(catalogResponse.data.wiring || null);
       }
       await loadHistory();
     })();
@@ -170,6 +177,27 @@ export default function Lab() {
       setError(readError(err));
     }
     setBusy("");
+  };
+
+  const runClone = async (target) => {
+    if (busy || cloneBusy) return;
+    if (!current) {
+      setCloneError("Draft a data request with an authorized host first — the lab will not capture a host you have not named.");
+      return;
+    }
+    setCloneError("");
+    setClone(null);
+    setCloneBusy(true);
+    try {
+      const response = await base44.functions.invoke("captureClone", {
+        data_request_id: current.id,
+        target_url: target
+      });
+      setClone(response.data);
+    } catch (err) {
+      setCloneError(readError(err));
+    }
+    setCloneBusy(false);
   };
 
   const toggleGap = async (value) => {
@@ -326,6 +354,16 @@ export default function Lab() {
           selectedPackId={packBusy ? busy : ""}
           onSelectPack={runPack}
           busy={packBusy}
+        />
+
+        <CrossWireMatrix wiring={wiring} />
+
+        <CrossWirePanel
+          authorized={authorized}
+          busy={cloneBusy}
+          result={clone}
+          error={cloneError}
+          onRun={runClone}
         />
 
         <StewardChat requestId={current ? current.id : ""} />
