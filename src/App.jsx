@@ -18,6 +18,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import OAuthConsent from './pages/OAuthConsent';
+import AgentVerdict from './pages/AgentVerdict';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 const AuthenticatedApp = () => {
@@ -71,6 +72,12 @@ const AuthenticatedApp = () => {
         element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fcompare" replace />} />}
       >
         <Route index element={<Compare />} />
+      </Route>
+      <Route
+        path="/verdict"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fverdict" replace />} />}
+      >
+        <Route index element={<AgentVerdict />} />
       </Route>
       <Route
         path="/spec"

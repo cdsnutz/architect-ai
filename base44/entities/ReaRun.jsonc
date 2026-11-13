@@ -84,6 +84,10 @@
                 },
                 "note": {
                   "type": "string"
+                },
+                "conversation_id": {
+                  "type": "string",
+                  "description": "Agent conversation the verdict was signed in."
                 }
               }
             }

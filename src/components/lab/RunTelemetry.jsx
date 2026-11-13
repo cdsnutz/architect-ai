@@ -1,7 +1,8 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity } from "lucide-react";
+import { Activity, ExternalLink } from "lucide-react";
 
 const DOT = {
   queued: "bg-muted-foreground/40",
@@ -62,14 +63,27 @@ export default function RunTelemetry({ stages, busy }) {
               {Array.isArray(stage.verdicts) && stage.verdicts.length > 0 && (
                 <ul className="mt-1.5 space-y-0.5 border-t border-border/50 pt-1.5">
                   {stage.verdicts.map((verdict) => (
-                    <li key={verdict.stage} className="flex gap-2 text-[11px] leading-relaxed">
-                      <span className="w-20 shrink-0 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
-                        {verdict.stage}
-                      </span>
-                      <span className={"shrink-0 font-mono text-[10px] uppercase " + (VERDICT[verdict.verdict] || "text-muted-foreground")}>
-                        {verdict.verdict}
-                      </span>
-                      <span className="min-w-0 flex-1 text-muted-foreground">{verdict.note}</span>
+                    <li key={verdict.stage} className="space-y-0.5 text-[11px] leading-relaxed">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+                          {verdict.stage}
+                        </span>
+                        <span className={"font-mono text-[10px] uppercase " + (VERDICT[verdict.verdict] || "text-muted-foreground")}>
+                          {verdict.verdict}
+                        </span>
+                        {verdict.conversation_id ? (
+                          <Link
+                            to={"/verdict?conversation=" + verdict.conversation_id + "&agent=" + (verdict.agent || "") + "&stage=" + (verdict.stage || "")}
+                            className="inline-flex items-center gap-1 text-[10px] font-medium text-primary underline-offset-2 hover:underline"
+                          >
+                            {verdict.agent}
+                            <ExternalLink className="h-3 w-3" />
+                          </Link>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground">{verdict.agent}</span>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground">{verdict.note}</p>
                     </li>
                   ))}
                 </ul>
