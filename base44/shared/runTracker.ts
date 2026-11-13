@@ -77,19 +77,21 @@ export function markRunning(base44, runId, key) {
   return patchStage(base44, runId, key, { status: 'running', started_at: nowIso() });
 }
 
-export function markComplete(base44, runId, key, detail) {
+export function markComplete(base44, runId, key, detail, extra: Record<string, any> = {}) {
   return patchStage(base44, runId, key, {
     status: 'complete',
     detail: detail || '',
-    finished_at: nowIso()
+    finished_at: nowIso(),
+    ...extra
   });
 }
 
-export function markNeedsInput(base44, runId, key, detail) {
+export function markNeedsInput(base44, runId, key, detail, extra: Record<string, any> = {}) {
   return patchStage(base44, runId, key, {
     status: 'needs_input',
     detail: detail || '',
-    finished_at: nowIso()
+    finished_at: nowIso(),
+    ...extra
   });
 }
 

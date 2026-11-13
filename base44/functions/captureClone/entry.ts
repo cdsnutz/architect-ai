@@ -352,15 +352,17 @@ export default async function (req) {
       });
       if (reviews.length) {
         applied = applyStageReviews(pipeline.stages, reviews);
-        agentReview = { checked_at: new Date().toISOString(), by: 'capture pipeline', ...reviewSummary(reviews) };
+        const summary = reviewSummary(reviews);
+        agentReview = { checked_at: new Date().toISOString(), by: 'capture pipeline', ...summary };
         const detail =
           reviews.length + ' stages signed off · ' + applied.stage_counts.needs_input + ' need input';
+        const verdicts = summary.verdicts;
         if (applied.stage_counts.needs_input > 0) {
           await stageNeedsInput(base44, 'RebuildSpec', specId, 'signoff', detail);
-          await markNeedsInput(base44, telemetryId, 'signoff', detail);
+          await markNeedsInput(base44, telemetryId, 'signoff', detail, { verdicts });
         } else {
           await stageComplete(base44, 'RebuildSpec', specId, 'signoff', detail);
-          await markComplete(base44, telemetryId, 'signoff', detail);
+          await markComplete(base44, telemetryId, 'signoff', detail, { verdicts });
         }
       } else {
         const detail = 'Sign-off withheld: no stage owner answered';

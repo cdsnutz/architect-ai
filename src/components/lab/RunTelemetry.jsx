@@ -12,6 +12,13 @@ const DOT = {
   failed: "bg-destructive"
 };
 
+const VERDICT = {
+  pass: "text-emerald-400",
+  attention: "text-amber-400",
+  declined: "text-red-400",
+  timeout: "text-amber-400"
+};
+
 export default function RunTelemetry({ stages, busy }) {
   if (!Array.isArray(stages) || stages.length === 0) return null;
 
@@ -52,6 +59,21 @@ export default function RunTelemetry({ stages, busy }) {
                 </div>
               )}
               {stage.detail && <p className="mt-1 text-[11px] text-muted-foreground">{stage.detail}</p>}
+              {Array.isArray(stage.verdicts) && stage.verdicts.length > 0 && (
+                <ul className="mt-1.5 space-y-0.5 border-t border-border/50 pt-1.5">
+                  {stage.verdicts.map((verdict) => (
+                    <li key={verdict.stage} className="flex gap-2 text-[11px] leading-relaxed">
+                      <span className="w-20 shrink-0 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+                        {verdict.stage}
+                      </span>
+                      <span className={"shrink-0 font-mono text-[10px] uppercase " + (VERDICT[verdict.verdict] || "text-muted-foreground")}>
+                        {verdict.verdict}
+                      </span>
+                      <span className="min-w-0 flex-1 text-muted-foreground">{verdict.note}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         ))}

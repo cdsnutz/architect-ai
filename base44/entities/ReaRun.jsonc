@@ -67,6 +67,27 @@
           "detail": {
             "type": "string"
           },
+          "verdicts": {
+            "type": "array",
+            "description": "Stage-owner verdicts recorded on this stage, when the stage asks agents to sign off.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stage": {
+                  "type": "string"
+                },
+                "agent": {
+                  "type": "string"
+                },
+                "verdict": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "started_at": {
             "type": "string"
           },
