@@ -160,6 +160,18 @@ function pySpecs(content: string): string[] {
   return specs;
 }
 
+const PATH_ALIASES: { prefix: string; base: string }[] = [
+  { prefix: '@/', base: 'src/' },
+  { prefix: '~/', base: 'src/' }
+];
+
+function aliasPath(spec: string): string {
+  for (const alias of PATH_ALIASES) {
+    if (spec.startsWith(alias.prefix)) return alias.base + spec.slice(alias.prefix.length);
+  }
+  return '';
+}
+
 function barePackage(spec: string): string {
   if (!spec || spec.startsWith('.') || spec.startsWith('/') || /^[a-z]+:/.test(spec)) return '';
   const parts = spec.split('/');
@@ -262,7 +274,7 @@ export function buildArchitecture(files: { path: string; content: string; lines:
   const known = new Set(files.map((file) => file.path));
   const modules = new Map<string, { key: string; layer: string; files: number; lines: number }>();
   const externals = new Map<string, number>();
-  const localImports: { from: string; spec: string; py: boolean }[] = [];
+  const localImports: { from: string; spec: string; py: boolean; rooted: boolean }[] = [];
 
   for (const file of files) {
     const key = moduleKey(file.path);
@@ -272,13 +284,17 @@ export function buildArchitecture(files: { path: string; content: string; lines:
     modules.set(key, entry);
 
     if (extensionOf(file.path) === 'py') {
-      for (const spec of pySpecs(file.content)) localImports.push({ from: file.path, spec, py: true });
+      for (const spec of pySpecs(file.content)) localImports.push({ from: file.path, spec, py: true, rooted: false });
       continue;
     }
 
     for (const spec of jsSpecs(file.content)) {
-      if (spec.startsWith('.')) {
-        localImports.push({ from: file.path, spec, py: false });
+      const aliased = aliasPath(spec);
+      if (aliased) {
+        // Aliased import resolves from the repo root, not the importing file.
+        localImports.push({ from: file.path, spec: aliased, py: false, rooted: true });
+      } else if (spec.startsWith('.')) {
+        localImports.push({ from: file.path, spec, py: false, rooted: false });
       } else {
         const name = barePackage(spec);
         if (name) externals.set(name, (externals.get(name) || 0) + 1);
@@ -288,7 +304,8 @@ export function buildArchitecture(files: { path: string; content: string; lines:
 
   const edges = new Map<string, { from: string; to: string; weight: number }>();
   for (const link of localImports) {
-    const target = link.py ? resolvePython(link.from, link.spec, known) : resolveImport(link.from, link.spec, known);
+    const resolveFrom = link.rooted ? 'index.js' : link.from;
+    const target = link.py ? resolvePython(resolveFrom, link.spec, known) : resolveImport(resolveFrom, link.spec, known);
     if (!target) {
       if (link.py) {
         const name = link.spec.replace(/^\.+/, '').split('.')[0];
