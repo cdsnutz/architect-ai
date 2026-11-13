@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 // Strictly read-only observation for the challenge lab.
 // Every routine here issues anonymous GET requests only: no cookies, no credentials,
 // no request bodies, no state-changing verbs, and no target that is private, internal

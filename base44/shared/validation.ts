@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 // One validation pass over a dossier. Shared by the single-dossier endpoint and by
 // the scheduled sweep, so the rule set lives in exactly one place.
 

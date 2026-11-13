@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 // Anonymous, GET-only content-negotiation observation.
 // Sends no credentials, no cookies and no request bodies, never repeats a path,
 // and never targets an endpoint that could change state.

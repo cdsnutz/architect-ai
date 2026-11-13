@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 // Automatic threat categorization for lab findings.
 // Every discovery is graded from its skill's risk class, then adjusted by what the
 // evidence actually says: a probe that observed nothing demotes, and an unobserved

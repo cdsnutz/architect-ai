@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 // Schemas, prompts and stage telemetry for the Engineering Challenge Lab.
 // The prompt contract is the part that matters: a claim is only "observed" when the
 // probe output states it, and anything the read surface cannot settle must be named

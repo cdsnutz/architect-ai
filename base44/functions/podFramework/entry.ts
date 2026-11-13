@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { PODS, TECHNIQUES, REV_CYCLE, SCOPE_GUARDRAIL, masterPrompt } from '../../shared/pods.ts';
 import { LAYERS, SYNC_SEQUENCE } from '../../shared/layers.ts';

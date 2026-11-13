@@ -1,0 +1,144 @@
+STRICT PROPRIETARY LICENSE
+Copyright (c) 2026 REVENGINE. All Rights Reserved.
+
+NOTICE TO ALL PERSONS AND ENTITIES: THIS IS NOT FREE OR OPEN SOURCE SOFTWARE.
+
+================================================================================
+1. COPYRIGHT AND OWNERSHIP
+================================================================================
+
+All right, title, and interest in and to this software, including but not
+limited to all source code, compiled code, object code, documentation, schemas,
+prompts, specifications, architecture, designs, workflows, data models, user
+interface designs, algorithms, and any other materials contained in or derived
+from this repository (collectively, the "Software"), are the exclusive property
+of the copyright holder identified above (the "Author").
+
+All rights are reserved by the Author.
+
+================================================================================
+2. NO LICENSE GRANTED
+================================================================================
+
+No part of the Software may be copied, reproduced, modified, adapted,
+translated, reverse engineered, decompiled, disassembled, distributed,
+redistributed, sublicensed, published, transmitted, hosted, rented, leased,
+sold, resold, or used, in whole or in part, in any commercial or private
+capacity, by any means and in any medium, without the express prior written
+consent of the Author.
+
+There is no implied license granted by the existence of the code in any
+specific environment. The availability of the Software in any repository,
+hosting service, package registry, development environment, application
+builder, artifact store, or other distribution channel does not constitute a
+grant of any license, express or implied, nor does it waive any right of the
+Author.
+
+Absence of a license file, rights notice, or technical protection measure in
+any particular copy, branch, fork, mirror, cached version, or generated build
+of the Software shall not be construed as a grant of rights.
+
+Any permission granted by the Author must be in writing, must be signed by the
+Author, and is limited strictly to the terms stated in that writing. All rights
+not expressly granted in such writing remain reserved to the Author.
+
+================================================================================
+3. PROHIBITED ACTS
+================================================================================
+
+Without the express prior written consent of the Author, you may not:
+
+  (a) use the Software, in whole or in part, for any commercial purpose;
+  (b) use the Software, in whole or in part, for any private or internal
+      purpose, including personal, educational, research, or evaluation use;
+  (c) copy, reproduce, publish, upload, post, transmit, or otherwise make the
+      Software available to any third party;
+  (d) modify, adapt, translate, or create derivative works based on the
+      Software;
+  (e) distribute, redistribute, sublicense, sell, resell, rent, lease, lend,
+      assign, or otherwise transfer the Software or any rights in it;
+  (f) incorporate the Software, in whole or in part, into any other product,
+      service, codebase, or system, whether commercial or non-commercial;
+  (g) remove, obscure, alter, or circumvent any copyright notice, rights
+      notice, or other proprietary marking contained in the Software;
+  (h) train, fine-tune, or otherwise use the Software as training data or as
+      input to any machine learning model or automated code generation system;
+  (i) use the Software to develop, or assist in developing, a competing
+      product or service.
+
+================================================================================
+4. CONFIDENTIALITY
+================================================================================
+
+The Software is proprietary and confidential. You must treat the Software as
+confidential information of the Author and must not disclose it, in whole or in
+part, to any third party except as expressly authorized in writing by the
+Author. You must protect it with at least the same degree of care you use for
+your own confidential information, and in no event less than a reasonable
+degree of care.
+
+================================================================================
+5. NO WARRANTY
+================================================================================
+
+THE SOFTWARE IS PROVIDED "AS-IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, TITLE, ACCURACY, AND NON-INFRINGEMENT. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH YOU. THE
+AUTHOR MAKES NO WARRANTY THAT THE SOFTWARE WILL BE ERROR-FREE, SECURE, OR
+UNINTERRUPTED, OR THAT DEFECTS WILL BE CORRECTED.
+
+================================================================================
+6. LIMITATION OF LIABILITY
+================================================================================
+
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
+OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE, INCLUDING WITHOUT LIMITATION ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES, OR DAMAGES FOR LOSS OF PROFITS,
+REVENUE, DATA, OR GOODWILL.
+
+================================================================================
+7. ENFORCEMENT AND REMEDIES
+================================================================================
+
+Any unauthorized use, copying, modification, or distribution of the Software is
+a material breach of this License and an infringement of the Author's
+intellectual property rights. The Author reserves the right to pursue all
+available legal and equitable remedies, including injunctive relief and
+recovery of damages, attorneys' fees, and costs.
+
+================================================================================
+8. TERMINATION
+================================================================================
+
+Any rights granted by the Author, whether express or implied, terminate
+automatically and immediately upon any breach of this License. Upon
+termination, you must cease all use of the Software and destroy all copies in
+your possession or control.
+
+================================================================================
+9. THIRD-PARTY COMPONENTS
+================================================================================
+
+This License applies to the original works of the Author contained in the
+Software. Third-party components included in or depended upon by the Software
+remain subject to their own licenses, which govern those components alone and
+are unaffected by this License.
+
+================================================================================
+10. GOVERNING TERMS
+================================================================================
+
+This License is the complete and exclusive statement of the rights granted with
+respect to the Software. No waiver of any term is effective unless in writing
+and signed by the Author. If any provision is held unenforceable, the remaining
+provisions remain in full force and effect.
+
+For licensing inquiries, written consent requests, or permissions, contact the
+Author directly.
+
+================================================================================
+END OF TERMS
+================================================================================

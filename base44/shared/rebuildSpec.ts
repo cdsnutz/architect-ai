@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 // Deterministic rebuild-spec compiler.
 //
 // Reads captured contracts (api_contracts, inferred_schema, state_transitions,

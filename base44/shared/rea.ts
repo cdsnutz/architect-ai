@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 // REA — the reverse-engineering agent layer. One registry for the tools, skills,
 // agents, pods and workflows that the engine exposes, so the console, the agent
 // and the backend all read the same inventory.

@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { CLONE_STAGES, STAGE_WIRING, crossWireMatrix, wiredSkillIds, stageEvidenceFromProbes } from '../../shared/crossWire.ts';
 import { SKILLS } from '../../shared/labSkills.ts';

@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 // The cross-wire: one map that binds the eleven replica stages to the lab's pods,
 // the lab's read-only skills, and the in-app agent that owns each stage.
 //

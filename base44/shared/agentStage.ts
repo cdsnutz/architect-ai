@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 // Stage ownership. Every replica stage names an owning agent. This module asks
 // that agent to sign its stage off from the evidence the stage carries, and
 // moves the stage to needs_input when the agent declines or never answers.

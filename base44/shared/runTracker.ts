@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 // Pod-run telemetry. One ReaRun record per pod pass, patched stage by stage while
 // the pass runs, so the tracker can follow the pods instead of guessing at them.
 // Tracking is auxiliary: a failure here is logged and never breaks the analysis.

@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 // Bounded, read-only capture of a whole site: anonymous GET per page, same-origin
 // links only, a hard page cap. It inventories what a visitor can reach, never
 // downloads source maps, never submits a form and never sends a body.

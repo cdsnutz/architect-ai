@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { extractEvidence, mapLogic } from '../../shared/analysis.ts';
 import { probeContentNegotiation, formatProbe } from '../../shared/probe.ts';

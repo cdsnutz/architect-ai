@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 // Repository ingestion: turns a GitHub repo into a gitingest-style digest and a
 // gitdiagram-style architecture map. Read-only by construction — the caller only
 // reads file trees and file contents, never writes to the repository.

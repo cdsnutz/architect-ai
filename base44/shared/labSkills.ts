@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 // The lab's unique engineering skill catalog. Every skill is an observation technique that
 // can be executed with anonymous GET/HEAD requests only — no writes, no credentials,
 // no payloads. `probe` names the read-only routine in readOnly.ts that carries it out.

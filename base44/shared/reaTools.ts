@@ -1,3 +1,10 @@
+/**
+* (c) 2026 REVENGINE. All Rights Reserved.
+* Proprietary and Confidential. Unauthorized copying, modification,
+* or distribution of this file strictly prohibited without prior
+* written consent from the author.
+*/
+
 // REA tool surface: agent connection tokens, the doctor pass, a source-level
 // analysis pass and the job-spec builder. All of it runs in the app, and the same
 // actions answer over the web endpoint for an agent holding a minted token.
