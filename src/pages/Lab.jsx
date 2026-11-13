@@ -15,6 +15,8 @@ import LabConductor from "@/components/lab/LabConductor";
 import StewardChat from "@/components/lab/StewardChat";
 import ThreatDashboard from "@/components/lab/ThreatDashboard";
 import ChallengeCoach from "@/components/lab/ChallengeCoach";
+import RepoIngestPanel from "@/components/lab/RepoIngestPanel";
+import IngestSources from "@/components/lab/IngestSources";
 import TriggerJourney from "@/components/analysis/TriggerJourney";
 
 function readError(error) {
@@ -36,7 +38,7 @@ export default function Lab() {
   const [focus, setFocus] = useState("production_incident");
   const [hosts, setHosts] = useState("");
 
-  const [catalog, setCatalog] = useState({ packs: [], skills: [] });
+  const [catalog, setCatalog] = useState({ packs: [], skills: [], sources: [] });
   const [wiring, setWiring] = useState(null);
   const [clone, setClone] = useState(null);
   const [cloneBusy, setCloneBusy] = useState(false);
@@ -61,7 +63,11 @@ export default function Lab() {
     (async () => {
       const catalogResponse = await base44.functions.invoke("labCatalog", {}).catch(() => null);
       if (catalogResponse && catalogResponse.data) {
-        setCatalog({ packs: catalogResponse.data.packs || [], skills: catalogResponse.data.skills || [] });
+        setCatalog({
+          packs: catalogResponse.data.packs || [],
+          skills: catalogResponse.data.skills || [],
+          sources: catalogResponse.data.sources || []
+        });
         setWiring(catalogResponse.data.wiring || null);
       }
     })();
@@ -109,6 +115,13 @@ export default function Lab() {
 
   const toggleTarget = (url) => {
     setAuthorized((list) => (list.includes(url) ? list.filter((item) => item !== url) : [...list, url]));
+  };
+
+  const useIngestTarget = (url) => {
+    setHosts((value) => {
+      const list = parseHosts(value);
+      return list.includes(url) ? value : [...list, url].join(", ");
+    });
   };
 
   const runPlan = async () => {
@@ -311,6 +324,14 @@ export default function Lab() {
           selectedPackId={packBusy ? busy : ""}
           onSelectPack={runPack}
           busy={packBusy}
+        />
+
+        <RepoIngestPanel />
+
+        <IngestSources
+          sources={catalog.sources}
+          authorized={parseHosts(hosts)}
+          onUseTarget={useIngestTarget}
         />
 
         <CrossWireMatrix wiring={wiring} />

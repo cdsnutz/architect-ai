@@ -1,0 +1,99 @@
+{
+  "name": "RepoIngest",
+  "type": "object",
+  "properties": {
+    "repo_url": {
+      "type": "string",
+      "description": "GitHub repository that was ingested."
+    },
+    "owner": {
+      "type": "string"
+    },
+    "repo": {
+      "type": "string"
+    },
+    "branch": {
+      "type": "string",
+      "description": "Branch the tree was read from."
+    },
+    "description": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string"
+    },
+    "stars": {
+      "type": "number"
+    },
+    "file_count": {
+      "type": "number",
+      "description": "Source files actually read into the digest."
+    },
+    "tracked_files": {
+      "type": "number",
+      "description": "Blobs in the repository tree, before filtering."
+    },
+    "total_lines": {
+      "type": "number"
+    },
+    "digest_chars": {
+      "type": "number"
+    },
+    "digest": {
+      "type": "string",
+      "description": "Opening of the gitingest-style digest, capped for storage. The full digest is returned to the caller."
+    },
+    "architecture": {
+      "type": "object",
+      "description": "Gitdiagram-style map: modules by layer, import edges, external packages."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "failed"
+      ],
+      "enumColors": [
+        "green",
+        "red"
+      ],
+      "default": "complete"
+    }
+  },
+  "required": [
+    "repo_url",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
