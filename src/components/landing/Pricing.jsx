@@ -18,16 +18,17 @@ const PLANS = [
     highlight: false,
   },
   {
-    name: "Sovereign",
-    price: "$49",
-    unit: "per month, per host",
-    note: "Continuous watch on one verified host.",
+    name: "Sovereign Monitor",
+    price: "$99",
+    unit: "per month, per account",
+    note: "Unlimited maps across up to 3 verified domains, re-mapped daily.",
     features: [
-      "Daily re-map of one verified host",
-      "Email alert the moment an endpoint appears, disappears or changes behaviour",
-      "History of what moved between runs",
+      "Email alert the moment any endpoint appears, disappears or changes behaviour",
+      "JSON truth table with per-route provenance",
+      "Ownership proof before any scan",
     ],
-    cta: "Start watching a host",
+    fineprint: "Fair use: up to 5,000 maps per month, which is 55 maps per domain per day.",
+    cta: "Start monitoring",
     highlight: true,
   },
   {
@@ -68,7 +69,14 @@ export default function Pricing() {
                   : "rounded-2xl border border-border bg-card/40 p-6 flex flex-col"
               }
             >
-              <h3 className="font-display text-lg font-semibold">{plan.name}</h3>
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="font-display text-lg font-semibold">{plan.name}</h3>
+                {plan.highlight && (
+                  <span className="shrink-0 rounded-full bg-primary px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-primary-foreground">
+                    Recommended
+                  </span>
+                )}
+              </div>
 
               <div className="mt-4 flex items-baseline gap-2">
                 <span className="font-display text-4xl font-bold tracking-tight">
@@ -87,6 +95,12 @@ export default function Pricing() {
                   </li>
                 ))}
               </ul>
+
+              {plan.fineprint && (
+                <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground/80">
+                  {plan.fineprint}
+                </p>
+              )}
 
               <Button
                 className="mt-7 gap-2"
