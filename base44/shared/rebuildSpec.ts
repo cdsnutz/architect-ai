@@ -259,7 +259,13 @@ export function specMarkdown(contracts, meta) {
     '## 10. Handoff',
     '',
     'Paste sections 0-9 into Claude Code together with the deploy bundle, run it locally, then post the run',
-    'output back into the lab so performance is captured against this spec.'
+    'output back into the lab so performance is captured against this spec.',
+    '',
+    '## 11. Replica gates',
+    '',
+    'Before the deploy stage, run the replica skill gates on this spec: parity against the feature matrix, a brand',
+    'sweep for anything still carrying the original name, domain or colours, and a WCAG contrast pass on the design',
+    'tokens. Any blocked gate stops the launch; the results are stored on the spec, not in this document.'
   ].join('\n');
 }
 
@@ -284,12 +290,18 @@ export function runnableSpec(contracts, meta) {
         key: 'probe',
         run: 'for p in ' + (endpoints.length ? endpoints.join(' ') : '/api/health') + '; do curl -s -o /dev/null -w "$p %{http_code} %{time_total}\\n" "http://localhost:3000$p"; done',
         capture: ['endpoints_total', 'endpoints_ok', 'p95_latency_ms']
+      },
+      {
+        key: 'replica-gates',
+        run: 'replicaSkill { action: "run_all", spec_id }',
+        expect: 'parity must-haves done, brand sweep clean, contrast AA pass',
+        capture: ['parity_score', 'sweep_hits', 'contrast_fails']
       }
     ],
     capture: {
       post_to: 'captureRunOutput',
       fields: ['spec_id', 'stdout', 'exit_code', 'metrics'],
-      metrics: ['build_seconds', 'test_passed', 'test_failed', 'endpoints_total', 'endpoints_ok', 'p95_latency_ms']
+      metrics: ['build_seconds', 'test_passed', 'test_failed', 'endpoints_total', 'endpoints_ok', 'p95_latency_ms', 'parity_score', 'sweep_hits', 'contrast_fails']
     },
     run_contract: 'Every stage runs against the rebuilt app on your machine. Post the transcript and metrics back to the lab to capture performance.',
     app_name: app

@@ -1,0 +1,471 @@
+// Replica skill set, ported from github.com/Jakeschincariol/replica-skill (MIT).
+//
+// Eleven staged skills; three of them ship deterministic tools that fit this
+// engine without a network call, so they run as app modules here:
+//   replica-diff/parity.py     -> scoreParity
+//   replica-design/contrast.py -> contrastCheck
+//   replica-brand/sweep.py     -> sweepArtifacts
+//
+// The rest are operator-run stages: they need a build, screenshots, store
+// listings or real reviews, which this surface deliberately does not fabricate.
+
+export const SKILL_CATALOG = [
+  { id: 'recon', command: '/replica-recon', label: 'Recon', purpose: 'Map screens, flows, components and the inferred data model from public pages and your own account.', runner: null },
+  { id: 'architect', command: '/replica-architect', label: 'Architect', purpose: 'Plan the stack, schema and API for the rebuild. This engine compiles the same artifacts as a spec.', runner: null },
+  { id: 'design', command: '/replica-design', label: 'Design', purpose: 'Rebuild the design system as tokens, with your own assets.', runner: 'contrast' },
+  { id: 'build', command: '/replica-build', label: 'Build', purpose: 'Rebuild screen by screen from the recon map, ticking off the feature matrix.', runner: null },
+  { id: 'backend', command: '/replica-backend', label: 'Backend', purpose: 'Auth, database, payments and integrations behind the captured contracts.', runner: null },
+  { id: 'test', command: '/replica-test', label: 'Test', purpose: 'Click through every flow and log bugs by severity. The run contract carries this stage.', runner: null },
+  { id: 'diff', command: '/replica-diff', label: 'Diff', purpose: 'Parity score against the original: features, must-haves done, what is missing and in what order.', runner: 'parity' },
+  { id: 'entrepreneur', command: '/replica-entrepreneur', label: 'Entrepreneur', purpose: 'Read real, linked reviews and turn them into fixes and a positioning angle. Needs review data you supply.', runner: null },
+  { id: 'brand', command: '/replica-brand', label: 'Brand', purpose: 'Rename and rebrand, then sweep the codebase until nothing of the original is left.', runner: 'sweep' },
+  { id: 'launch', command: '/replica-launch', label: 'Launch', purpose: 'Landing page, pricing and store listing, checked against store limits.', runner: null },
+  { id: 'deploy', command: '/replica-deploy', label: 'Deploy', purpose: 'Preflight (tests, parity, sweep), production setup and DNS. The deploy bundle carries the config.', runner: null }
+];
+
+const WEIGHT = { must: 3, should: 2, could: 1, p0: 3, p1: 2, p2: 1 };
+const CREDIT = { yes: 1, done: 1, partial: 0.5, no: 0, '': 0, todo: 0 };
+const PRIORITY_NAME = { 3: 'must', 2: 'should', 1: 'could' };
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let cell = '';
+  let quoted = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          cell += '"';
+          i += 1;
+        } else {
+          quoted = false;
+        }
+      } else {
+        cell += ch;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      quoted = true;
+      continue;
+    }
+    if (ch === ',') {
+      row.push(cell);
+      cell = '';
+      continue;
+    }
+    if (ch === '\n') {
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = '';
+      continue;
+    }
+    if (ch === '\r') continue;
+    cell += ch;
+  }
+  if (cell.length || row.length) {
+    row.push(cell);
+    rows.push(row);
+  }
+  return rows.filter((r) => r.some((c) => String(c).trim().length));
+}
+
+function escapeCell(value) {
+  const text = value === undefined || value === null ? '' : String(value);
+  return /[",\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+
+export function matrixToCsv(rows) {
+  const header = ['feature', 'area', 'priority', 'original', 'clone', 'notes'];
+  const body = rows.map((row) => header.map((key) => escapeCell(row[key])).join(','));
+  return [header.join(','), ...body].join('\n');
+}
+
+export function parseFeatureMatrix(text) {
+  const table = parseCsv(String(text || ''));
+  if (!table.length) throw new Error('The feature matrix is empty.');
+  const header = table[0].map((h) => h.trim().toLowerCase());
+  for (const need of ['feature', 'priority', 'clone']) {
+    if (!header.includes(need)) {
+      throw new Error("The matrix has no '" + need + "' column. Needed: feature, area, priority, original, clone, notes.");
+    }
+  }
+  return table.slice(1).map((cells) => {
+    const row = {};
+    header.forEach((key, index) => {
+      if (key) row[key] = (cells[index] || '').trim();
+    });
+    return row;
+  }).filter((row) => row.feature);
+}
+
+export function deriveFeatureMatrix(contracts) {
+  const rows = [];
+  const traces = Array.isArray(contracts.ledger_traces) ? contracts.ledger_traces : [];
+  const apis = Array.isArray(contracts.api_contracts) ? contracts.api_contracts : [];
+  const transitions = Array.isArray(contracts.state_transitions) ? contracts.state_transitions : [];
+  const tables = Array.isArray(contracts.inferred_schema) ? contracts.inferred_schema : [];
+
+  traces.forEach((trace) => {
+    const endpoint = String(trace.endpoint || '').trim();
+    const table = String(trace.table || '').trim();
+    rows.push({
+      feature: String(trace.ui_trigger || 'action') + ' -> ' + (endpoint || 'endpoint unobserved'),
+      area: 'flows',
+      priority: 'must',
+      original: 'yes',
+      clone: endpoint && table ? 'yes' : 'partial',
+      notes: String(trace.evidence || '')
+    });
+  });
+
+  apis.forEach((api) => {
+    const method = String(api.method || 'UNKNOWN').toUpperCase();
+    const endpoint = String(api.endpoint || '').trim();
+    rows.push({
+      feature: method + ' ' + (endpoint || 'endpoint'),
+      area: 'api surface',
+      priority: method === 'UNKNOWN' ? 'should' : 'must',
+      original: 'yes',
+      clone: endpoint ? 'yes' : 'partial',
+      notes: String(api.evidence || '')
+    });
+  });
+
+  transitions.forEach((edge) => {
+    const from = String(edge.current_state || edge.from_state || '?');
+    const to = String(edge.next_state || edge.to_state || '?');
+    rows.push({
+      feature: String(edge.entity || 'object') + ': ' + from + ' -> ' + to,
+      area: 'lifecycle',
+      priority: 'must',
+      original: 'yes',
+      clone: edge.evidence ? 'yes' : 'partial',
+      notes: String(edge.trigger || '')
+    });
+  });
+
+  tables.forEach((table) => {
+    const columns = Array.isArray(table.columns) ? table.columns : [];
+    rows.push({
+      feature: 'table ' + String(table.table || 'unnamed') + ' (' + columns.length + ' columns)',
+      area: 'data model',
+      priority: 'must',
+      original: 'yes',
+      clone: columns.length ? 'yes' : 'partial',
+      notes: String(table.purpose || '')
+    });
+  });
+
+  return rows.slice(0, 40);
+}
+
+export function scoreParity(rows) {
+  const counted = [];
+  const skipped = [];
+  const extras = [];
+  const problems = [];
+
+  rows.forEach((row, index) => {
+    const line = index + 2;
+    const original = String(row.original || 'yes').toLowerCase() || 'yes';
+    const clone = String(row.clone || '').toLowerCase();
+    const prio = String(row.priority || '').toLowerCase();
+
+    if (['no', 'n', 'false'].includes(original)) {
+      extras.push(row);
+      return;
+    }
+    if (clone === 'skip') {
+      skipped.push(row);
+      return;
+    }
+    if (!(prio in WEIGHT)) {
+      problems.push("line " + line + ": priority '" + (row.priority || '') + "' is not must/should/could, counted as could");
+    }
+    if (!(clone in CREDIT)) {
+      problems.push("line " + line + ": clone '" + (row.clone || '') + "' is not yes/partial/no/skip, counted as no");
+    }
+    counted.push({
+      ...row,
+      weight: WEIGHT[prio] || 1,
+      credit: CREDIT[clone] === undefined ? 0 : CREDIT[clone]
+    });
+  });
+
+  const total = counted.reduce((sum, row) => sum + row.weight, 0);
+  const got = counted.reduce((sum, row) => sum + row.weight * row.credit, 0);
+  const featureScore = total ? (100 * got) / total : 0;
+
+  const areaMap = {};
+  counted.forEach((row) => {
+    const area = row.area || '(no area)';
+    const bucket = areaMap[area] || [0, 0, 0];
+    bucket[0] += row.weight * row.credit;
+    bucket[1] += row.weight;
+    bucket[2] += 1;
+    areaMap[area] = bucket;
+  });
+  const byArea = Object.keys(areaMap)
+    .map((area) => ({
+      area,
+      score: areaMap[area][1] ? Math.round((100 * areaMap[area][0]) / areaMap[area][1] * 10) / 10 : 0,
+      features: areaMap[area][2]
+    }))
+    .sort((a, b) => a.score - b.score);
+
+  const missing = counted
+    .filter((row) => row.credit < 1)
+    .sort((a, b) => b.weight - a.weight || a.credit - b.credit || String(a.area || '').localeCompare(String(b.area || '')))
+    .map((row) => ({
+      feature: row.feature,
+      area: row.area || '',
+      priority: PRIORITY_NAME[row.weight] || 'could',
+      clone: row.clone || 'no',
+      notes: row.notes || ''
+    }));
+
+  const musts = counted.filter((row) => row.weight === 3);
+
+  return {
+    feature_score: Math.round(featureScore * 10) / 10,
+    overall: Math.round(featureScore * 10) / 10,
+    counted: counted.length,
+    must_have_done: musts.filter((row) => row.credit === 1).length,
+    must_have_total: musts.length,
+    by_area: byArea,
+    missing,
+    skipped: skipped.map((row) => ({ feature: row.feature, area: row.area || '', notes: row.notes || '' })),
+    extras: extras.map((row) => ({ feature: row.feature, area: row.area || '' })),
+    problems
+  };
+}
+
+const HEX = /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+const NEEDS = { normal: [4.5, 7], large: [3, 4.5], ui: [3, 3] };
+
+function parseHex(value) {
+  const match = HEX.exec(String(value || '').trim());
+  if (!match) return null;
+  let hex = match[1];
+  if (hex.length === 3) hex = hex.split('').map((c) => c + c).join('');
+  return [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+}
+
+function luminance(rgb) {
+  const channels = rgb.map((c) => {
+    const v = c / 255;
+    return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+}
+
+export function contrastRatio(fg, bg) {
+  const a = luminance(parseHex(fg));
+  const b = luminance(parseHex(bg));
+  const hi = Math.max(a, b);
+  const lo = Math.min(a, b);
+  return Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100;
+}
+
+function flatten(obj, prefix = '', out = {}) {
+  if (obj && typeof obj === 'object') {
+    if (typeof obj.value === 'string') {
+      out[prefix] = obj.value;
+      return out;
+    }
+    if (typeof obj.$value === 'string') {
+      out[prefix] = obj.$value;
+      return out;
+    }
+    Object.keys(obj).forEach((key) => {
+      if (key.charAt(0) === '$' || key.charAt(0) === '_') return;
+      flatten(obj[key], prefix ? prefix + '-' + key : key, out);
+    });
+  } else if (typeof obj === 'string' && HEX.test(obj.trim())) {
+    out[prefix] = obj.trim();
+  }
+  return out;
+}
+
+export function contrastCheck(tokensInput, explicitPairs) {
+  let tokens = tokensInput;
+  if (typeof tokens === 'string') {
+    try {
+      tokens = JSON.parse(tokensInput);
+    } catch (error) {
+      throw new Error('The token file is not valid JSON.');
+    }
+  }
+  if (!tokens || typeof tokens !== 'object') throw new Error('Pass a token object or the token JSON.');
+
+  const source = tokens.color || tokens.colors || tokens.colour || {};
+  const flat = flatten(source);
+  const colours = {};
+  Object.keys(flat).forEach((key) => {
+    if (HEX.test(flat[key])) colours[key] = flat[key];
+  });
+
+  let pairs = explicitPairs;
+  if (!Array.isArray(pairs) || !pairs.length) {
+    pairs = Array.isArray(tokens.pairs) && tokens.pairs.length ? tokens.pairs : null;
+  }
+  if (!pairs) {
+    const fg = Object.keys(colours).filter((k) => /(^|-)(text|fg|on)(-|$)/.test(k));
+    const bg = Object.keys(colours).filter((k) => /(^|-)(bg|background|surface)(-|$)/.test(k));
+    pairs = [];
+    fg.forEach((f) => bg.forEach((b) => pairs.push([f, b])));
+  }
+  if (!pairs.length) throw new Error('No pairs to check. Add a "pairs" list to the token file.');
+
+  const rows = pairs.slice(0, 200).map((pair) => {
+    const fg = pair[0];
+    const bg = pair[1];
+    const size = NEEDS[pair[2]] ? pair[2] : 'normal';
+    if (!colours[fg] || !colours[bg]) {
+      return { fg, bg, size, error: 'unknown token' };
+    }
+    const ratio = contrastRatio(colours[fg], colours[bg]);
+    const [aa, aaa] = NEEDS[size];
+    return {
+      fg,
+      bg,
+      size,
+      ratio,
+      aa: ratio >= aa,
+      aaa: ratio >= aaa,
+      fg_hex: colours[fg],
+      bg_hex: colours[bg]
+    };
+  });
+
+  const failing = rows.filter((row) => row.error || !row.aa).length;
+  return { rows, pairs: rows.length, failing, clean: failing === 0 };
+}
+
+const HEX_FIND = /#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![0-9a-zA-Z])/g;
+
+function normalizeHex(value) {
+  let hex = String(value || '').toLowerCase().replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map((c) => c + c).join('');
+  return '#' + hex;
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function sweepArtifacts(files, options = {}) {
+  const avoid = (options.avoid || []).map((n) => String(n).trim()).filter(Boolean);
+  const domains = (options.domains || []).map((d) => String(d).trim().toLowerCase()).filter(Boolean);
+  const colours = new Set((options.colors || []).filter((c) => HEX.test(String(c || '').trim())).map(normalizeHex));
+
+  if (!avoid.length && !domains.length && !colours.size) {
+    throw new Error("Nothing to look for. Give the original app's name, domain or brand colours.");
+  }
+
+  const patterns = [];
+  avoid.forEach((name) => {
+    const parts = name.split(/[\s_-]+/).filter(Boolean).map(escapeRegex);
+    patterns.push({ kind: 'name', label: name, rx: new RegExp(parts.join('[\\s_-]?'), 'i') });
+  });
+  domains.forEach((domain) => {
+    patterns.push({ kind: 'domain', label: domain, rx: new RegExp(escapeRegex(domain), 'i') });
+  });
+
+  const hits = [];
+  const limit = 200;
+
+  (Array.isArray(files) ? files : []).forEach((file) => {
+    if (hits.length >= limit) return;
+    const path = String((file && file.path) || 'artifact');
+    const content = String((file && file.content) || '');
+
+    patterns.forEach((pattern) => {
+      if (pattern.kind === 'name' && pattern.rx.test(path)) {
+        hits.push({ file: path, line: 0, kind: 'path', match: pattern.label, text: 'file name' });
+      }
+    });
+
+    content.split('\n').forEach((line, index) => {
+      if (hits.length >= limit) return;
+      patterns.forEach((pattern) => {
+        if (pattern.rx.test(line)) {
+          hits.push({ file: path, line: index + 1, kind: pattern.kind, match: pattern.label, text: line.trim().slice(0, 160) });
+        }
+      });
+      if (colours.size) {
+        const found = line.match(HEX_FIND) || [];
+        found.forEach((raw) => {
+          const hex = normalizeHex(raw);
+          if (colours.has(hex)) {
+            hits.push({ file: path, line: index + 1, kind: 'color', match: hex, text: line.trim().slice(0, 160) });
+          }
+        });
+      }
+    });
+  });
+
+  const byKind = {};
+  hits.forEach((hit) => {
+    byKind[hit.kind] = (byKind[hit.kind] || 0) + 1;
+  });
+
+  return { hits: hits.slice(0, limit), by_kind: byKind, clean: hits.length === 0 };
+}
+
+export function deriveSweepTargets(spec) {
+  const title = String((spec && spec.title) || '').trim();
+  const head = title.split(' - ')[0].trim();
+  const avoid = head && head.length > 2 ? [head] : [];
+  const domains = [];
+  const rawUrl = String((spec && spec.target_url) || '');
+  if (rawUrl) {
+    try {
+      const host = new URL(rawUrl).hostname.replace(/^www\./, '');
+      if (host) domains.push(host);
+    } catch (error) {
+      domains.length = 0;
+    }
+  }
+  return { avoid, domains, colors: [] };
+}
+
+export function gateSummary({ parity, sweep, contrast, threshold = 80 }) {
+  const gates = [];
+
+  if (parity) {
+    const mustsDone = parity.must_have_total > 0 && parity.must_have_done === parity.must_have_total;
+    gates.push({
+      key: 'parity',
+      pass: mustsDone && parity.feature_score >= threshold,
+      score: parity.feature_score,
+      label: parity.feature_score + '/100 parity, must-haves ' + parity.must_have_done + '/' + parity.must_have_total
+    });
+  }
+  if (sweep) {
+    const score = sweep.hits.length ? Math.max(0, 100 - sweep.hits.length * 10) : 100;
+    gates.push({
+      key: 'sweep',
+      pass: sweep.hits.length === 0,
+      score,
+      label: sweep.hits.length ? sweep.hits.length + ' brand hits left' : 'brand sweep clean'
+    });
+  }
+  if (contrast) {
+    const score = contrast.pairs ? Math.round(100 * (1 - contrast.failing / contrast.pairs)) : 0;
+    gates.push({
+      key: 'contrast',
+      pass: contrast.failing === 0,
+      score,
+      label: contrast.failing + '/' + contrast.pairs + ' pairs fail AA'
+    });
+  }
+
+  const score = gates.length ? Math.round(gates.reduce((sum, gate) => sum + gate.score, 0) / gates.length) : 0;
+  const verdict = !gates.length ? 'unchecked' : gates.every((gate) => gate.pass) ? 'pass' : 'blocked';
+  return { gates, score, verdict, threshold };
+}

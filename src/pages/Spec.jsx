@@ -9,6 +9,7 @@ import SpecViewer from "@/components/spec/SpecViewer";
 import RunnableSpec from "@/components/spec/RunnableSpec";
 import DeployBundle from "@/components/spec/DeployBundle";
 import RunCapture from "@/components/spec/RunCapture";
+import ReplicaChecks from "@/components/spec/ReplicaChecks";
 import { GitBranch } from "lucide-react";
 
 export default function Spec() {
@@ -50,6 +51,11 @@ export default function Spec() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const replaceSpec = (spec) => {
+    setSpecs((prev) => prev.map((item) => (item.id === spec.id ? spec : item)));
+    setSelected(spec);
   };
 
   const capture = async (payload) => {
@@ -96,6 +102,7 @@ export default function Spec() {
                 <SpecViewer spec={selected} />
                 <RunnableSpec spec={selected} />
                 <RunCapture spec={selected} onCapture={capture} busy={busy} />
+                <ReplicaChecks spec={selected} onUpdated={replaceSpec} />
                 <DeployBundle spec={selected} />
               </>
             ) : (

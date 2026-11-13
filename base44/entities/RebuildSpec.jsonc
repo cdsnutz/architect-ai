@@ -80,6 +80,10 @@
       "type": "object",
       "description": "Derived performance read: verdict, test pass rate, latency, endpoint health."
     },
+    "replica": {
+      "type": "object",
+      "description": "Replica skill gates: parity matrix and score, brand sweep hits, contrast failures, combined verdict."
+    },
     "notes": {
       "type": "string"
     }
