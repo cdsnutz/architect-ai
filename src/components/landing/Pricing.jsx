@@ -6,9 +6,8 @@
 */
 
 import React from "react";
-import { Link } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import TelemetryButton from "@/components/landing/TelemetryButton";
 
 const PLANS = [
   {
@@ -55,75 +54,74 @@ const PLANS = [
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="border-b border-border/60">
-      <div className="max-w-6xl mx-auto px-5 py-20">
-        <div className="max-w-2xl">
-          <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">
-            Pricing
-          </h2>
-          <p className="mt-4 text-muted-foreground">
-            One map, a watched host, or the whole engine in your own network.
-          </p>
-        </div>
+    <section id="pricing" className="border-t border-[#1c2431] px-8 py-14">
+      <div className="mx-auto max-w-[1280px]">
+        <h2 className="text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-[#E6EDF3]">
+          Pricing
+        </h2>
+        <p className="mt-2.5 max-w-[560px] text-[14px] leading-[1.55] text-[#9AA7B6]">
+          One map, a watched host, or the whole engine in your own network.
+        </p>
 
-        <div className="mt-10 grid lg:grid-cols-3 gap-5">
+        <div className="mt-7 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3">
           {PLANS.map((plan) => (
             <div
               key={plan.name}
               className={
                 plan.highlight
-                  ? "rounded-2xl border border-primary/40 bg-card p-6 shadow-xl flex flex-col"
-                  : "rounded-2xl border border-border bg-card/40 p-6 flex flex-col"
+                  ? "flex flex-col rounded-[14px] border border-[#22C55E] bg-[#14201d] p-5 shadow-[0_0_0_1px_rgba(34,197,94,0.5),0_0_34px_rgba(34,197,94,0.3)]"
+                  : "flex flex-col rounded-[14px] border border-[#2b3646] bg-[#161B22] p-5"
               }
             >
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="font-display text-lg font-semibold">{plan.name}</h3>
+              <div className="flex min-h-6 items-start justify-between gap-2">
+                <h3 className="text-[15px] font-semibold text-[#E6EDF3]">{plan.name}</h3>
                 {plan.highlight && (
-                  <span className="shrink-0 rounded-full bg-primary px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-primary-foreground">
+                  <span className="whitespace-nowrap rounded-full bg-[#22C55E] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#04130a]">
                     Recommended
                   </span>
                 )}
               </div>
 
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="font-display text-4xl font-bold tracking-tight">
+              <div className="mt-3.5 flex flex-wrap items-baseline gap-1.5">
+                <b className="text-[34px] font-semibold tracking-[-0.03em] text-[#E6EDF3]">
                   {plan.price}
-                </span>
-                <span className="text-sm text-muted-foreground">{plan.unit}</span>
+                </b>
+                <span className="text-[12px] text-[#9AA7B6]">{plan.unit}</span>
               </div>
 
-              <p className="mt-3 text-sm text-muted-foreground">{plan.note}</p>
+              <p className="mt-2.5 text-[12.5px] leading-[1.5] text-[#9AA7B6]">{plan.note}</p>
 
-              <ul className="mt-6 space-y-3 flex-1">
+              <ul className="mt-4 flex flex-1 list-none flex-col gap-2.5">
                 {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2.5 text-sm">
-                    <Check className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
-                    <span className="text-muted-foreground">{feature}</span>
+                  <li
+                    key={feature}
+                    className="flex gap-2 text-[12px] leading-[1.45] text-[#C5D0DC]"
+                  >
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#22C55E]" />
+                    {feature}
                   </li>
                 ))}
               </ul>
 
               {plan.fineprint && (
-                <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground/80">
+                <p className="mt-3 text-[10.5px] leading-[1.5] text-[#7d8a99]">
                   {plan.fineprint}
                 </p>
               )}
 
-              <Button
-                className="mt-7 gap-2"
-                variant={plan.highlight ? "default" : "outline"}
-                asChild
+              <TelemetryButton
+                to="/workspace"
+                variant={plan.highlight ? "solid" : "outline"}
+                className="mt-[18px]"
               >
-                <Link to="/workspace">
-                  {plan.cta}
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </Button>
+                {plan.cta}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </TelemetryButton>
             </div>
           ))}
         </div>
 
-        <p className="mt-6 text-xs text-muted-foreground">
+        <p className="mt-[18px] text-[12px] text-[#7d8a99]">
           Every plan starts with the same ownership check. No verified host, no map.
         </p>
       </div>

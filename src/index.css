@@ -90,3 +90,48 @@
     @apply bg-background text-foreground font-body;
   }
 }
+
+/* Landing page — Linear Telemetry */
+.lt-page {
+  font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+@keyframes ltScan {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(338px);
+  }
+}
+
+@keyframes ltUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lt-scan {
+  animation: ltScan 3.6s ease-in-out infinite alternate;
+}
+
+.lt-up {
+  animation: ltUp 0.8s ease-out both;
+}
+
+.lt-up-late {
+  animation: ltUp 1s 0.2s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lt-scan,
+  .lt-up,
+  .lt-up-late {
+    animation: none;
+  }
+}

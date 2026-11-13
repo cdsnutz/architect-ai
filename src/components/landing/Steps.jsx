@@ -6,7 +6,7 @@
 */
 
 import React from "react";
-import { ShieldCheck, Radar, FileJson } from "lucide-react";
+import { ArrowRight, FileJson, Radar, ShieldCheck } from "lucide-react";
 
 const STEPS = [
   {
@@ -15,10 +15,14 @@ const STEPS = [
     body: (
       <>
         Publish a DNS TXT record at{" "}
-        <span className="font-mono text-foreground">_revengine-verify.&lt;your-domain&gt;</span>{" "}
+        <code className="font-mono text-[11.5px] break-all text-[#E6EDF3]">
+          _revengine-verify.&lt;your-domain&gt;
+        </code>{" "}
         or drop a file at{" "}
-        <span className="font-mono text-foreground">/.well-known/revengine-verify.txt</span>.
-        Nothing is mapped until one of the two answers.
+        <code className="font-mono text-[11.5px] break-all text-[#E6EDF3]">
+          /.well-known/revengine-verify.txt
+        </code>
+        . Nothing is mapped until one of the two answers.
       </>
     ),
   },
@@ -36,34 +40,41 @@ const STEPS = [
 
 export default function Steps() {
   return (
-    <section id="steps" className="border-b border-border/60">
-      <div className="max-w-6xl mx-auto px-5 py-20">
-        <div className="max-w-2xl">
-          <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">
-            The three steps
-          </h2>
-          <p className="mt-4 text-muted-foreground">
-            From claiming a host to holding the evidence, in order.
-          </p>
-        </div>
+    <section id="steps" className="border-t border-[#1c2431] px-8 py-14">
+      <div className="mx-auto max-w-[1280px]">
+        <h2 className="text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-[#E6EDF3]">
+          The three steps
+        </h2>
+        <p className="mt-2.5 max-w-[560px] text-[14px] leading-[1.55] text-[#9AA7B6]">
+          From claiming a host to holding the evidence, in order.
+        </p>
 
-        <ol className="mt-10 grid md:grid-cols-3 gap-5">
+        <div className="mt-7 flex flex-col items-stretch md:flex-row">
           {STEPS.map((step, index) => {
             const Icon = step.icon;
             return (
-              <li key={step.title} className="rounded-2xl border border-border bg-card/40 p-6">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2 font-mono text-xs text-primary">
+              <React.Fragment key={step.title}>
+                {index > 0 && (
+                  <div className="flex w-full shrink-0 items-center justify-center py-1 md:w-[26px] md:py-0">
+                    <ArrowRight className="h-4 w-4 rotate-90 text-[#38BDF8] md:rotate-0" />
+                  </div>
+                )}
+                <div className="flex-1 rounded-xl border border-[#2b3646] bg-[#161B22] p-5 transition-[border-color,box-shadow] duration-200 hover:border-[#38BDF8] hover:shadow-[0_0_22px_rgba(56,189,248,0.15)]">
+                  <div className="flex items-center justify-between font-mono text-[12px] text-[#38BDF8]">
                     0{index + 1}
-                  </span>
-                  <Icon className="w-4 h-4 text-muted-foreground" />
+                    <Icon className="h-4 w-4 text-[#9AA7B6]" />
+                  </div>
+                  <h3 className="mt-3.5 text-[16px] font-semibold text-[#E6EDF3]">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 text-[12.5px] leading-[1.55] text-[#9AA7B6]">
+                    {step.body}
+                  </p>
                 </div>
-                <h3 className="mt-4 font-display text-lg font-semibold">{step.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{step.body}</p>
-              </li>
+              </React.Fragment>
             );
           })}
-        </ol>
+        </div>
       </div>
     </section>
   );

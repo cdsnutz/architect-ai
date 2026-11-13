@@ -6,8 +6,7 @@
 */
 
 import React from "react";
-import { X, Check, Radar } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Check, Radar, X } from "lucide-react";
 
 const GUESSWORK = [
   "Guesses /admin, /api/v1, /test and calls whatever answers a hit.",
@@ -24,78 +23,81 @@ const STAGES = [
 
 export default function ProofCompare() {
   return (
-    <section id="proof" className="border-b border-border/60">
-      <div className="max-w-6xl mx-auto px-5 py-20">
-        <div className="max-w-2xl">
-          <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">
-            The proof
-          </h2>
-          <p className="mt-4 text-muted-foreground">
-            Anyone can produce a list of URLs. The difference is what stands behind each
-            line of that list.
-          </p>
-        </div>
+    <section id="proof" className="border-t border-[#1c2431] px-8 py-14">
+      <div className="mx-auto max-w-[1280px]">
+        <h2 className="text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-[#E6EDF3]">
+          The proof
+        </h2>
+        <p className="mt-2.5 max-w-[560px] text-[14px] leading-[1.55] text-[#9AA7B6]">
+          Anyone can produce a list of URLs. The difference is what stands behind each line
+          of that list.
+        </p>
 
-        <div className="mt-10 grid lg:grid-cols-2 gap-5">
-          <div className="rounded-2xl border border-border bg-card/40 p-6">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="font-display text-lg font-semibold">Guesswork scanner</h3>
-              <Badge variant="outline" className="border-muted-foreground/30 text-muted-foreground">
+        <div className="mt-7 grid grid-cols-1 overflow-hidden rounded-[14px] border border-[#2b3646] bg-[#161B22] md:grid-cols-[1fr_1.15fr]">
+          <div className="p-[22px]">
+            <div className="flex items-center justify-between gap-2.5">
+              <h3 className="text-[16px] font-semibold text-[#E6EDF3]">Guesswork scanner</h3>
+              <span className="whitespace-nowrap rounded-[5px] bg-[rgba(244,114,182,0.14)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[#F472B6]">
                 probably
-              </Badge>
+              </span>
             </div>
 
-            <ul className="mt-6 space-y-4">
+            <ul className="mt-4 flex list-none flex-col gap-[13px]">
               {GUESSWORK.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm text-muted-foreground">
-                  <X className="w-4 h-4 mt-0.5 shrink-0 text-destructive" />
+                <li
+                  key={item}
+                  className="flex gap-2.5 text-[12.5px] leading-[1.5] text-[#9AA7B6]"
+                >
+                  <X className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#F472B6]" />
                   {item}
                 </li>
               ))}
             </ul>
 
-            <p className="mt-6 border-t border-border/70 pt-5 text-sm text-muted-foreground">
-              The result is one word: <span className="text-foreground">&ldquo;probably&rdquo;</span>.
-              No provenance, so nobody downstream can check it.
+            <p className="mt-[18px] border-t border-[#2b3646] pt-4 text-[12.5px] leading-[1.55] text-[#9AA7B6]">
+              The result is one word:{" "}
+              <b className="font-medium text-[#38BDF8]">&ldquo;probably&rdquo;</b>. No
+              provenance, so nobody downstream can check it.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-primary/30 bg-card p-6 shadow-xl">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="font-display text-lg font-semibold flex items-center gap-2">
-                <Radar className="w-4 h-4 text-primary" />
+          <div className="border-t border-[#2b3646] bg-[#131a22] p-[22px] md:border-l md:border-t-0">
+            <div className="flex items-center justify-between gap-2.5">
+              <h3 className="flex items-center gap-2 text-[16px] font-semibold text-[#E6EDF3]">
+                <Radar className="h-4 w-4 text-[#22C55E]" />
                 REVENGINE
               </h3>
-              <Badge className="bg-primary/15 text-primary border-transparent hover:bg-primary/15">
+              <span className="whitespace-nowrap rounded-[5px] bg-[rgba(34,197,94,0.14)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[#22C55E]">
                 each stage proves something
-              </Badge>
+              </span>
             </div>
 
-            <ul className="mt-6 space-y-4">
+            <ul className="mt-4 flex list-none flex-col gap-[13px]">
               {STAGES.map((stage) => (
-                <li key={stage.label} className="flex items-start gap-3">
-                  <Check className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
-                  <p className="text-sm">
-                    <span className="font-mono text-xs uppercase tracking-wide text-foreground">
+                <li
+                  key={stage.label}
+                  className="flex gap-2.5 text-[12.5px] leading-[1.5] text-[#9AA7B6]"
+                >
+                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#22C55E]" />
+                  <p>
+                    <span className="mb-0.5 block font-mono text-[11px] uppercase tracking-[0.08em] text-[#E6EDF3]">
                       {stage.label}
                     </span>
-                    <span className="block text-muted-foreground">{stage.proves}</span>
+                    {stage.proves}
                   </p>
                 </li>
               ))}
             </ul>
 
-            <div className="mt-6 border-t border-border/70 pt-5 space-y-3 text-sm text-muted-foreground">
-              <p>
-                Every route carries its provenance, so you always know which of the four
-                stages put it in the table.
-              </p>
-              <p>
-                Templated routes are reported as{" "}
-                <span className="font-mono text-foreground">pattern_match</span> instead of
-                being probed with literal braces.
-              </p>
-            </div>
+            <p className="mt-[18px] border-t border-[#2b3646] pt-4 text-[12.5px] leading-[1.55] text-[#9AA7B6]">
+              Every route carries its provenance, so you always know which of the four
+              stages put it in the table.
+            </p>
+            <p className="mt-2.5 text-[12.5px] leading-[1.55] text-[#9AA7B6]">
+              Templated routes are reported as{" "}
+              <code className="font-mono text-[#38BDF8]">pattern_match</code> instead of
+              being probed with literal braces.
+            </p>
           </div>
         </div>
       </div>

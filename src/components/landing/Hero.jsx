@@ -6,53 +6,65 @@
 */
 
 import React from "react";
-import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Image } from "@/components/ui/image";
+import TelemetryButton from "@/components/landing/TelemetryButton";
+import TruthTablePreview from "@/components/landing/TruthTablePreview";
+
+const HERO_IMAGE =
+  "https://media.base44.com/images/public/6acbfbcf65532c58a25774fd/fae447e9a_generated_23907d33.jpg";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-border/60">
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[38rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
+    <section className="relative">
+      <div className="absolute inset-0 z-0">
+        <Image
+          src={HERO_IMAGE}
+          alt="Abstract network map of endpoints"
+          fittingType="fill"
+          className="h-full w-full opacity-35"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,#0D1117_20%,rgba(13,17,23,0.75)_60%,rgba(13,17,23,0.9))]" />
+      </div>
 
-      <div className="relative max-w-4xl mx-auto px-5 pt-20 pb-16 text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-          <ShieldCheck className="w-3.5 h-3.5" />
-          Ownership gate on every map
-        </span>
+      <div className="relative z-10 mx-auto grid max-w-[1280px] items-center gap-8 px-8 pt-[52px] pb-14 md:grid-cols-[1fr_340px]">
+        <div>
+          <span className="inline-flex items-center gap-[7px] rounded-full border border-[rgba(34,197,94,0.4)] bg-[rgba(34,197,94,0.1)] px-2.5 py-[5px] text-[11px] font-semibold text-[#22C55E]">
+            <ShieldCheck className="h-3 w-3" />
+            Ownership gate on every map
+          </span>
 
-        <h1 className="mt-6 font-display text-4xl sm:text-6xl font-bold leading-[1.05] tracking-tight">
-          Your API documentation is a lie.
-        </h1>
+          <h1 className="lt-up mt-[18px] text-[40px] font-semibold leading-[1.1] tracking-[-0.03em] text-[#E6EDF3]">
+            Your API documentation is a lie.
+          </h1>
 
-        <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-          Between legacy endpoints, shadow APIs and developer leaks, the surface your app
-          actually exposes is bigger than your docs claim. REVENGINE maps every reachable
-          endpoint and shows you the evidence for each one.
-        </p>
+          <p className="mt-4 text-[14px] leading-[1.6] text-[#9AA7B6]">
+            Between legacy endpoints, shadow APIs and developer leaks, the surface your app
+            actually exposes is bigger than your docs claim. REVENGINE maps every reachable
+            endpoint and shows you the evidence for each one.
+          </p>
 
-        <div className="mt-9 flex flex-col sm:flex-row gap-3 justify-center">
-          <Button size="lg" className="gap-2" asChild>
-            <Link to="/workspace">
+          <div className="mt-[22px] flex flex-col items-start gap-2.5">
+            <TelemetryButton to="/workspace">
               Verify ownership, then get your truth table
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </Button>
-          <Button size="lg" variant="outline" asChild>
-            <a href="#proof">See how the map is built</a>
-          </Button>
-        </div>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </TelemetryButton>
+            <TelemetryButton href="#proof" variant="outline">
+              See how the map is built
+            </TelemetryButton>
+          </div>
 
-        <div className="mt-10 mx-auto max-w-2xl rounded-lg border border-border bg-card/60 px-5 py-4 text-left">
-          <div className="flex items-start gap-3">
-            <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
-            <p className="text-sm text-muted-foreground">
-              <span className="text-foreground font-medium">The gate is the product.</span>{" "}
+          <div className="mt-[22px] flex gap-2.5 rounded-lg border border-[#2b3646] border-l-2 border-l-[#38BDF8] bg-[rgba(22,27,34,0.85)] px-3.5 py-3 text-[12.5px] leading-[1.5] text-[#9AA7B6]">
+            <ShieldCheck className="mt-px h-4 w-4 shrink-0 text-[#38BDF8]" />
+            <span>
+              <b className="font-semibold text-[#E6EDF3]">The gate is the product.</b>{" "}
               REVENGINE maps nothing until you prove you control the host, and every run
               carries that authorisation with it.
-            </p>
+            </span>
           </div>
         </div>
+
+        <TruthTablePreview />
       </div>
     </section>
   );
