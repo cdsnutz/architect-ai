@@ -44,6 +44,10 @@ export default function Footer() {
           </div>
           <p className="text-xs text-muted-foreground">Evidence in, truth table out</p>
         </div>
+
+        <p className="mt-8 border-t border-border pt-6 text-center sm:text-left text-xs text-muted-foreground">
+          © 2026 Unsaved Changes LLC. All rights reserved.
+        </p>
       </div>
     </footer>
   );
