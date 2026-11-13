@@ -33,11 +33,11 @@ export default function ProofCompare() {
           of that list.
         </p>
 
-        <div className="mt-7 grid grid-cols-1 overflow-hidden rounded-[14px] border border-[#2b3646] bg-[#161B22] md:grid-cols-[1fr_1.15fr]">
+        <div className="mt-7 grid grid-cols-1 overflow-hidden border border-[#2b3646] bg-[#161B22] md:grid-cols-[1fr_1.15fr]">
           <div className="p-[22px]">
             <div className="flex items-center justify-between gap-2.5">
               <h3 className="text-[16px] font-semibold text-[#E6EDF3]">Guesswork scanner</h3>
-              <span className="whitespace-nowrap rounded-[5px] bg-[rgba(244,114,182,0.14)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[#F472B6]">
+              <span className="whitespace-nowrap bg-[rgba(244,114,182,0.14)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[#F472B6]">
                 probably
               </span>
             </div>
@@ -56,7 +56,7 @@ export default function ProofCompare() {
 
             <p className="mt-[18px] border-t border-[#2b3646] pt-4 text-[12.5px] leading-[1.55] text-[#9AA7B6]">
               The result is one word:{" "}
-              <b className="font-medium text-[#38BDF8]">&ldquo;probably&rdquo;</b>. No
+              <b className="font-medium text-[#F472B6]">&ldquo;probably&rdquo;</b>. No
               provenance, so nobody downstream can check it.
             </p>
           </div>
@@ -67,7 +67,7 @@ export default function ProofCompare() {
                 <Radar className="h-4 w-4 text-[#22C55E]" />
                 REVENGINE
               </h3>
-              <span className="whitespace-nowrap rounded-[5px] bg-[rgba(34,197,94,0.14)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[#22C55E]">
+              <span className="whitespace-nowrap bg-[rgba(34,197,94,0.14)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[#22C55E]">
                 each stage proves something
               </span>
             </div>
@@ -95,7 +95,7 @@ export default function ProofCompare() {
             </p>
             <p className="mt-2.5 text-[12.5px] leading-[1.55] text-[#9AA7B6]">
               Templated routes are reported as{" "}
-              <code className="font-mono text-[#38BDF8]">pattern_match</code> instead of
+              <code className="font-mono text-[#22C55E]">pattern_match</code> instead of
               being probed with literal braces.
             </p>
           </div>

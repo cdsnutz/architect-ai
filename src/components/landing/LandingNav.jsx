@@ -17,7 +17,7 @@ const LINKS = [
 ];
 
 const LINK_CLASS =
-  "rounded-md px-3 py-2 text-[13px] text-[#9AA7B6] no-underline transition-colors duration-200 hover:bg-[#161B22] hover:text-[#E6EDF3] active:bg-[#1d2530] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38BDF8]";
+  "px-3 py-2 text-[13px] text-[#9AA7B6] no-underline transition-colors duration-200 hover:bg-[#161B22] hover:text-[#E6EDF3] active:bg-[#1d2530] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]";
 
 export default function LandingNav() {
   const [progress, setProgress] = useState(0);
@@ -40,7 +40,7 @@ export default function LandingNav() {
         <div className="flex h-[60px] items-center justify-between px-8">
           <Link
             to="/"
-            className="flex items-center gap-2 text-[15px] font-bold tracking-[0.04em] text-[#E6EDF3] no-underline"
+            className="flex items-center gap-2 font-display text-[15px] font-bold tracking-tight text-[#E6EDF3] no-underline"
           >
             <ScanLine className="h-5 w-5 text-[#22C55E]" />
             REVENGINE
@@ -57,7 +57,7 @@ export default function LandingNav() {
           <div className="flex items-center gap-3.5">
             <Link
               to="/login"
-              className="text-[13px] text-[#9AA7B6] no-underline transition-colors duration-200 hover:text-[#E6EDF3] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38BDF8]"
+              className="text-[13px] text-[#9AA7B6] no-underline transition-colors duration-200 hover:text-[#E6EDF3] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]"
             >
               Sign in
             </Link>
@@ -73,7 +73,7 @@ export default function LandingNav() {
                 index < reached
                   ? "bg-[#22C55E]"
                   : index === reached
-                    ? "bg-[#38BDF8]"
+                    ? "bg-[rgba(34,197,94,0.45)]"
                     : "bg-[#1c2431]"
               }`}
             />

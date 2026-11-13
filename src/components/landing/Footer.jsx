@@ -13,7 +13,7 @@ export default function Footer() {
   return (
     <footer>
       <div className="mx-auto max-w-[1280px] px-8">
-        <div className="flex flex-col items-start justify-between gap-5 rounded-[14px] border border-[#2b3646] bg-[#161B22] p-6 md:flex-row md:items-center">
+        <div className="flex flex-col items-start justify-between gap-5 border border-[#2b3646] bg-[#161B22] p-6 md:flex-row md:items-center">
           <div>
             <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-[#E6EDF3]">
               Need a session-aware map of an authenticated area?
@@ -25,7 +25,7 @@ export default function Footer() {
           </div>
           <a
             href="mailto:support@klswitch.app?subject=Session-aware%20map%20request"
-            className="inline-flex items-center gap-2 whitespace-nowrap rounded-[7px] border border-[rgba(56,189,248,0.45)] bg-[rgba(56,189,248,0.1)] px-3.5 py-2.5 text-[13px] font-semibold text-[#38BDF8] no-underline transition-colors duration-200 hover:bg-[rgba(56,189,248,0.2)] cursor-pointer"
+            className="inline-flex items-center gap-2 whitespace-nowrap border border-[rgba(34,197,94,0.45)] bg-[rgba(34,197,94,0.1)] px-3.5 py-2.5 text-[13px] font-semibold text-[#22C55E] no-underline transition-colors duration-200 hover:bg-[rgba(34,197,94,0.2)] cursor-pointer"
           >
             <Mail className="h-4 w-4" />
             support@klswitch.app
@@ -35,7 +35,7 @@ export default function Footer() {
         <div className="flex flex-col items-center justify-between gap-4 pt-8 pb-7 sm:flex-row">
           <Link
             to="/"
-            className="flex items-center gap-2 text-[15px] font-bold tracking-[0.04em] text-[#E6EDF3] no-underline"
+            className="flex items-center gap-2 font-display text-[15px] font-bold tracking-tight text-[#E6EDF3] no-underline"
           >
             <ScanLine className="h-[18px] w-[18px] text-[#22C55E]" />
             REVENGINE

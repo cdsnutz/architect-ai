@@ -56,11 +56,11 @@ export default function Steps() {
               <React.Fragment key={step.title}>
                 {index > 0 && (
                   <div className="flex w-full shrink-0 items-center justify-center py-1 md:w-[26px] md:py-0">
-                    <ArrowRight className="h-4 w-4 rotate-90 text-[#38BDF8] md:rotate-0" />
+                    <ArrowRight className="h-4 w-4 rotate-90 text-[#22C55E] md:rotate-0" />
                   </div>
                 )}
-                <div className="flex-1 rounded-xl border border-[#2b3646] bg-[#161B22] p-5 transition-[border-color,box-shadow] duration-200 hover:border-[#38BDF8] hover:shadow-[0_0_22px_rgba(56,189,248,0.15)]">
-                  <div className="flex items-center justify-between font-mono text-[12px] text-[#38BDF8]">
+                <div className="flex-1 border border-[#2b3646] bg-[#161B22] p-5 transition-[border-color,box-shadow] duration-200 hover:border-[#22C55E] hover:shadow-[0_0_22px_rgba(34,197,94,0.2)]">
+                  <div className="flex items-center justify-between font-mono text-[12px] text-[#22C55E]">
                     0{index + 1}
                     <Icon className="h-4 w-4 text-[#9AA7B6]" />
                   </div>

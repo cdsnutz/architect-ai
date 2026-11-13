@@ -69,14 +69,14 @@ export default function Pricing() {
               key={plan.name}
               className={
                 plan.highlight
-                  ? "flex flex-col rounded-[14px] border border-[#22C55E] bg-[#14201d] p-5 shadow-[0_0_0_1px_rgba(34,197,94,0.5),0_0_34px_rgba(34,197,94,0.3)]"
-                  : "flex flex-col rounded-[14px] border border-[#2b3646] bg-[#161B22] p-5"
+                  ? "flex flex-col border border-[#22C55E] bg-[#14201d] p-5 shadow-[0_0_0_1px_rgba(34,197,94,0.5),0_0_34px_rgba(34,197,94,0.3)]"
+                  : "flex flex-col border border-[#2b3646] bg-[#161B22] p-5"
               }
             >
               <div className="flex min-h-6 items-start justify-between gap-2">
                 <h3 className="text-[15px] font-semibold text-[#E6EDF3]">{plan.name}</h3>
                 {plan.highlight && (
-                  <span className="whitespace-nowrap rounded-full bg-[#22C55E] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#04130a]">
+                  <span className="whitespace-nowrap bg-[#22C55E] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#04130a]">
                     Recommended
                   </span>
                 )}
