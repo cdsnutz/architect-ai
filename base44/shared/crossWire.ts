@@ -22,7 +22,8 @@ export const CLONE_STAGES = [
   { key: 'skills', label: 'Run the wired skills', pods: ['Protocol Analyst', 'Schema Archaeologist', 'Logic Reconstructor'] },
   { key: 'contracts', label: 'Synthesize captured contracts', pods: ['Logic Reconstructor'] },
   { key: 'spec', label: 'Compile the rebuild spec', pods: ['REA Orchestrator'] },
-  { key: 'clone', label: 'Run the eleven-stage clone', pods: ['REA Orchestrator'] }
+  { key: 'clone', label: 'Run the eleven-stage clone', pods: ['REA Orchestrator'] },
+  { key: 'signoff', label: 'Agent sign-off', pods: ['REA Orchestrator'] }
 ];
 
 export const STAGE_WIRING: StageWiring[] = [

@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
-import { requestStageReviews, applyStageReviews } from '../../shared/agentStage.ts';
+import { missingCaptureInputs, requestStageReviews, applyStageReviews, reviewSummary } from '../../shared/agentStage.ts';
 
 export default async function (req: Request): Promise<Response> {
   try {
@@ -14,10 +14,15 @@ export default async function (req: Request): Promise<Response> {
     const spec = await base44.entities.RebuildSpec.get(specId).catch((e) => (e.status === 404 ? null : Promise.reject(e)));
     if (!spec) return Response.json({ error: 'Spec not found' }, { status: 404 });
 
-    const stages = spec.replica && Array.isArray(spec.replica.stages) ? spec.replica.stages : [];
-    if (!stages.length) {
-      return Response.json({ error: 'This spec has no stage board yet. Run the clone first.' }, { status: 400 });
+    const missing = missingCaptureInputs(spec);
+    if (missing.length) {
+      return Response.json(
+        { error: 'Sign-off needs the full capture first. Missing: ' + missing.join(', ') + '.', missing },
+        { status: 409 }
+      );
     }
+
+    const stages = spec.replica && Array.isArray(spec.replica.stages) ? spec.replica.stages : [];
 
     const reviews = await requestStageReviews(base44, { spec, stages });
     if (!reviews.length) {
@@ -34,17 +39,8 @@ export default async function (req: Request): Promise<Response> {
         ready_to_ship: applied.ready_to_ship,
         agent_review: {
           checked_at: new Date().toISOString(),
-          reviewed: reviews.length,
-          declined: reviews.filter((review) => review.verdict === 'declined').length,
-          timed_out: reviews.filter((review) => review.verdict === 'timeout').length,
           by: user.email || user.id,
-          verdicts: reviews.map((review) => ({
-            stage: review.stage,
-            agent: review.agent,
-            verdict: review.verdict,
-            note: review.note,
-            conversation_id: review.conversation_id
-          }))
+          ...reviewSummary(reviews)
         }
       }
     });

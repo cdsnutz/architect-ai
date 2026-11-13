@@ -7,6 +7,7 @@ const DOT = {
   queued: "bg-muted-foreground/40",
   running: "bg-primary animate-pulse",
   complete: "bg-emerald-500",
+  needs_input: "bg-amber-500",
   skipped: "bg-muted-foreground/40",
   failed: "bg-destructive"
 };

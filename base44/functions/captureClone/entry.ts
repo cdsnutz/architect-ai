@@ -5,10 +5,12 @@ import { selectProbes, runProbe, formatProbes, assertPublicUrl } from '../../sha
 import { captureSite } from '../../shared/siteCapture.ts';
 import { compileSpec } from '../../shared/rebuildSpec.ts';
 import { contrastCheck, deriveFeatureMatrix, scoreParity, sweepArtifacts, deriveSweepTargets, runSkillPipeline } from '../../shared/replicaSkill.ts';
-import { startRun, markRunning, markComplete, finishRun } from '../../shared/runTracker.ts';
-import { seedStages, stageRunning, stageComplete } from '../../shared/lab.ts';
+import { startRun, markRunning, markComplete, markNeedsInput, finishRun } from '../../shared/runTracker.ts';
+import { seedStages, stageRunning, stageComplete, stageNeedsInput } from '../../shared/lab.ts';
+import { missingCaptureInputs, requestStageReviews, applyStageReviews, reviewSummary } from '../../shared/agentStage.ts';
 
 const DEFAULT_STACK = 'Node 20 + TypeScript + Fastify + Postgres (Neon) + Docker';
+const SIGN_OFF_DEADLINE_MS = 35000;
 
 const CONTRACTS_SCHEMA = {
   type: 'object',
@@ -316,6 +318,57 @@ export default async function (req) {
       ' · ' + pipeline.stage_counts.attention + ' open';
     await stageComplete(base44, 'RebuildSpec', specId, 'clone', cloneDetail);
     await markComplete(base44, telemetryId, 'clone', cloneDetail);
+
+    // 6. Agent sign-off: each stage owner signs its stage off, or the stage moves
+    // to needs_input. Never run it on a capture that is missing its evidence.
+    await stageRunning(base44, 'RebuildSpec', specId, 'signoff');
+    await markRunning(base44, telemetryId, 'signoff');
+    const draft = {
+      id: specId,
+      title: meta.title,
+      target_url: wanted,
+      contracts,
+      deploy_bundle: compiled.deploy_bundle,
+      replica: { stages: pipeline.stages, parity, sweep }
+    };
+    let applied = {
+      stages: pipeline.stages,
+      stage_counts: pipeline.stage_counts,
+      ready_to_ship: pipeline.ready_to_ship
+    };
+    let agentReview = null;
+    const missing = missingCaptureInputs(draft);
+
+    if (missing.length) {
+      const detail = 'Sign-off withheld: missing ' + missing.join(', ');
+      await stageNeedsInput(base44, 'RebuildSpec', specId, 'signoff', detail);
+      await markNeedsInput(base44, telemetryId, 'signoff', detail);
+      console.log('captureClone: sign-off withheld — ' + detail);
+    } else {
+      const reviews = await requestStageReviews(base44, {
+        spec: draft,
+        stages: pipeline.stages,
+        deadlineMs: SIGN_OFF_DEADLINE_MS
+      });
+      if (reviews.length) {
+        applied = applyStageReviews(pipeline.stages, reviews);
+        agentReview = { checked_at: new Date().toISOString(), by: 'capture pipeline', ...reviewSummary(reviews) };
+        const detail =
+          reviews.length + ' stages signed off · ' + applied.stage_counts.needs_input + ' need input';
+        if (applied.stage_counts.needs_input > 0) {
+          await stageNeedsInput(base44, 'RebuildSpec', specId, 'signoff', detail);
+          await markNeedsInput(base44, telemetryId, 'signoff', detail);
+        } else {
+          await stageComplete(base44, 'RebuildSpec', specId, 'signoff', detail);
+          await markComplete(base44, telemetryId, 'signoff', detail);
+        }
+      } else {
+        const detail = 'Sign-off withheld: no stage owner answered';
+        await stageNeedsInput(base44, 'RebuildSpec', specId, 'signoff', detail);
+        await markNeedsInput(base44, telemetryId, 'signoff', detail);
+      }
+    }
+
     await finishRun(base44, telemetryId, 'complete', { analysis_id: specId });
 
     const saved = await base44.entities.RebuildSpec.update(specId, {
@@ -329,9 +382,10 @@ export default async function (req) {
       replica: {
         parity,
         sweep,
-        stages: pipeline.stages,
-        stage_counts: pipeline.stage_counts,
-        ready_to_ship: pipeline.ready_to_ship,
+        stages: applied.stages,
+        stage_counts: applied.stage_counts,
+        ready_to_ship: applied.ready_to_ship,
+        agent_review: agentReview,
         clone_handoff: pipeline.clone_handoff,
         wiring: crossWireMatrix(),
         checked_at: new Date().toISOString(),

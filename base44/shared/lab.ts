@@ -377,6 +377,14 @@ export function stageRunning(base44: any, entityName: string, id: string, key: s
   return patchStage(base44, entityName, id, key, { status: 'running', started_at: new Date().toISOString() });
 }
 
+export function stageNeedsInput(base44: any, entityName: string, id: string, key: string, detail: string) {
+  return patchStage(base44, entityName, id, key, {
+    status: 'needs_input',
+    detail: detail || '',
+    finished_at: new Date().toISOString()
+  });
+}
+
 export function stageComplete(base44: any, entityName: string, id: string, key: string, detail: string) {
   return patchStage(base44, entityName, id, key, {
     status: 'complete',

@@ -59,6 +59,7 @@
               "queued",
               "running",
               "complete",
+              "needs_input",
               "skipped",
               "failed"
             ]

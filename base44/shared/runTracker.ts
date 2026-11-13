@@ -85,6 +85,14 @@ export function markComplete(base44, runId, key, detail) {
   });
 }
 
+export function markNeedsInput(base44, runId, key, detail) {
+  return patchStage(base44, runId, key, {
+    status: 'needs_input',
+    detail: detail || '',
+    finished_at: nowIso()
+  });
+}
+
 export function markSkipped(base44, runId, key, detail) {
   return patchStage(base44, runId, key, {
     status: 'skipped',

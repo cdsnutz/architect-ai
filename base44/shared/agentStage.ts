@@ -18,6 +18,41 @@ function bullets(details: any): string {
   return details.filter(Boolean).slice(0, 8).map((line: any) => '- ' + String(line)).join('\n');
 }
 
+// The sign-off may only run on a spec that actually captured its surface. A
+// stage owner cannot be asked to sign evidence that was never collected.
+export function missingCaptureInputs(spec: any): string[] {
+  const missing: string[] = [];
+  const contracts = (spec && spec.contracts) || {};
+  const capture = contracts.capture || {};
+  const replica = (spec && spec.replica) || {};
+  const pages = Number(capture.page_count || 0);
+  const routes = Array.isArray(capture.route_paths) ? capture.route_paths.length : 0;
+  const bundle = Array.isArray(spec && spec.deploy_bundle) ? spec.deploy_bundle.length : 0;
+  if (!pages) missing.push('captured pages');
+  if (!routes) missing.push('captured routes');
+  if (!bundle) missing.push('deploy bundle');
+  if (!replica.parity) missing.push('parity matrix');
+  if (!Array.isArray(replica.stages) || !replica.stages.length) missing.push('stage board');
+  return missing;
+}
+
+export function reviewSummary(reviews: StageReview[]) {
+  return {
+    reviewed: reviews.length,
+    passed: reviews.filter((review) => review.verdict === 'pass').length,
+    attention: reviews.filter((review) => review.verdict === 'attention').length,
+    declined: reviews.filter((review) => review.verdict === 'declined').length,
+    timed_out: reviews.filter((review) => review.verdict === 'timeout').length,
+    verdicts: reviews.map((review) => ({
+      stage: review.stage,
+      agent: review.agent,
+      verdict: review.verdict,
+      note: review.note,
+      conversation_id: review.conversation_id
+    }))
+  };
+}
+
 export function stageReviewPrompt(spec: any, stage: any): string {
   const lines = [
     'STAGE REVIEW',
