@@ -25,7 +25,13 @@ export default function Compare() {
   useEffect(() => {
     (async () => {
       try {
-        const page = await base44.entities.SiteAnalysis.filter({}, { sort: "-created_date", limit: 50 });
+        const user = await base44.auth.me().catch(() => null);
+        const page = user
+          ? await base44.entities.SiteAnalysis.filter(
+              { created_by_id: user.id },
+              { sort: "-created_date", limit: 50 }
+            )
+          : { items: [] };
         const items = page.items;
         setAnalyses(items);
         if (items.length > 0) setLeftId(items[0].id);

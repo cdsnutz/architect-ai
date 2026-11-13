@@ -21,7 +21,13 @@ export default function Dashboard() {
   useEffect(() => {
     (async () => {
       try {
-        const page = await base44.entities.SiteAnalysis.filter({}, { sort: "-created_date", limit: 50 });
+        const user = await base44.auth.me().catch(() => null);
+        const page = user
+          ? await base44.entities.SiteAnalysis.filter(
+              { created_by_id: user.id },
+              { sort: "-created_date", limit: 50 }
+            )
+          : { items: [] };
         setAnalyses(page.items);
       } finally {
         setLoading(false);
