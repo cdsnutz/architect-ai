@@ -29,10 +29,13 @@ export default function Spec() {
 
   useEffect(() => {
     (async () => {
+      const user = await base44.auth.me().catch(() => null);
+      if (!user) return;
+      const owner = { created_by_id: user.id };
       const [analysesPage, requestsPage, specsPage] = await Promise.all([
-        base44.entities.SiteAnalysis.list({ sort: "-created_date", limit: 30 }),
-        base44.entities.DataRequest.list({ sort: "-created_date", limit: 30 }),
-        base44.entities.RebuildSpec.list({ sort: "-created_date", limit: 30 })
+        base44.entities.SiteAnalysis.filter(owner, { sort: "-created_date", limit: 30 }),
+        base44.entities.DataRequest.filter(owner, { sort: "-created_date", limit: 30 }),
+        base44.entities.RebuildSpec.filter(owner, { sort: "-created_date", limit: 30 })
       ]);
       setAnalyses(analysesPage.items || []);
       setRequests(requestsPage.items || []);
