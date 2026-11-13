@@ -96,28 +96,44 @@
   font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
 }
 
-/* IDE surface — workspace and lab */
-.ide-surface {
-  --background: 215 27% 7%;
-  --foreground: 210 27% 93%;
-  --card: 215 21% 11%;
-  --card-foreground: 210 27% 93%;
-  --popover: 215 21% 11%;
-  --popover-foreground: 210 27% 93%;
-  --primary: 142 71% 45%;
-  --primary-foreground: 150 60% 8%;
-  --secondary: 215 18% 15%;
-  --secondary-foreground: 210 27% 93%;
-  --muted: 215 18% 15%;
-  --muted-foreground: 210 15% 66%;
-  --accent: 215 18% 16%;
-  --accent-foreground: 210 27% 93%;
-  --border: 216 22% 20%;
-  --input: 216 22% 20%;
-  --ring: 142 71% 45%;
+/* Design tokens — one palette and type scale for the whole app.
+   Raw values live here only; components use the mapped classes
+   (bg-surface-panel, border-line, text-ink-muted, text-signal, font-display...). */
+:root,
+.dark {
+  --surface-base: 215 27% 7%;      /* page background */
+  --surface-sunken: 214 27% 6%;    /* rails, tab strips, gutters */
+  --surface-panel: 215 23% 8%;     /* panels and editor surfaces */
+  --surface-raised: 215 21% 11%;   /* cards inside panels */
+  --line: 216 22% 20%;             /* strong borders */
+  --line-soft: 215 20% 15%;        /* dividers */
+  --ink: 210 27% 93%;              /* primary text */
+  --ink-muted: 210 15% 66%;        /* secondary text */
+  --ink-dim: 210 10% 55%;          /* labels and meta */
+  --signal: 142 71% 45%;           /* green accent, the only glow */
+  --signal-foreground: 150 60% 8%;
+
+  --background: var(--surface-base);
+  --foreground: var(--ink);
+  --card: var(--surface-raised);
+  --card-foreground: var(--ink);
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--ink);
+  --primary: var(--signal);
+  --primary-foreground: var(--signal-foreground);
+  --secondary: var(--surface-raised);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface-raised);
+  --muted-foreground: var(--ink-muted);
+  --accent: var(--surface-raised);
+  --accent-foreground: var(--ink);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--signal);
   --radius: 0px;
 }
 
+/* Square edges on every IDE surface (workspace, lab, dashboard, compare, spec) */
 .ide-surface *,
 .ide-surface *::before,
 .ide-surface *::after {

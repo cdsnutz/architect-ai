@@ -9,10 +9,10 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, LayoutDashboard, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import StatusColumn from "@/components/dashboard/StatusColumn";
 import { STATUSES, groupByStatus } from "@/lib/analysisStatus";
+import IdeShell from "@/components/ide/IdeShell";
 
 export default function Dashboard() {
   const [analyses, setAnalyses] = useState([]);
@@ -38,48 +38,48 @@ export default function Dashboard() {
   const buckets = groupByStatus(analyses);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 py-10 space-y-6">
-        <header className="space-y-3">
-          <Button variant="ghost" size="sm" className="gap-2 -ml-2" asChild>
-            <Link to="/workspace">
-              <ArrowLeft className="w-4 h-4" />
-              Workspace
-            </Link>
-          </Button>
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <LayoutDashboard className="w-6 h-6 text-primary" />
-              <h1 className="font-display text-2xl font-bold">Dashboard</h1>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {analyses.length} site{analyses.length === 1 ? "" : "s"} tracked
-            </p>
-          </div>
-        </header>
+    <IdeShell
+      active="dashboard"
+      crumb="dashboard / track-record"
+      note="sites by status"
+      status={[
+        { label: "sites", value: String(analyses.length) },
+        { label: "columns", value: String(STATUSES.length) },
+        { label: "state", value: loading ? "loading" : "ready" },
+      ]}
+    >
+      <div className="space-y-4 p-3 md:p-4">
+        <div className="border border-line bg-surface-panel px-4 py-3">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-signal">Dashboard</p>
+          <h1 className="mt-2 font-display text-2xl font-bold text-ink">Every mapped host, by status</h1>
+          <p className="mt-2 max-w-2xl text-[12.5px] leading-relaxed text-ink-muted">
+            {analyses.length} site{analyses.length === 1 ? "" : "s"} tracked. Each record keeps its own
+            evidence, so a column is never a guess.
+          </p>
+        </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <div className="flex justify-center border border-line bg-surface-panel py-12">
+            <Loader2 className="h-5 w-5 animate-spin text-signal" />
           </div>
         ) : analyses.length === 0 ? (
-          <Card>
-            <CardContent className="py-10 text-center space-y-3">
-              <p className="font-medium">No analyses yet</p>
-              <p className="text-sm text-muted-foreground">Map a site and it will show up here by status.</p>
-              <Button asChild>
-                <Link to="/workspace">Map a website</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="border border-dashed border-line bg-surface-sunken px-4 py-10 text-center">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-dim">no records</p>
+            <p className="mt-2 text-[12.5px] text-ink-muted">
+              Map a site and it will show up here by status.
+            </p>
+            <Button className="mt-4" asChild>
+              <Link to="/workspace">Map a website</Link>
+            </Button>
+          </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-3 items-start">
+          <div className="grid items-start gap-4 md:grid-cols-3">
             {STATUSES.map((status) => (
               <StatusColumn key={status.key} status={status} items={buckets[status.key]} />
             ))}
           </div>
         )}
       </div>
-    </div>
+    </IdeShell>
   );
 }

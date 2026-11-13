@@ -241,15 +241,15 @@ export default function Lab() {
       ]}
     >
       <div className="space-y-4 p-3 md:p-4">
-        <div className="border border-[#2b3646] bg-[#0F141B] px-4 py-3">
-          <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-[#22C55E]">
+        <div className="border border-line bg-surface-panel px-4 py-3">
+          <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-signal">
             <FlaskConical className="h-3.5 w-3.5" />
             Engineering challenge lab
           </p>
-          <h1 className="mt-2 font-display text-2xl font-bold leading-tight text-[#E6EDF3]">
+          <h1 className="mt-2 font-display text-2xl font-bold leading-tight text-ink">
             Describe the problem. Get the evidence chain.
           </h1>
-          <p className="mt-2 max-w-2xl text-[12.5px] leading-relaxed text-[#9AA7B6]">
+          <p className="mt-2 max-w-2xl text-[12.5px] leading-relaxed text-ink-muted">
             Your words become a reviewable probe plan. Pods run it read-only against the hosts you authorize, then hand back
             findings tagged observed or inferred, with the gaps named.
           </p>

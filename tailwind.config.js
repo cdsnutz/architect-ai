@@ -51,6 +51,25 @@ module.exports = {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
+  			surface: {
+  				base: 'hsl(var(--surface-base))',
+  				sunken: 'hsl(var(--surface-sunken))',
+  				panel: 'hsl(var(--surface-panel))',
+  				raised: 'hsl(var(--surface-raised))'
+  			},
+  			line: {
+  				DEFAULT: 'hsl(var(--line))',
+  				soft: 'hsl(var(--line-soft))'
+  			},
+  			ink: {
+  				DEFAULT: 'hsl(var(--ink))',
+  				muted: 'hsl(var(--ink-muted))',
+  				dim: 'hsl(var(--ink-dim))'
+  			},
+  			signal: {
+  				DEFAULT: 'hsl(var(--signal))',
+  				foreground: 'hsl(var(--signal-foreground))'
+  			},
   			chart: {
   				'1': 'hsl(var(--chart-1))',
   				'2': 'hsl(var(--chart-2))',

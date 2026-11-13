@@ -15,7 +15,7 @@ const TABS = [
 
 export default function EditorTabs({ mode, onChange, busy, right = null }) {
   return (
-    <div className="flex h-9 shrink-0 items-stretch justify-between border-b border-[#1c2431] bg-[#0B0F14]">
+    <div className="flex h-9 shrink-0 items-stretch justify-between border-b border-line-soft bg-surface-sunken">
       <div className="flex items-stretch overflow-x-auto">
         {TABS.map((tab) => {
           const Icon = tab.icon;
@@ -25,16 +25,16 @@ export default function EditorTabs({ mode, onChange, busy, right = null }) {
               key={tab.key}
               type="button"
               onClick={() => onChange(tab.key)}
-              className={`relative flex items-center gap-1.5 border-r border-[#1c2431] px-3 font-mono text-[11px] transition-colors ${
+              className={`relative flex items-center gap-1.5 border-r border-line-soft px-3 font-mono text-[11px] transition-colors ${
                 isActive
-                  ? "bg-[#0F141B] text-[#E6EDF3]"
-                  : "text-[#7d8a99] hover:bg-[#11161D] hover:text-[#E6EDF3]"
+                  ? "bg-surface-panel text-ink"
+                  : "text-ink-dim hover:bg-surface-panel hover:text-ink"
               }`}
             >
-              {isActive && <span className="absolute inset-x-0 top-0 h-0.5 bg-[#22C55E]" />}
-              <Icon className={`h-3.5 w-3.5 ${isActive ? "text-[#22C55E]" : ""}`} />
+              {isActive && <span className="absolute inset-x-0 top-0 h-0.5 bg-signal" />}
+              <Icon className={`h-3.5 w-3.5 ${isActive ? "text-signal" : ""}`} />
               {tab.label}
-              {isActive && busy && <Loader2 className="h-3 w-3 animate-spin text-[#22C55E]" />}
+              {isActive && busy && <Loader2 className="h-3 w-3 animate-spin text-signal" />}
             </button>
           );
         })}

@@ -10,11 +10,12 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, GitCompare, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import AnalysisResult from "@/components/analysis/AnalysisResult";
 import CompareSummary from "@/components/compare/CompareSummary";
+import IdeShell from "@/components/ide/IdeShell";
+import IdePanel from "@/components/ide/IdePanel";
 
 export default function Compare() {
   const [analyses, setAnalyses] = useState([]);
@@ -46,92 +47,98 @@ export default function Compare() {
   const right = analyses.find((a) => a.id === rightId);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 py-10 space-y-6">
-        <header className="space-y-3">
-          <Button variant="ghost" size="sm" className="gap-2 -ml-2" asChild>
-            <Link to="/workspace">
-              <ArrowLeft className="w-4 h-4" />
-              Workspace
-            </Link>
-          </Button>
-          <div className="flex items-center gap-2">
-            <GitCompare className="w-6 h-6 text-primary" />
-            <h1 className="font-display text-2xl font-bold">Compare iterations</h1>
-          </div>
-          <p className="text-sm text-muted-foreground">
+    <IdeShell
+      active="compare"
+      crumb="compare / iterations"
+      note="two maps, side by side"
+      status={[
+        { label: "records", value: String(analyses.length) },
+        { label: "left", value: left ? left.title : "empty" },
+        { label: "right", value: right ? right.title : "empty" },
+        { label: "state", value: loading ? "loading" : "ready" },
+      ]}
+    >
+      <div className="space-y-4 p-3 md:p-4">
+        <div className="border border-line bg-surface-panel px-4 py-3">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-signal">Compare</p>
+          <h1 className="mt-2 font-display text-2xl font-bold text-ink">Compare iterations</h1>
+          <p className="mt-2 max-w-2xl text-[12.5px] leading-relaxed text-ink-muted">
             Put two analyses of the same product side by side to see what changed between rebuilds.
           </p>
-        </header>
+        </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <div className="flex justify-center border border-line bg-surface-panel py-12">
+            <Loader2 className="h-5 w-5 animate-spin text-signal" />
           </div>
         ) : analyses.length < 2 ? (
-          <Card>
-            <CardContent className="py-10 text-center space-y-3">
-              <p className="font-medium">You need at least two analyses to compare</p>
-              <p className="text-sm text-muted-foreground">Map another page or paste an updated version of this one first.</p>
-              <Button asChild>
-                <Link to="/workspace">Back to workspace</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="border border-dashed border-line bg-surface-sunken px-4 py-10 text-center">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-dim">not enough records</p>
+            <p className="mt-2 text-[12.5px] text-ink-muted">
+              You need at least two analyses to compare. Map another page, or paste an updated version of this one.
+            </p>
+            <Button className="mt-4" asChild>
+              <Link to="/workspace">Back to workspace</Link>
+            </Button>
+          </div>
         ) : (
           <>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <p className="text-xs font-medium text-muted-foreground">Left analysis</p>
-                <Select value={leftId} onValueChange={setLeftId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose an analysis" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {analyses.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
-                        {item.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <IdePanel label="Selection">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-dim">Left analysis</p>
+                  <Select value={leftId} onValueChange={setLeftId}>
+                    <SelectTrigger className="border-line bg-surface-sunken">
+                      <SelectValue placeholder="Choose an analysis" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {analyses.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-dim">Right analysis</p>
+                  <Select value={rightId} onValueChange={setRightId}>
+                    <SelectTrigger className="border-line bg-surface-sunken">
+                      <SelectValue placeholder="Choose an analysis" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {analyses.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <p className="text-xs font-medium text-muted-foreground">Right analysis</p>
-                <Select value={rightId} onValueChange={setRightId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose an analysis" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {analyses.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
-                        {item.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            </IdePanel>
 
             {left && right ? (
               <>
                 {left.id === right.id ? (
-                  <Card>
-                    <CardContent className="py-6 text-center text-sm text-muted-foreground">
-                      Pick two different analyses to compare.
-                    </CardContent>
-                  </Card>
+                  <div className="border border-line bg-surface-panel px-4 py-6 text-center text-[12.5px] text-ink-muted">
+                    Pick two different analyses to compare.
+                  </div>
                 ) : (
                   <CompareSummary left={left} right={right} />
                 )}
 
-                <div className="grid gap-6 md:grid-cols-2 items-start">
+                <div className="grid items-start gap-4 md:grid-cols-2">
                   <div className="space-y-3">
-                    <Badge variant="secondary">Left</Badge>
+                    <Badge variant="secondary" className="font-mono text-[10px] uppercase tracking-[0.16em]">
+                      Left
+                    </Badge>
                     {left && <AnalysisResult analysis={left} />}
                   </div>
                   <div className="space-y-3">
-                    <Badge variant="secondary">Right</Badge>
+                    <Badge variant="secondary" className="font-mono text-[10px] uppercase tracking-[0.16em]">
+                      Right
+                    </Badge>
                     {right && <AnalysisResult analysis={right} />}
                   </div>
                 </div>
@@ -140,6 +147,6 @@ export default function Compare() {
           </>
         )}
       </div>
-    </div>
+    </IdeShell>
   );
 }

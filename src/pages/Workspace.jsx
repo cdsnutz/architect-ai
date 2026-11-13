@@ -120,30 +120,30 @@ export default function Workspace() {
 
   if (status === "loading") {
     return (
-      <div className="ide-surface flex min-h-screen items-center justify-center bg-[#0D1117]">
-        <Loader2 className="h-5 w-5 animate-spin text-[#22C55E]" />
+      <div className="ide-surface flex min-h-screen items-center justify-center bg-surface-base">
+        <Loader2 className="h-5 w-5 animate-spin text-signal" />
       </div>
     );
   }
 
   if (status === "anonymous") {
     return (
-      <div className="ide-surface min-h-screen bg-[#0D1117] text-[#E6EDF3]">
+      <div className="ide-surface min-h-screen bg-surface-base text-ink">
         <div className="mx-auto max-w-lg px-5 py-20">
           <Link
             to="/"
             className="mb-8 flex items-center justify-center gap-2 font-display font-bold no-underline"
           >
-            <ScanLine className="h-5 w-5 text-[#22C55E]" />
+            <ScanLine className="h-5 w-5 text-signal" />
             REVENGINE
           </Link>
-          <Card className="border-[#2b3646] bg-[#0F141B]">
+          <Card className="border-line bg-surface-panel">
             <CardContent className="p-8 text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center border border-[rgba(34,197,94,0.35)] bg-[rgba(34,197,94,0.1)]">
-                <Lock className="h-5 w-5 text-[#22C55E]" />
+                <Lock className="h-5 w-5 text-signal" />
               </div>
               <h1 className="mt-5 font-display text-2xl font-bold">Sign in to open your workspace</h1>
-              <p className="mt-3 text-sm text-[#9AA7B6]">
+              <p className="mt-3 text-sm text-ink-muted">
                 Use your account to access your saved analyses.
               </p>
               <div className="mt-7 space-y-3">
@@ -193,7 +193,7 @@ export default function Workspace() {
         <IdePanel
           label={mode === "url" ? "Target host" : "Captured source"}
           right={
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#7d8a99]">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-dim">
               read-only
             </span>
           }
@@ -206,7 +206,7 @@ export default function Workspace() {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 required
-                className="flex-1 border-[#2b3646] bg-[#0B0F14] font-mono text-[12px]"
+                className="flex-1 border-line bg-surface-sunken font-mono text-[12px]"
               />
               <Button type="submit" disabled={analyzing}>
                 {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -238,11 +238,11 @@ export default function Workspace() {
         ) : (
           !analyzing &&
           !error && (
-            <div className="border border-dashed border-[#2b3646] bg-[#0B0F14] px-4 py-10 text-center">
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#7d8a99]">
+            <div className="border border-dashed border-line bg-surface-sunken px-4 py-10 text-center">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-dim">
                 no map open
               </p>
-              <p className="mx-auto mt-2 max-w-sm text-[12.5px] leading-relaxed text-[#9AA7B6]">
+              <p className="mx-auto mt-2 max-w-sm text-[12.5px] leading-relaxed text-ink-muted">
                 Enter a host and run the map, or pick a saved analysis from the explorer on the left.
               </p>
             </div>

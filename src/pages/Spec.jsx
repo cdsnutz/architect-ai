@@ -6,10 +6,8 @@
 */
 
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
 import SpecBuilder from "@/components/spec/SpecBuilder";
 import SpecList from "@/components/spec/SpecList";
 import SpecViewer from "@/components/spec/SpecViewer";
@@ -17,7 +15,8 @@ import RunnableSpec from "@/components/spec/RunnableSpec";
 import DeployBundle from "@/components/spec/DeployBundle";
 import RunCapture from "@/components/spec/RunCapture";
 import ReplicaChecks from "@/components/spec/ReplicaChecks";
-import { GitBranch } from "lucide-react";
+import IdeShell from "@/components/ide/IdeShell";
+import IdePanel from "@/components/ide/IdePanel";
 
 export default function Spec() {
   const { toast } = useToast();
@@ -35,7 +34,7 @@ export default function Spec() {
       const [analysesPage, requestsPage, specsPage] = await Promise.all([
         base44.entities.SiteAnalysis.filter(owner, { sort: "-created_date", limit: 30 }),
         base44.entities.DataRequest.filter(owner, { sort: "-created_date", limit: 30 }),
-        base44.entities.RebuildSpec.filter(owner, { sort: "-created_date", limit: 30 })
+        base44.entities.RebuildSpec.filter(owner, { sort: "-created_date", limit: 30 }),
       ]);
       setAnalyses(analysesPage.items || []);
       setRequests(requestsPage.items || []);
@@ -56,7 +55,7 @@ export default function Spec() {
       toast({
         variant: "destructive",
         title: "Could not compile",
-        description: error?.response?.data?.error || error.message
+        description: error?.response?.data?.error || error.message,
       });
     } finally {
       setBusy(false);
@@ -80,7 +79,7 @@ export default function Spec() {
       toast({
         variant: "destructive",
         title: "Could not capture",
-        description: error?.response?.data?.error || error.message
+        description: error?.response?.data?.error || error.message,
       });
     } finally {
       setBusy(false);
@@ -88,44 +87,55 @@ export default function Spec() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-5xl space-y-6 px-4 py-10">
-        <header className="flex flex-wrap items-center justify-between gap-3">
-          <div className="space-y-1">
-            <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-primary">
-              <GitBranch className="h-3.5 w-3.5" />
-              Rebuild spec
-            </p>
-            <h1 className="font-display text-2xl font-bold">Contracts in, runnable app out</h1>
+    <IdeShell
+      active="spec"
+      crumb="spec / rebuild"
+      note="contracts in, runnable app out"
+      sidebar={
+        <aside className="sticky top-11 hidden h-[calc(100vh-2.75rem)] w-56 shrink-0 flex-col border-r border-line-soft bg-surface-sunken md:flex">
+          <div className="flex items-center justify-between border-b border-line-soft px-3 py-2">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-dim">Compiled specs</p>
+            <span className="font-mono text-[10px] text-ink-dim">{specs.length}</span>
           </div>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/lab">Back to lab</Link>
-          </Button>
-        </header>
-
-        <SpecBuilder analyses={analyses} requests={requests} onBuild={build} busy={busy} />
-
-        <div className="grid gap-6 lg:grid-cols-[1fr_18rem]">
-          <div className="space-y-6">
-            {selected ? (
-              <>
-                <SpecViewer spec={selected} />
-                <RunnableSpec spec={selected} />
-                <RunCapture spec={selected} onCapture={capture} busy={busy} />
-                <ReplicaChecks spec={selected} onUpdated={replaceSpec} />
-                <DeployBundle spec={selected} />
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">Compile a spec from a dossier or a lab request to begin.</p>
-            )}
-          </div>
-
-          <aside className="space-y-2">
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Compiled specs</p>
+          <div className="flex-1 overflow-y-auto">
             <SpecList specs={specs} selectedId={selected?.id} onSelect={setSelected} />
-          </aside>
+          </div>
+        </aside>
+      }
+      status={[
+        { label: "specs", value: String(specs.length) },
+        { label: "dossiers", value: String(analyses.length) },
+        { label: "requests", value: String(requests.length) },
+        { label: "state", value: busy ? "compiling" : selected ? "loaded" : "idle" },
+      ]}
+    >
+      <div className="space-y-4 p-3 md:p-4">
+        <div className="border border-line bg-surface-panel px-4 py-3">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-signal">Rebuild spec</p>
+          <h1 className="mt-2 font-display text-2xl font-bold text-ink">Contracts in, runnable app out</h1>
         </div>
+
+        <IdePanel label="Compile from a source">
+          <SpecBuilder analyses={analyses} requests={requests} onBuild={build} busy={busy} />
+        </IdePanel>
+
+        {selected ? (
+          <div className="space-y-4">
+            <SpecViewer spec={selected} />
+            <RunnableSpec spec={selected} />
+            <RunCapture spec={selected} onCapture={capture} busy={busy} />
+            <ReplicaChecks spec={selected} onUpdated={replaceSpec} />
+            <DeployBundle spec={selected} />
+          </div>
+        ) : (
+          <div className="border border-dashed border-line bg-surface-sunken px-4 py-10 text-center">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-dim">no spec open</p>
+            <p className="mx-auto mt-2 max-w-sm text-[12.5px] leading-relaxed text-ink-muted">
+              Compile a spec from a dossier or a lab request to begin, or pick one from the list on the left.
+            </p>
+          </div>
+        )}
       </div>
-    </div>
+    </IdeShell>
   );
 }

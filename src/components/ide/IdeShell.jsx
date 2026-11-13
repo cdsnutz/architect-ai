@@ -12,7 +12,7 @@ import IdeStatusBar from "@/components/ide/IdeStatusBar";
 
 export default function IdeShell({ active, crumb, note, sidebar = null, tabs = null, status = [], children }) {
   return (
-    <div className="ide-surface flex min-h-screen flex-col bg-[#0D1117] text-[#E6EDF3]">
+    <div className="ide-surface flex min-h-screen flex-col bg-surface-base text-ink">
       <IdeTopBar crumb={crumb} note={note} />
       <div className="flex flex-1 items-start">
         <IdeRail active={active} />
