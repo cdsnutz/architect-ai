@@ -13,16 +13,16 @@ export default function LandingNav() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
-          <a href="#how" className="hover:text-foreground transition-colors">How it works</a>
-          <a href="#features" className="hover:text-foreground transition-colors">Capabilities</a>
-          <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
+          <a href="#proof" className="hover:text-foreground transition-colors">The proof</a>
+          <a href="#steps" className="hover:text-foreground transition-colors">How it works</a>
+          <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
         </nav>
 
         <div className="flex items-center gap-4">
           <Link to="/login" className="hidden sm:block text-sm text-muted-foreground hover:text-foreground transition-colors">
             Sign in
           </Link>
-          <Button size="sm" asChild><Link to="/workspace">Get access</Link></Button>
+          <Button size="sm" asChild><Link to="/workspace">Verify a host</Link></Button>
         </div>
       </div>
     </header>
