@@ -6,10 +6,9 @@
 */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { AlertCircle, FlaskConical, GitBranch, LayoutDashboard, ScanLine } from "lucide-react";
+import { AlertCircle, FlaskConical } from "lucide-react";
+import IdeShell from "@/components/ide/IdeShell";
 import RequestComposer from "@/components/lab/RequestComposer";
 import PlanReview from "@/components/lab/PlanReview";
 import RunTelemetry from "@/components/lab/RunTelemetry";
@@ -230,46 +229,27 @@ export default function Lab() {
   const packBusy = Boolean(busy && busy !== "plan" && busy !== "run");
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-5xl space-y-6 px-4 py-10">
-        <header className="flex flex-wrap items-center justify-between gap-3">
-          <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-            <ScanLine className="h-5 w-5 text-primary" />
-            REVENGINE
-          </Link>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="gap-2" asChild>
-              <Link to="/workspace">
-                <ScanLine className="h-4 w-4" />
-                Workspace
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" className="gap-2" asChild>
-              <Link to="/dashboard">
-                <LayoutDashboard className="h-4 w-4" />
-                Dashboard
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" className="gap-2" asChild>
-              <Link to="/spec">
-                <GitBranch className="h-4 w-4" />
-                Rebuild spec
-              </Link>
-            </Button>
-          </div>
-        </header>
-
-        <div className="space-y-2">
-          <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-primary">
+    <IdeShell
+      active="lab"
+      crumb="lab / challenge-runner"
+      note="read-only contract"
+      status={[
+        { label: "focus", value: focus.replace(/_/g, " ") },
+        { label: "packs", value: String(catalog.packs.length) },
+        { label: "hosts", value: String(parseHosts(hosts).length) },
+        { label: "run", value: busy === "run" ? "probing" : current ? current.status : "idle" }
+      ]}
+    >
+      <div className="space-y-4 p-3 md:p-4">
+        <div className="border border-[#2b3646] bg-[#0F141B] px-4 py-3">
+          <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-[#22C55E]">
             <FlaskConical className="h-3.5 w-3.5" />
             Engineering challenge lab
           </p>
-          <h1 className="font-display text-3xl font-bold leading-tight sm:text-4xl">
-            Describe the problem.
-            <br />
-            Get the evidence chain.
+          <h1 className="mt-2 font-display text-2xl font-bold leading-tight text-[#E6EDF3]">
+            Describe the problem. Get the evidence chain.
           </h1>
-          <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-2 max-w-2xl text-[12.5px] leading-relaxed text-[#9AA7B6]">
             Your words become a reviewable probe plan. Pods run it read-only against the hosts you authorize, then hand back
             findings tagged observed or inferred, with the gaps named.
           </p>
@@ -357,6 +337,6 @@ export default function Lab() {
 
         <ThreatDashboard />
       </div>
-    </div>
+    </IdeShell>
   );
 }
