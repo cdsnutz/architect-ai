@@ -163,7 +163,7 @@ export function masterPrompt(): string {
     layers +
     "\n\n## I.c Synchronisation sequence\nRun the pods in this order so each layer inherits validated input.\n" +
     sequence +
-    "\n\n## II. Unconventional methods\n" +
+    "\n\n## II. Unique engineering methods\n" +
     methods +
     "\n\n## III. Execution cycle\n" +
     cycle +

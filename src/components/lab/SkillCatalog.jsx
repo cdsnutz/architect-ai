@@ -14,7 +14,7 @@ export default function SkillCatalog({ packs, skills, focus, selectedPackId, onS
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <FlaskConical className="h-4 w-4 text-primary" />
-          Unconventional skills
+          Unique engineering skills
           <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             <Lock className="h-3 w-3" />
             read-only

@@ -5,7 +5,7 @@
 
 export const LAB_STAGES = [
   { key: 'inventory', label: 'Inventory authorized surfaces', pods: ['Perimeter Scout'] },
-  { key: 'skills', label: 'Run unconventional skills', pods: ['Protocol Analyst', 'Schema Archaeologist'] },
+  { key: 'skills', label: 'Run unique engineering skills', pods: ['Protocol Analyst', 'Schema Archaeologist'] },
   { key: 'synthesize', label: 'Synthesize findings', pods: ['Logic Reconstructor'] },
   { key: 'dossier', label: 'Write the dossier', pods: ['REA Orchestrator'] }
 ];

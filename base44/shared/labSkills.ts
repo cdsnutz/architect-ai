@@ -1,4 +1,4 @@
-// The lab's unconventional skill catalog. Every skill is an observation technique that
+// The lab's unique engineering skill catalog. Every skill is an observation technique that
 // can be executed with anonymous GET/HEAD requests only — no writes, no credentials,
 // no payloads. `probe` names the read-only routine in readOnly.ts that carries it out.
 
