@@ -5,10 +5,11 @@
 * written consent from the author.
 */
 
-// The engine of record for every browser-backed session in this lab. A
-// self-hosted CloakBrowser answers on CDP; nothing else is offered as an
-// alternative, so a run can never silently fall back to a different browser
-// than the one it is documented against.
+// The engine of record for every browser-backed session in this lab. Two
+// transports reach the same binary: the licence-key SDK (cloakbrowser.launch,
+// executed by a Python host) and a self-hosted cloakserve answering on CDP.
+// Nothing else is offered, so a run can never silently fall back to a
+// different browser than the one it is documented against.
 
 import { secrets } from "base44:runtime";
 
@@ -16,9 +17,12 @@ export const ENGINE = {
   id: "cloakbrowser",
   label: "CloakBrowser",
   source: "https://github.com/CloakHQ/CloakBrowser",
-  mode: "self-hosted · cloakserve (CDP 9222)",
+  mode: "licence-key sdk · cloakbrowser.launch",
+  transports: ["sdk", "cdp"],
   is_default: true
 };
+
+export const RUNNER = "cloakbrowser_runner.py";
 
 function secret(name: string) {
   try {
@@ -28,10 +32,16 @@ function secret(name: string) {
   }
 }
 
+// The licence key is a credential: it is read, reported only as present (with
+// its last four characters so the operator can tell which key is installed),
+// and never returned in full or written to a log.
 export function engineConfig() {
+  const key = secret("CLOAKBROWSER_LICENSE_KEY");
   return {
     url: secret("CLOAKBROWSER_CDP_URL").replace(/\/+$/, ""),
-    token: secret("CLOAKBROWSER_CDP_TOKEN")
+    token: secret("CLOAKBROWSER_CDP_TOKEN"),
+    key_present: Boolean(key),
+    key_suffix: key ? key.slice(-4) : ""
   };
 }
 
@@ -47,15 +57,30 @@ function hostOf(url: string) {
 // whether per-seed routing is answering. The CDP websocket URL is a live
 // credential, so it is never returned or logged.
 export async function probeEngine() {
-  const { url, token } = engineConfig();
+  const { url, token, key_present, key_suffix } = engineConfig();
 
   if (!url) {
+    if (key_present) {
+      return {
+        ...ENGINE,
+        transport: "sdk",
+        licence: "installed · ****" + key_suffix,
+        configured: true,
+        reachable: false,
+        runner: RUNNER,
+        runner_command: "CLOAKBROWSER_LICENSE_KEY=… python " + RUNNER + " --url https://example.com --geoip",
+        detail:
+          "The licence key is installed, so the SDK can launch the browser with humanize and geoip. This app's backend is JavaScript and cannot load a Python package, so the pass runs on a host that has one: " +
+          RUNNER +
+          " executes it and hands the evidence back. Save a reachable endpoint as CLOAKBROWSER_CDP_URL to drive that host from here."
+      };
+    }
     return {
       ...ENGINE,
       configured: false,
       reachable: false,
       detail:
-        "No cloakserve endpoint is set. Run the container on a host, then save its URL as CLOAKBROWSER_CDP_URL."
+        "Neither a licence key nor a cloakserve endpoint is set. Save CLOAKBROWSER_LICENSE_KEY to run the SDK on a Python host, or CLOAKBROWSER_CDP_URL for a self-hosted endpoint."
     };
   }
 
@@ -93,6 +118,8 @@ export async function probeEngine() {
     return {
       ...ENGINE,
       host: hostOf(url),
+      transport: "cdp",
+      licence: key_present ? "installed · ****" + key_suffix : "not installed",
       configured: true,
       reachable: true,
       browser: String(data.Browser || ""),

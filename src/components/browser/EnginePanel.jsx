@@ -79,9 +79,16 @@ export default function EnginePanel() {
           {busy && !status ? "Asking the endpoint for its browser version…" : (status && status.detail) || ""}
         </p>
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-dim">
-          {(status && status.mode) || "self-hosted · cloakserve (CDP 9222)"}
+          {(status && status.mode) || "licence-key sdk · cloakbrowser.launch"}
+          {status && status.transport ? " · " + status.transport : ""}
+          {status && status.licence ? " · " + status.licence : ""}
           {status && status.host ? " · " + status.host : ""}
         </p>
+        {status && status.runner_command && (
+          <p className="truncate font-mono text-[10px] text-ink-dim" title={status.runner_command}>
+            {status.runner_command}
+          </p>
+        )}
       </div>
     </div>
   );
