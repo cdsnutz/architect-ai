@@ -9,13 +9,13 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const BASE =
-  "inline-flex items-center justify-center gap-2 border px-4 py-2.5 text-[13px] font-semibold no-underline transition-[background,box-shadow,border-color] duration-200 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]";
+  "group inline-flex items-center justify-center gap-2 border px-5 py-3 text-[13px] font-semibold tracking-[-0.01em] no-underline transition-[background-color,box-shadow,border-color,transform] duration-200 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal";
 
 const VARIANTS = {
   solid:
-    "border-transparent bg-[#22C55E] text-[#04130a] hover:bg-[#34d46f] hover:shadow-[0_0_18px_rgba(34,197,94,0.45)] active:bg-[#1aa84f]",
+    "border-transparent bg-signal text-[hsl(var(--signal-foreground))] shadow-[inset_0_1px_0_hsl(var(--ink)/0.22),0_12px_28px_-16px_hsl(var(--signal)/0.95)] hover:bg-[hsl(var(--signal)/0.92)] hover:shadow-[0_0_0_1px_hsl(var(--signal)/0.45),0_14px_32px_-14px_hsl(var(--signal)/0.8)] active:translate-y-px",
   outline:
-    "border-[#2b3646] bg-transparent text-[#E6EDF3] hover:border-[#22C55E] hover:bg-[#161B22] hover:shadow-[0_0_18px_rgba(34,197,94,0.22)] active:bg-[#0f141b]",
+    "border-line bg-[hsl(var(--surface-panel)/0.7)] text-ink hover:border-[hsl(var(--signal)/0.55)] hover:bg-surface-raised hover:shadow-[0_0_24px_-12px_hsl(var(--signal)/0.6)] active:translate-y-px",
 };
 
 export default function TelemetryButton({ to, href, variant = "solid", className = "", children }) {

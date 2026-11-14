@@ -17,7 +17,7 @@ const LINKS = [
 ];
 
 const LINK_CLASS =
-  "px-3 py-2 text-[13px] text-[#9AA7B6] no-underline transition-colors duration-200 hover:bg-[#161B22] hover:text-[#E6EDF3] active:bg-[#1d2530] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]";
+  "px-3 py-1.5 text-[13px] text-ink-muted no-underline transition-colors duration-200 hover:bg-[hsl(var(--surface-raised)/0.8)] hover:text-ink active:bg-surface-raised cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal";
 
 export default function LandingNav() {
   const [progress, setProgress] = useState(0);
@@ -32,21 +32,20 @@ export default function LandingNav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const reached = Math.floor(progress * 4);
-
   return (
-    <header className="sticky top-0 z-50 border-b border-[#222b38] bg-[#0D1117]">
+    <header className="sticky top-0 z-50 border-b border-line-soft bg-[hsl(var(--surface-base)/0.82)] backdrop-blur-xl">
       <div className="mx-auto max-w-[1280px]">
-        <div className="flex h-[60px] items-center justify-between px-8">
-          <Link
-            to="/"
-            className="flex items-center gap-2 font-display text-[15px] font-bold tracking-tight text-[#E6EDF3] no-underline"
-          >
-            <ScanLine className="h-5 w-5 text-[#22C55E]" />
-            REVENGINE
+        <div className="flex h-16 items-center justify-between px-6 sm:px-8">
+          <Link to="/" className="group flex items-center gap-2.5 no-underline">
+            <span className="flex h-7 w-7 items-center justify-center border border-[hsl(var(--signal)/0.35)] bg-[hsl(var(--signal)/0.1)] transition-colors group-hover:bg-[hsl(var(--signal)/0.18)]">
+              <ScanLine className="h-4 w-4 text-signal" strokeWidth={2.1} />
+            </span>
+            <span className="font-display text-[14px] font-bold uppercase tracking-[0.16em] text-ink">
+              REVENGINE
+            </span>
           </Link>
 
-          <nav className="hidden items-center gap-1.5 md:flex">
+          <nav className="hidden items-center gap-1 md:flex">
             {LINKS.map((link) => (
               <a key={link.href} href={link.href} className={LINK_CLASS}>
                 {link.label}
@@ -54,30 +53,24 @@ export default function LandingNav() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-4">
             <Link
               to="/login"
-              className="text-[13px] text-[#9AA7B6] no-underline transition-colors duration-200 hover:text-[#E6EDF3] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]"
+              className="hidden text-[13px] text-ink-muted no-underline transition-colors duration-200 hover:text-ink sm:block cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
             >
               Sign in
             </Link>
-            <TelemetryButton to="/workspace">Verify a host</TelemetryButton>
+            <TelemetryButton to="/workspace" className="px-4 py-2.5 text-[12.5px]">
+              Verify a host
+            </TelemetryButton>
           </div>
         </div>
 
-        <div className="flex h-[3px] gap-1 px-8">
-          {[0, 1, 2, 3].map((index) => (
-            <span
-              key={index}
-              className={`block h-[3px] flex-1 ${
-                index < reached
-                  ? "bg-[#22C55E]"
-                  : index === reached
-                    ? "bg-[rgba(34,197,94,0.45)]"
-                    : "bg-[#1c2431]"
-              }`}
-            />
-          ))}
+        <div className="h-[2px] bg-[hsl(var(--surface-raised))]" aria-hidden>
+          <div
+            className="h-full bg-signal shadow-[0_0_10px_hsl(var(--signal)/0.7)] transition-[width] duration-150"
+            style={{ width: `${progress * 100}%` }}
+          />
         </div>
       </div>
     </header>

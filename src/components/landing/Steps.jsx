@@ -15,11 +15,11 @@ const STEPS = [
     body: (
       <>
         Publish a DNS TXT record at{" "}
-        <code className="font-mono text-[11.5px] break-all text-[#E6EDF3]">
+        <code className="break-all border border-line bg-[hsl(var(--surface-sunken))] px-1 font-mono text-[11px] text-ink">
           _revengine-verify.&lt;your-domain&gt;
         </code>{" "}
         or drop a file at{" "}
-        <code className="font-mono text-[11.5px] break-all text-[#E6EDF3]">
+        <code className="break-all border border-line bg-[hsl(var(--surface-sunken))] px-1 font-mono text-[11px] text-ink">
           /.well-known/revengine-verify.txt
         </code>
         . Nothing is mapped until one of the two answers.
@@ -40,34 +40,38 @@ const STEPS = [
 
 export default function Steps() {
   return (
-    <section id="steps" className="border-t border-[#1c2431] px-8 py-14">
+    <section id="steps" className="border-b border-line-soft px-6 py-16 sm:px-8">
       <div className="mx-auto max-w-[1280px]">
-        <h2 className="text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-[#E6EDF3]">
+        <h2 className="font-display text-[28px] font-semibold leading-[1.08] tracking-[-0.03em] text-ink sm:text-[34px]">
           The three steps
         </h2>
-        <p className="mt-2.5 max-w-[560px] text-[14px] leading-[1.55] text-[#9AA7B6]">
+        <p className="mt-3 max-w-[560px] text-[14.5px] leading-[1.6] text-ink-muted">
           From claiming a host to holding the evidence, in order.
         </p>
 
-        <div className="mt-7 flex flex-col items-stretch md:flex-row">
+        <div className="mt-8 flex flex-col items-stretch gap-3 md:flex-row md:gap-0">
           {STEPS.map((step, index) => {
             const Icon = step.icon;
             return (
               <React.Fragment key={step.title}>
                 {index > 0 && (
-                  <div className="flex w-full shrink-0 items-center justify-center py-1 md:w-[26px] md:py-0">
-                    <ArrowRight className="h-4 w-4 rotate-90 text-[#22C55E] md:rotate-0" />
+                  <div className="flex w-full shrink-0 items-center justify-center py-0.5 md:w-8 md:py-0">
+                    <ArrowRight className="h-4 w-4 rotate-90 text-ink-dim md:rotate-0" />
                   </div>
                 )}
-                <div className="flex-1 border border-[#2b3646] bg-[#161B22] p-5 transition-[border-color,box-shadow] duration-200 hover:border-[#22C55E] hover:shadow-[0_0_22px_rgba(34,197,94,0.2)]">
-                  <div className="flex items-center justify-between font-mono text-[12px] text-[#22C55E]">
-                    0{index + 1}
-                    <Icon className="h-4 w-4 text-[#9AA7B6]" />
+                <div className="group flex-1 border border-line bg-surface-panel p-5 transition-[border-color,box-shadow,background-color] duration-200 hover:border-[hsl(var(--signal)/0.45)] hover:bg-surface-raised hover:shadow-[0_18px_40px_-28px_hsl(var(--signal)/0.7)]">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[11px] tracking-[0.16em] text-signal">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span className="flex h-7 w-7 items-center justify-center border border-line-soft bg-[hsl(var(--surface-sunken))]">
+                      <Icon className="h-3.5 w-3.5 text-ink-muted transition-colors group-hover:text-signal" />
+                    </span>
                   </div>
-                  <h3 className="mt-3.5 text-[16px] font-semibold text-[#E6EDF3]">
+                  <h3 className="mt-3.5 font-display text-[15.5px] font-semibold tracking-[-0.01em] text-ink">
                     {step.title}
                   </h3>
-                  <p className="mt-2 text-[12.5px] leading-[1.55] text-[#9AA7B6]">
+                  <p className="mt-2 text-[12.5px] leading-[1.65] text-ink-muted">
                     {step.body}
                   </p>
                 </div>

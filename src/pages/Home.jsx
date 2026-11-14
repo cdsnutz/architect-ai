@@ -15,7 +15,7 @@ import Footer from "@/components/landing/Footer";
 
 export default function Home() {
   return (
-    <div className="lt-page min-h-screen bg-[#0D1117] text-[#E6EDF3]">
+    <div className="lt-page relative min-h-screen bg-surface-base text-ink">
       <LandingNav />
       <Hero />
       <ProofCompare />

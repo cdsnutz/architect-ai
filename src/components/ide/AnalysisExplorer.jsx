@@ -18,7 +18,7 @@ function hostOf(url) {
 
 export default function AnalysisExplorer({ history, loading, currentId, onOpen }) {
   return (
-    <aside className="sticky top-11 hidden h-[calc(100vh-2.75rem)] w-56 shrink-0 flex-col border-r border-line-soft bg-surface-sunken md:flex">
+    <aside className="sticky top-12 hidden h-[calc(100vh-3rem)] w-56 shrink-0 flex-col border-r border-line-soft bg-[hsl(var(--surface-sunken)/0.85)] backdrop-blur md:flex">
       <div className="flex items-center justify-between border-b border-line-soft px-3 py-2">
         <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-dim">Analyses</p>
         <span className="font-mono text-[10px] text-ink-dim">{history.length}</span>
