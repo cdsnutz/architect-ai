@@ -36,8 +36,9 @@ export default function BugHunter() {
     setError("");
     try {
       const response = await base44.functions.invoke("ingestBugHunter", {});
-      if (response.data && response.data.record) setCatalog(response.data.record);
-      await load();
+      const data = response.data || {};
+      if (data.record) setCatalog(data.record);
+      else if (data.catalog) setCatalog(data.catalog);
     } catch (err) {
       const detail = err && err.response && err.response.data && err.response.data.error;
       setError(detail || (err && err.message) || "The catalog could not be read.");

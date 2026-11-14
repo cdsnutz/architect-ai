@@ -66,7 +66,7 @@ export default function ToolList({ tools, query, onQuery, lane, onLaneReset }) {
               onClick={onLaneReset}
               className="border border-line px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-ink-muted hover:border-signal hover:text-signal"
             >
-              lane: {lane} ×
+              lane: {LABEL[lane] || lane} ×
             </button>
           )}
           <input

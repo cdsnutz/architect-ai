@@ -67,7 +67,7 @@ export default async function (req) {
       );
     }
 
-    const record = await base44.entities.BugHunterCatalog.create({
+    const catalog = {
       source_url: 'https://github.com/' + owner + '/' + repo,
       branch,
       status: 'complete',
@@ -75,13 +75,21 @@ export default async function (req) {
       readme_chars: markdown.length,
       counts,
       sections
-    });
+    };
+
+    // The index is derived from the README, so a failed save still returns it.
+    let record = null;
+    try {
+      record = await base44.entities.BugHunterCatalog.create(catalog);
+    } catch (saveError) {
+      console.log('ingestBugHunter could not persist the index: ' + (saveError && saveError.message));
+    }
 
     console.log(
       'ingestBugHunter read ' + owner + '/' + repo + ': ' + counts.tools + ' tools across ' + counts.sections + ' sections'
     );
 
-    return Response.json({ record });
+    return Response.json({ catalog, record, persisted: Boolean(record) });
   } catch (error) {
     console.log('ingestBugHunter failed: ' + (error && error.message));
     return Response.json({ error: (error && error.message) || 'The catalog could not be read.' }, { status: 500 });
