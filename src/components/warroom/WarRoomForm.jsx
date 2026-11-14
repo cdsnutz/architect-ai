@@ -17,7 +17,7 @@ const BASES = [
 const FIELD =
   "mt-1 w-full border border-line bg-surface-sunken px-2 py-1.5 font-mono text-[12px] text-ink outline-none focus:border-signal/60";
 
-export default function WarRoomForm({ onRun, busy }) {
+export default function WarRoomForm({ onRun, busy, label = "run the war room" }) {
   const [target, setTarget] = useState("");
   const [competitors, setCompetitors] = useState(["", "", ""]);
   const [basis, setBasis] = useState("owned");
@@ -90,7 +90,7 @@ export default function WarRoomForm({ onRun, busy }) {
           disabled={busy}
           className="inline-flex items-center gap-1.5 border border-signal/50 bg-signal/10 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-signal transition-colors hover:bg-signal/20 disabled:opacity-50"
         >
-          <Play className="h-3 w-3" /> {busy ? "war room running" : "run the war room"}
+          <Play className="h-3 w-3" /> {busy ? "reading surfaces" : label}
         </button>
         <p className="text-[10px] leading-relaxed text-ink-dim">
           One anonymous read per surface. Exposure is reported only where a response proves it.

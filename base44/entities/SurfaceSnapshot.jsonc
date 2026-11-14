@@ -1,0 +1,86 @@
+{
+  "name": "SurfaceSnapshot",
+  "type": "object",
+  "properties": {
+    "host": {
+      "type": "string",
+      "description": "Hostname the snapshot was read from."
+    },
+    "url": {
+      "type": "string",
+      "description": "Surface read as the snapshot baseline."
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "lead",
+        "winner"
+      ],
+      "enumColors": [
+        "green",
+        "blue"
+      ],
+      "description": "Whether this surface was the lead or a winner in the pass."
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Indexable paths published to an anonymous reader at capture time."
+    },
+    "families": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Path family counts, the shape the drift module compares against."
+    },
+    "total_paths": {
+      "type": "number"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "host",
+    "url",
+    "role",
+    "paths",
+    "captured_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

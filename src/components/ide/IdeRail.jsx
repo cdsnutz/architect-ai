@@ -8,6 +8,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import {
+  Activity,
   Binary,
   Bug,
   Crosshair,
@@ -40,12 +41,14 @@ const ICONS = {
   shannon: Crosshair,
   "reverse-skill": RouteIcon,
   gap: Radar,
-  "war-room": Target
+  "war-room": Target,
+  intel: Activity
 };
 
 // Run order first, then the indexed toolkits that feed it.
 const ITEMS = [
   { key: "war-room", to: "/war-room", label: "War room" },
+  { key: "intel", to: "/intel", label: "Intelligence" },
   { key: "gap", to: "/gap", label: "Gap analyzer" },
   ...CLONE_MODULES,
   ...RAIL_TOOLKITS.map((toolkit) => ({ key: toolkit.key, to: toolkit.route, label: toolkit.name }))
