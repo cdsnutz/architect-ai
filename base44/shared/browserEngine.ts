@@ -96,18 +96,23 @@ export async function probeRunner(runner = runnerConfig()) {
       };
     }
 
-    const ready = data && data.ok === true;
+    const isRunner = Boolean(data && data.engine === ENGINE.id);
+    const ready = isRunner && data.ok === true;
     return {
       ...ENGINE,
       host,
       transport: "sdk-http",
       configured: true,
       reachable: ready,
-      licence: String((data && data.licence) || "unknown"),
+      licence: isRunner ? String(data.licence || "unknown") : "not served",
       auth_required: Boolean(data && data.auth_required),
       detail: ready
         ? "The runner on " + host + " is listening, holds the licence key and executes cloakbrowser.launch for this app."
-        : "The runner on " + host + " is up but not ready: " + String((data && data.problem) || "the engine is not importable there.")
+        : isRunner
+          ? "The runner on " + host + " is up but not ready: " + String(data.problem || "the engine is not importable there.")
+          : "Something answers on " + host + ", but it is not the CloakBrowser runner: it does not identify itself as cloakbrowser on /health. Deploy " +
+            RUNNER +
+            " on that machine, or point CLOAKBROWSER_RUNNER_URL at the host that runs it."
     };
   } catch (error: any) {
     const timedOut = error && (error.name === "TimeoutError" || error.name === "AbortError");
@@ -161,10 +166,16 @@ export async function captureViaRunner(
     });
     const data = await response.json().catch(() => ({} as any));
     if (!response.ok || !data || data.ok !== true) {
+      const raw = String((data && data.error) || "The runner answered " + response.status + " without evidence.");
       return {
         ok: false,
         status: response.status,
-        error: String((data && data.error) || "The runner answered " + response.status + " without evidence."),
+        error:
+          response.status === 404
+            ? "The host answered 404 (" + raw + "): the runner is not serving /capture there, so no pass ran."
+            : response.status === 401 || response.status === 403
+              ? "The runner refused this app's token. Check that CLOAKBROWSER_RUNNER_TOKEN matches on the machine."
+              : raw,
         evidence: data
       };
     }
