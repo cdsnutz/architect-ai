@@ -18,7 +18,7 @@ export default function Pipeline() {
     <IdeShell
       active="pipeline"
       crumb="Pipeline / full clone runbook"
-      note="ten stages · evidence before claims"
+      note="eleven stages · evidence before claims"
       status={[
         { label: "stages", value: String(CLONE_STAGES.length) },
         { label: "toolkits", value: String(TOOLKIT_LIST.length) },
@@ -54,7 +54,7 @@ export default function Pipeline() {
                 <div className="min-w-0">
                   <p className="text-[12px] text-ink">{toolkit.name}</p>
                   <p className="font-mono text-[10px] text-ink-dim">
-                    {toolkit.owner}/{toolkit.repo} · {toolkit.role}
+                    {toolkit.source || toolkit.owner + "/" + toolkit.repo} · {toolkit.role}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">

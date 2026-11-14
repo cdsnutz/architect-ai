@@ -27,6 +27,7 @@ import ResetPassword from './pages/ResetPassword';
 import OAuthConsent from './pages/OAuthConsent';
 import AgentVerdict from './pages/AgentVerdict';
 import Symmetry from './pages/Symmetry';
+import Structure from './pages/Structure';
 import BugHunter from './pages/BugHunter';
 import Toolkit from './pages/Toolkit';
 import Pipeline from './pages/Pipeline';
@@ -101,6 +102,12 @@ const AuthenticatedApp = () => {
         element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fsymmetry" replace />} />}
       >
         <Route index element={<Symmetry />} />
+      </Route>
+      <Route
+        path="/structure"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fstructure" replace />} />}
+      >
+        <Route index element={<Structure />} />
       </Route>
       <Route
         path="/bug-hunter"

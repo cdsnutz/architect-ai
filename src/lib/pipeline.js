@@ -34,7 +34,7 @@ export const CLONE_STAGES = [
     label: "Read the evidence",
     module: "/lab",
     moduleLabel: "Lab",
-    does: "Walk the authorized surface and tag each finding observed or inferred, with its evidence, gap and next probe. Toolkits on hand: Ghidra for binary claims.",
+    does: "Walk the authorized surface and tag each finding observed or inferred, with its evidence, gap and next probe. Toolkits on hand: Ghidra for binary claims, Shannon for source-level attack surface.",
     produces: "Findings and ledger traces",
     gate: "An unobserved claim is labelled, never promoted to fact."
   },
@@ -43,9 +43,18 @@ export const CLONE_STAGES = [
     label: "Measure the graph",
     module: "/symmetry",
     moduleLabel: "Symmetry",
-    does: "Map trigger edges, entropy families, state-key names and timing, then diff a candidate deploy against the baseline to see where it diverges.",
+    does: "Map trigger edges, entropy families, state-key names and timing, then diff a candidate deploy against the baseline to see where it diverges. Toolkits on hand: Shannon entropy for families the page never linked.",
     produces: "SymmetryRun: graph, entropy, latency, fidelity",
     gate: "The pass runs only on a stated basis: owned, written authorization, or staging mirror."
+  },
+  {
+    key: "audit",
+    label: "Audit the structure",
+    module: "/structure",
+    moduleLabel: "Structure",
+    does: "Run the graph theory suite over the captured graph: degree distribution, cycles, duplicate and dangling edges, chain depth, origin spread. Each anomaly comes back with the fix it needs. Toolkits on hand: the graph theory suite.",
+    produces: "Anomaly list and a copyable fix plan",
+    gate: "Every anomaly carries a fix, or an explicit note that the capture cannot settle it."
   },
   {
     key: "compile",
@@ -70,7 +79,7 @@ export const CLONE_STAGES = [
     label: "Gate the clone 1:1",
     module: "/spec",
     moduleLabel: "Rebuild spec",
-    does: "Score the parity matrix, brand sweep and contrast check together, so the clone is judged on evidence rather than on resemblance.",
+    does: "Score the parity matrix, brand sweep and contrast check together, so the clone is judged on evidence rather than on resemblance. Toolkits on hand: Replica for the gate.",
     produces: "Replica verdict",
     gate: "Parity and brand gates pass before anything is called a clone."
   },
@@ -88,7 +97,7 @@ export const CLONE_STAGES = [
     label: "Sign it off",
     module: "/lab",
     moduleLabel: "Lab",
-    does: "The owning pod records a verdict per stage. A decline routes the stage back as needs_input instead of quietly closing it.",
+    does: "The owning pod records a verdict per stage. A decline routes the stage back as needs_input instead of quietly closing it. Toolkits on hand: the Rea agents for stage ownership and sign-off.",
     produces: "Stage verdicts, with the transcript",
     gate: "A stage closes only on an explicit verdict."
   },

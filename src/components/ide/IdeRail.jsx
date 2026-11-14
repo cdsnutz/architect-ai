@@ -17,10 +17,11 @@ import {
   LayoutDashboard,
   Network,
   ScanLine,
+  Waypoints,
   Workflow
 } from "lucide-react";
 import { CLONE_MODULES } from "@/lib/pipeline";
-import { TOOLKIT_LIST } from "@/lib/toolkits";
+import { RAIL_TOOLKITS } from "@/lib/toolkits";
 
 const ICONS = {
   pipeline: Workflow,
@@ -30,6 +31,7 @@ const ICONS = {
   spec: GitBranch,
   compare: GitCompare,
   dashboard: LayoutDashboard,
+  structure: Waypoints,
   ghidra: Binary,
   "bug-hunter": Bug,
   shannon: Crosshair
@@ -38,7 +40,7 @@ const ICONS = {
 // Run order first, then the indexed toolkits that feed it.
 const ITEMS = [
   ...CLONE_MODULES,
-  ...TOOLKIT_LIST.map((toolkit) => ({ key: toolkit.key, to: toolkit.route, label: toolkit.name }))
+  ...RAIL_TOOLKITS.map((toolkit) => ({ key: toolkit.key, to: toolkit.route, label: toolkit.name }))
 ];
 
 export default function IdeRail({ active }) {
