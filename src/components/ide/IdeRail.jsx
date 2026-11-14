@@ -16,6 +16,7 @@ import {
   GitCompare,
   LayoutDashboard,
   Network,
+  Radar,
   Route as RouteIcon,
   ScanLine,
   Waypoints,
@@ -36,11 +37,13 @@ const ICONS = {
   ghidra: Binary,
   "bug-hunter": Bug,
   shannon: Crosshair,
-  "reverse-skill": RouteIcon
+  "reverse-skill": RouteIcon,
+  gap: Radar
 };
 
 // Run order first, then the indexed toolkits that feed it.
 const ITEMS = [
+  { key: "gap", to: "/gap", label: "Gap analyzer" },
   ...CLONE_MODULES,
   ...RAIL_TOOLKITS.map((toolkit) => ({ key: toolkit.key, to: toolkit.route, label: toolkit.name }))
 ];

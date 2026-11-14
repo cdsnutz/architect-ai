@@ -252,7 +252,7 @@ async function probeCache(skill: string, target: string): Promise<ProbeResult> {
   };
 }
 
-const FRAMEWORK_MARKERS: { label: string; test: RegExp }[] = [
+export const FRAMEWORK_MARKERS: { label: string; test: RegExp }[] = [
   { label: 'Next.js', test: /__NEXT_DATA__|\/_next\/static\//i },
   { label: 'Nuxt', test: /__NUXT__|\/_nuxt\//i },
   { label: 'React shell', test: /data-reactroot|id=["']root["']/i },
