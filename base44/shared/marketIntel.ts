@@ -21,6 +21,7 @@
 
 import { assertPublicUrl } from './readOnly.ts';
 import { assertAuthorization } from './symmetry.ts';
+import { readBundleIntelligence } from './bundleIntel.ts';
 
 const UA = 'Mozilla/5.0 (compatible; RevEngineCommand/1.0; authorized read-only audit)';
 const TIMEOUT_MS = 9000;
@@ -43,7 +44,7 @@ export const COMMAND_REFUSALS = [
     key: 'Shadow_API_Watch',
     reach: 'refused',
     detail:
-      'Watching XHR and fetch traffic needs a live authenticated session against a third-party origin. This lab reads published documents only, so undocumented endpoints are not claimed here. What the served bundles declare can still be read in the Mirror reversal stage.'
+      'Watching XHR and fetch traffic needs a live authenticated session against a third-party origin. This lab reads published documents only, so the endpoint map below is read from the public bundles and labelled as declared, never as observed traffic.'
   },
   {
     key: 'Externality_Scrape',
@@ -165,7 +166,7 @@ async function fetchPage(url: string) {
   // redirect:'follow' can land anywhere: the surface parsed has to be public.
   assertPublicUrl(response.url);
   const text = (await response.text()).slice(0, MAX_BYTES);
-  return { url: response.url, status: response.status, text, ms: Date.now() - started };
+  return { url: response.url, status: response.status, text, headers: response.headers, ms: Date.now() - started };
 }
 
 async function readSurface(url: string, role: string) {
@@ -175,6 +176,44 @@ async function readSurface(url: string, role: string) {
   const origin = new URL(home.url).origin;
   const host = new URL(home.url).hostname;
   const homeInfo = extract(home.text, origin);
+
+  // Same-origin scripts are the only bundles this pass will read, and the
+  // sitemap is the surface's own statement of what it publishes.
+  const scripts = [...new Set(
+    [...home.text.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/gi)]
+      .map((match) => {
+        try {
+          const asset = new URL(match[1], origin);
+          return asset.origin === origin ? asset.toString() : '';
+        } catch {
+          return '';
+        }
+      })
+      .filter(Boolean)
+  )].slice(0, 4);
+
+  let sitemap: string[] = [];
+  try {
+    const jar = await fetchPage(origin + '/robots.txt');
+    const declared = [...jar.text.matchAll(/^\s*sitemap:\s*(\S+)/gim)].map((match) => match[1]).slice(0, 2);
+    for (const root of declared.length ? declared : [origin + '/sitemap.xml']) {
+      try {
+        const index = await fetchPage(root);
+        if (index.status !== 200) continue;
+        for (const match of index.text.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)) {
+          if (/\.xml(\?|$)/i.test(match[1])) continue;
+          const path = normalizePath(match[1], origin);
+          if (path) sitemap.push(path);
+          if (sitemap.length >= 300) break;
+        }
+      } catch {
+        // A sitemap that will not read undercounts the surface; it never invents paths.
+      }
+    }
+  } catch {
+    sitemap = [];
+  }
+  sitemap = [...new Set(sitemap)].slice(0, 300);
 
   // Money paths are read before anything else: they are where the gravity
   // question is actually answered.
@@ -201,7 +240,25 @@ async function readSurface(url: string, role: string) {
     pages.push({ path, ...extract(page.text, origin), status: page.status, bytes: page.text.length, ttfb_ms: page.ms });
   });
 
-  return { url: home.url, origin, host, role, pages, ttfb_ms: home.ms, security: home.status };
+  const header = (name: string) => home.headers.get(name) || '';
+
+  return {
+    url: home.url,
+    origin,
+    host,
+    role,
+    pages,
+    scripts,
+    sitemap,
+    ttfb_ms: home.ms,
+    security: {
+      hsts: Boolean(header('strict-transport-security')),
+      csp: Boolean(header('content-security-policy')),
+      nosniff: Boolean(header('x-content-type-options')),
+      referrer: Boolean(header('referrer-policy')),
+      permissions: Boolean(header('permissions-policy'))
+    }
+  };
 }
 
 // ── 1. Gravity map ───────────────────────────────────────────────────────────
@@ -472,6 +529,208 @@ function buildAgilityModule(surfaces: any[], history: Record<string, any[]>) {
   };
 }
 
+// ── 4. Sovereign dashboard ───────────────────────────────────────────────────
+function surfacePaths(surface: any): string[] {
+  const fromSitemap = Array.isArray(surface.sitemap) ? surface.sitemap : [];
+  if (fromSitemap.length) return fromSitemap;
+  return [...new Set(surface.pages.flatMap((page: any) => page.links))] as string[];
+}
+
+function securityCount(security: any): number {
+  return ['hsts', 'csp', 'nosniff', 'referrer', 'permissions'].filter((key) => security && security[key]).length;
+}
+
+function buildDashboard(surfaces: any[], cognitive: any, gravity: any, agility: any) {
+  const paths = new Map<string, string[]>(surfaces.map((surface) => [surface.host, surfacePaths(surface)]));
+  const maxPaths = Math.max(1, ...[...paths.values()].map((list) => list.length));
+  const minTtfb = Math.min(...surfaces.map((surface) => surface.ttfb_ms)) || 1;
+
+  const series = surfaces.map((surface) => {
+    const load = cognitive.rows.find((row: any) => row.host === surface.host);
+    const grav = gravity.rows.find((row: any) => row.host === surface.host);
+    const agil = agility.rows.find((row: any) => row.host === surface.host);
+    const content = (paths.get(surface.host) || []).length;
+    const churn = agil && agil.churn_per_pass !== null ? agil.churn_per_pass : null;
+
+    return {
+      host: surface.host,
+      role: surface.role,
+      values: {
+        content: Math.round((content / maxPaths) * 100),
+        speed: Math.min(100, Math.round((minTtfb / Math.max(1, surface.ttfb_ms)) * 100)),
+        security: securityCount(surface.security) * 20,
+        velocity: churn === null ? null : Math.min(100, Math.round(churn * 10)),
+        gravity: grav ? Math.min(100, Math.round(grav.money_share)) : 0
+      },
+      measures: {
+        content,
+        ttfb_ms: surface.ttfb_ms,
+        headers: securityCount(surface.security),
+        churn_per_pass: churn,
+        money_share: grav ? grav.money_share : 0,
+        load: load ? load.load : null
+      }
+    };
+  });
+
+  const leadSurface = surfaces.find((surface) => surface.role === 'lead');
+  const winners = surfaces.filter((surface) => surface.role === 'winner');
+  const leadFamilies = new Set((paths.get(leadSurface.host) || []).map((path) => familyOf(path)));
+  const consensus = new Map<string, Set<string>>();
+
+  winners.forEach((winner) => {
+    new Set((paths.get(winner.host) || []).map((path) => familyOf(path))).forEach((family) => {
+      if (!family) return;
+      if (!consensus.has(family)) consensus.set(family, new Set());
+      (consensus.get(family) as Set<string>).add(winner.host);
+    });
+  });
+
+  // A void is a family the winners agree on and the lead does not publish at
+  // all. A thinner version of an existing family is a delta, not a void.
+  const voids = [...consensus.entries()]
+    .filter(([family, hosts]) => hosts.size >= Math.min(2, winners.length) && !leadFamilies.has(family))
+    .map(([family, hosts]) => {
+      const examples = [...new Set(
+        winners
+          .filter((winner) => hosts.has(winner.host))
+          .flatMap((winner) => (paths.get(winner.host) || []).filter((path) => familyOf(path) === family))
+      )].slice(0, 4);
+      return {
+        family,
+        present_in: [...hosts],
+        paths: examples,
+        opportunity:
+          'Nothing on ' + leadSurface.host + ' answers /' + family + ', and ' + hosts.size + ' of ' + winners.length +
+          ' winner(s) publish it (' + examples.join(', ') + ').'
+      };
+    })
+    .sort((left, right) => right.present_in.length - left.present_in.length)
+    .slice(0, 8);
+
+  const lead = series.find((entry) => entry.role === 'lead');
+  const strongestWinner = series.filter((entry) => entry.role === 'winner').sort((a, b) => b.values.content - a.values.content)[0];
+  const fastest = [...series].sort((a, b) => a.measures.ttfb_ms - b.measures.ttfb_ms)[0];
+  const lightest = series
+    .filter((entry) => entry.measures.load !== null)
+    .sort((a, b) => (a.measures.load as number) - (b.measures.load as number))[0];
+  const mostGravity = [...series].sort((a, b) => b.measures.money_share - a.measures.money_share)[0];
+
+  const weekOne = [] as { title: string; evidence: string }[];
+  if (lead && strongestWinner && lead.measures.headers < strongestWinner.measures.headers) {
+    weekOne.push({
+      title: 'Close the header gap',
+      evidence: lead.host + ' ships ' + lead.measures.headers + ' of 5 hardening headers; ' + strongestWinner.host + ' ships ' + strongestWinner.measures.headers + '.'
+    });
+  }
+  if (lead && fastest && lead.measures.ttfb_ms > fastest.measures.ttfb_ms * 1.25) {
+    weekOne.push({
+      title: 'Close the first-byte gap',
+      evidence: 'first byte ' + lead.measures.ttfb_ms + 'ms against ' + fastest.measures.ttfb_ms + 'ms on ' + fastest.host + '.'
+    });
+  }
+  if (lead && lightest && lead.measures.load !== null && lead.measures.load > (lightest.measures.load as number)) {
+    weekOne.push({
+      title: 'Cut entry-page decisions',
+      evidence: 'load ' + lead.measures.load + ' against ' + lightest.measures.load + ' on ' + lightest.host + '.'
+    });
+  }
+  if (lead && mostGravity && lead.measures.money_share < mostGravity.measures.money_share) {
+    weekOne.push({
+      title: 'Route internal links into the money path',
+      evidence: lead.measures.money_share + '% of links point at a conversion page against ' + mostGravity.measures.money_share + '% on ' + mostGravity.host + '.'
+    });
+  }
+  if (!weekOne.length) {
+    weekOne.push({
+      title: 'No measurable weakness on the lead this pass',
+      evidence: 'Every axis the pass could measure is at or ahead of the winners read.'
+    });
+  }
+
+  const roadmap = [
+    { week: 1, label: 'Harden what is live', items: weekOne },
+    {
+      week: 2,
+      label: 'Claim the consensus void',
+      items: voids.length
+        ? [{ title: 'Publish /' + voids[0].family + ' as a hub', evidence: voids[0].opportunity }]
+        : [{ title: 'No consensus void to claim', evidence: 'Every family the winners publish also exists on the lead.' }]
+    },
+    {
+      week: 3,
+      label: 'Second void or gravity',
+      items: voids.length > 1
+        ? [{ title: 'Publish /' + voids[1].family, evidence: voids[1].opportunity }]
+        : [{ title: 'Deepen the entry path', evidence: 'Gravity and load are the levers left once the void list is empty.' }]
+    },
+    {
+      week: 4,
+      label: 'Re-read the system',
+      items: [
+        {
+          title: 'Run the command pass again after seven days',
+          evidence: 'Agility needs two digests a day apart; the next pass turns churn from a baseline into a number.'
+        }
+      ]
+    }
+  ];
+
+  return {
+    axes: [
+      { key: 'content', label: 'Content depth' },
+      { key: 'speed', label: 'Tech speed' },
+      { key: 'security', label: 'Security hardening' },
+      { key: 'velocity', label: 'Path velocity' },
+      { key: 'gravity', label: 'Conversion gravity' }
+    ],
+    series,
+    voids,
+    roadmap,
+    note: voids.length
+      ? voids.length + ' famil(ies) are published by the winners and absent from ' + leadSurface.host + '. The roadmap is derived from those voids and the measured axes, not from a template.'
+      : 'No winner-consensus family is missing from the lead, so the roadmap works the measured axes instead.',
+    limits:
+      'Axes are normalised against the surfaces read in this pass: one winner makes a weak consensus. Velocity is null until two digests exist a day apart.'
+  };
+}
+
+// ── 5. Declared endpoints (the shadow map the lab can honestly read) ────────
+async function buildShadow(surface: any) {
+  if (!surface.scripts.length) {
+    return {
+      host: surface.host,
+      state: 'no_bundles',
+      mode: 'none',
+      bundles: 0,
+      routes: 0,
+      endpoints: [],
+      frameworks: [],
+      note: 'The entry document requested no same-origin script, so there is no bundle to read and no endpoint to declare.'
+    };
+  }
+
+  const intel = await readBundleIntelligence(surface.origin, surface.scripts, 3, 400000);
+  const API = /(^|\/)(api|v\d|graphql|rest|rpc)\//i;
+  const endpoints = [...new Set(intel.routes as string[])].filter((route) => API.test(route)).slice(0, 20);
+
+  return {
+    host: surface.host,
+    state: endpoints.length ? 'declared' : 'no_endpoints',
+    mode: intel.mode,
+    bundles: intel.bundles.length,
+    routes: (intel.routes as string[]).length,
+    endpoints,
+    frameworks: (intel.frameworks as string[]).slice(0, 6),
+    note: endpoints.length
+      ? endpoints.length + ' endpoint path(s) are named in ' + intel.bundles.length + ' public bundle(s). They are declarations, not traffic: nothing was called.'
+      : intel.note,
+    limits:
+      'Read from same-origin scripts only (' + intel.bundles.length + ' bundle(s), ' + intel.mode +
+      ' mode). An obfuscated payload is read by pattern: no string is decoded and no request is replayed.'
+  };
+}
+
 export async function runMarketIntel(input: { base44: any; body: any }) {
   const { base44, body } = input;
   const target = assertPublicUrl(body.target_url);
@@ -529,6 +788,8 @@ export async function runMarketIntel(input: { base44: any; body: any }) {
   const gravity = buildGravityModule(surfaces);
   const cognitive = buildCognitiveModule(surfaces);
   const agility = buildAgilityModule(surfaces, history);
+  const dashboard = buildDashboard(surfaces, cognitive, gravity, agility);
+  const shadow = await buildShadow(lead);
 
   const capturedAt = nowIso();
   try {
@@ -568,6 +829,8 @@ export async function runMarketIntel(input: { base44: any; body: any }) {
     gravity,
     cognitive,
     agility,
+    dashboard,
+    shadow,
     refusals: COMMAND_REFUSALS,
     limits:
       'Anonymous GET only: the entry page plus up to ' + (MAX_PAGES - 1) + ' same-origin pages per surface, money paths first, ' +

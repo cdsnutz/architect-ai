@@ -9,6 +9,8 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import IdeShell from "@/components/ide/IdeShell";
 import WarRoomForm from "@/components/warroom/WarRoomForm";
+import SovereignDashboard from "@/components/command/SovereignDashboard";
+import ShadowPanel from "@/components/command/ShadowPanel";
 import GravityPanel from "@/components/command/GravityPanel";
 import LoadPanel from "@/components/command/LoadPanel";
 import AgilityPanel from "@/components/command/AgilityPanel";
@@ -102,9 +104,11 @@ export default function Command() {
 
         {run && (
           <>
+            <SovereignDashboard dashboard={run.dashboard} />
             <GravityPanel gravity={run.gravity} />
             <LoadPanel cognitive={run.cognitive} />
             <AgilityPanel agility={run.agility} />
+            <ShadowPanel shadow={run.shadow} />
 
             {run.unread?.length > 0 && (
               <p className="border border-amber-500/40 bg-amber-500/10 p-2.5 font-mono text-[10px] leading-relaxed text-amber-300">

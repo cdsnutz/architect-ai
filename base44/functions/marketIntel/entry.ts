@@ -45,6 +45,8 @@ export default async function (req) {
       gravity: result.gravity,
       cognitive: result.cognitive,
       agility: result.agility,
+      dashboard: result.dashboard,
+      shadow: result.shadow,
       surfaces: result.surfaces,
       unread: result.unread,
       refusals: result.refusals,
