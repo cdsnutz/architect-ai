@@ -52,9 +52,9 @@ export const CLONE_STAGES = [
     label: "Mirror it in one pass",
     module: "/pipeline",
     moduleLabel: "Pipeline",
-    does: "Run the sovereign mirror pipeline: Shannon-Scout and Topology-Mapper discover assets, Ghidra-Decoder and REA-Logic-Agent read the public bundles for routes and transitions, Replica-Weaver inventories the DOM, and Symmetry-Engineer measures the timing setpoint.",
-    produces: "MirrorRun: staged evidence, symmetry score, handoff artifacts",
-    gate: "Symmetry has to clear 99% before anything is called a mirror, and state values are never read."
+    does: "Run the sovereign mirror pipeline: Shannon-Scout and Topology-Mapper discover assets, Ghidra-Decoder and REA-Logic-Agent read the public bundle as a binary (manifest as symbol table, chunk graph as call graph, pattern matching when obfuscated), Replica-Weaver inventories the DOM, Shannon-Scout closes a prediction-and-confirmation loop, and Symmetry-Engineer tunes the latency last.",
+    produces: "MirrorRun: staged evidence, live-loop state, symmetry score, tuned hold, handoff artifacts",
+    gate: "Symmetry has to clear 99% before anything is called a mirror; the loop has to confirm its predictions before it is called live, and state values are never read."
   },
   {
     key: "audit",

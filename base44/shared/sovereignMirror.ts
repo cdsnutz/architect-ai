@@ -22,6 +22,8 @@
 import { assertPublicUrl } from './readOnly.ts';
 import { assertAuthorization, runSymmetryPass } from './symmetry.ts';
 import { captureSite } from './siteCapture.ts';
+import { readBundleIntelligence } from './bundleIntel.ts';
+import { runFeedbackLoop } from './assetLoop.ts';
 
 const UA = 'REVENGINE-SovereignMirror/1.0 (+authorized read-only pass)';
 const MAX_SCRIPTS = 3;
@@ -75,7 +77,19 @@ export const SKILLS = [
     key: 'JS_Bundle_Reversal',
     agent: 'Ghidra-Decoder',
     reach: 'bounded',
-    detail: 'Static literal reading of the target\'s own public bundles for route and endpoint strings, plus framework markers. No binary decompilation runs here and no obfuscated payload is executed.'
+    detail: 'The public bundle is treated as the binary: the build manifest is the symbol table, the chunk graph is the call graph, and route strings are recovered from the chunks. When the payload is obfuscated the reader switches to pattern matching instead of literal reading. No payload is executed and no obfuscated string is decoded.'
+  },
+  {
+    key: 'Live_Feedback_Loop',
+    agent: 'Shannon-Scout',
+    reach: 'bounded',
+    detail: 'Each round confirms what the transition model predicted, writes the confirmation back into the graph and re-plans inside a fixed probe budget. The loop closes on evidence; it never sweeps the asset space.'
+  },
+  {
+    key: 'Pod_Latency_Tuning',
+    agent: 'Symmetry-Engineer',
+    reach: 'bounded',
+    detail: 'Measured pod durations are reconciled against the origin signature and expressed as one tuned hold plus per-agent budgets. The engineer is the last agent to touch the run, so the number it publishes is the number that ships.'
   },
   {
     key: 'State_Machine_Map',
@@ -114,7 +128,9 @@ export const STAGE_SEEDS = [
   { key: 'reversal', label: 'Step 2 · Reversal', pods: ['reverse'], agents: ['Ghidra-Decoder', 'REA-Logic-Agent'] },
   { key: 'capture', label: 'Step 3 · Capture', pods: ['reconstruct'], agents: ['Replica-Weaver'] },
   { key: 'virtualization', label: 'Step 4 · Virtualization', pods: ['reconstruct'], agents: ['Symmetry-Engineer'] },
-  { key: 'validation', label: 'Validation · Symmetry gate', pods: ['recon', 'reverse', 'reconstruct'], agents: ['REA-Logic-Agent'] }
+  { key: 'loop', label: 'Step 5 · Live loop', pods: ['recon'], agents: ['Shannon-Scout'] },
+  { key: 'validation', label: 'Validation · Symmetry gate', pods: ['recon', 'reverse', 'reconstruct'], agents: ['REA-Logic-Agent'] },
+  { key: 'tuning', label: 'Final · Tune', pods: ['reconstruct'], agents: ['Symmetry-Engineer'] }
 ];
 
 export const MIRROR_GATE = 99;
@@ -145,55 +161,8 @@ function close(stage, patch) {
   return { ...stage, ...patch, finished_at: nowIso() };
 }
 
-// Static literal reading of the bundles the document already requested. Bounded
-// by count and bytes, same-origin only, and nothing is ever evaluated.
-async function readBundleRoutes(origin: string, scriptUrls: string[]) {
-  const ROUTE = /["'`](\/(?:api|v[0-9]|graphql|rest|rpc|internal|admin)\/[A-Za-z0-9_\-./{}$:]{1,80})["'`]/g;
-  const FRAMEWORK = /\b(react|vue|svelte|angular|next|nuxt|remix|astro|ember|jquery|backbone)[@/.\-]?([0-9][\w.]*)?/gi;
-  const routes = new Set<string>();
-  const frameworks = new Set<string>();
-  const read: { url: string; bytes: number }[] = [];
-
-  const targets = scriptUrls.slice(0, MAX_SCRIPTS);
-  const texts = await Promise.all(
-    targets.map(async (url) => {
-      try {
-        const res = await fetch(url, {
-          headers: { 'User-Agent': UA, Accept: '*/*' },
-          redirect: 'follow',
-          signal: AbortSignal.timeout(9000)
-        });
-        if (!res.ok) return { url, text: '' };
-        const text = (await res.text()).slice(0, SCRIPT_CAP);
-        return { url, text };
-      } catch {
-        return { url, text: '' };
-      }
-    })
-  );
-
-  for (const bundle of texts) {
-    if (!bundle.text) continue;
-    read.push({ url: bundle.url, bytes: bundle.text.length });
-    for (const match of bundle.text.matchAll(ROUTE)) {
-      if (routes.size >= 60) break;
-      routes.add(match[1]);
-    }
-    for (const match of bundle.text.matchAll(FRAMEWORK)) {
-      if (frameworks.size >= 12) break;
-      frameworks.add((match[1] + (match[2] ? ' ' + match[2] : '')).toLowerCase().trim());
-    }
-  }
-
-  return {
-    bundles: read,
-    routes: [...routes],
-    frameworks: [...frameworks],
-    note: read.length
-      ? routes.size + ' route literal(s) and ' + frameworks.size + ' framework marker(s) read from ' + read.length + ' public bundle(s). Literals are what the bundle names, not routes the server proves it serves.'
-      : 'No same-origin bundle could be read, so the route literals stay unobserved.'
-  };
-}
+// The bundle read lives in bundleIntel.ts: manifest as symbol table, chunk graph
+// as call graph, and a pattern-matching reader when the payload is obfuscated.
 
 function transitionClasses(graph: any) {
   const counts: Record<string, number> = {};
@@ -286,6 +255,56 @@ function artifactBundle(input: {
   ];
 }
 
+// Pod latency reconciliation. Pods run in sequence, so their durations add up,
+// and Symmetry-Engineer reconciles the total against the origin signature last.
+// Nothing is delayed here: the pass is off the request path. The output is the
+// hold plus the per-agent budget your deployment should be tuned to.
+export function tunePods(stages: any[], latency: any, loop: any) {
+  const timings = stages
+    .filter((stage) => stage.key !== 'tuning' && stage.started_at && stage.finished_at)
+    .map((stage) => ({
+      key: stage.key,
+      label: stage.label,
+      agents: stage.agents || [],
+      ms: Math.max(0, new Date(stage.finished_at).getTime() - new Date(stage.started_at).getTime())
+    }));
+
+  const total = timings.reduce((sum, part) => sum + part.ms, 0);
+  const setpoint = latency && latency.pid ? latency.pid.setpoint_ms : null;
+  const hold = latency && latency.hold_ms !== undefined ? latency.hold_ms : null;
+  // The signature is setpoint = hold + your own serve. The hold is the only thing
+  // tuning adds to a visitor's clock; pod durations stay build-time overhead.
+  const serveBudget = setpoint !== null && hold !== null ? setpoint - hold : null;
+  const trimTargets = [...timings]
+    .sort((a, b) => b.ms - a.ms)
+    .slice(0, 3)
+    .map((part) => ({ agents: part.agents.join(' + '), key: part.key, ms: part.ms }));
+
+  const verdict = setpoint === null || hold === null ? 'unmeasured' : 'tuned';
+  const note =
+    verdict === 'unmeasured'
+      ? 'No timing setpoint came back from the origin, so there is no signature to tune the rebuild against.'
+      : 'Pod lag totals ' + total + ' ms and none of it reaches a visitor: this pass runs off the request path. What ships is a ' +
+        hold + ' ms hold at your edge inside a ' + setpoint + ' ms signature, leaving ' + serveBudget +
+        ' ms for your own serve. The engineer publishes the slowest pods (' +
+        (trimTargets.map((target) => target.agents + ' ' + target.ms + ' ms').join(', ') || 'none') +
+        ') as trim targets instead of concealing them: padding a mirror to hide real processing is what makes it read as artificial.';
+
+  return {
+    gatekeeper: 'Symmetry-Engineer',
+    order: timings.map((part) => part.key),
+    timings,
+    total_ms: total,
+    setpoint_ms: setpoint,
+    serve_budget_ms: serveBudget,
+    hold_ms: hold,
+    trim_targets: trimTargets,
+    loop_state: loop ? loop.verdict : 'unknown',
+    verdict,
+    note
+  };
+}
+
 export async function runSovereignMirror(body: any) {
   const target = assertPublicUrl(body.target_url);
   const candidate = typeof body.candidate_url === 'string' && body.candidate_url.trim()
@@ -319,14 +338,17 @@ export async function runSovereignMirror(body: any) {
   // Step 2 — reversal. Static literals from public bundles, then transition classes.
   touch('reversal', { status: 'running', started_at: nowIso() });
   const scripts = (pass.graph.nodes || []).filter((n: any) => n.kind === 'script' && n.url.startsWith(origin)).map((n: any) => n.url);
-  const reversal = await readBundleRoutes(origin, scripts);
+  const reversal = await readBundleIntelligence(origin, scripts, MAX_SCRIPTS, SCRIPT_CAP);
   const transitions = transitionClasses(pass.graph);
   touch(
     'reversal',
     close(stages.find((stage) => stage.key === 'reversal'), {
       status: 'complete',
       skills: ['JS_Bundle_Reversal', 'State_Machine_Map'],
-      detail: reversal.routes.length + ' route literal(s) · ' + transitions.rows.length + ' transition class(es)'
+      detail:
+        reversal.routes.length + ' route/endpoint candidate(s) via ' + reversal.mode + ' reading · ' +
+        (reversal.manifest ? reversal.manifest.kind + ' manifest mapped to ' + reversal.manifest.chunks + ' chunk(s)' : 'no build manifest published') +
+        ' · ' + transitions.rows.length + ' transition class(es)'
     })
   );
 
@@ -379,6 +401,30 @@ export async function runSovereignMirror(body: any) {
     })
   );
 
+  // Step 5 — the live loop. Shannon-Scout does not stop at one pass: it confirms
+  // what the model predicted, writes the confirmation back and predicts again.
+  touch('loop', { status: 'running', started_at: nowIso() });
+  const walk = ['document', ...(pass.graph.edges || []).filter((edge: any) => edge.trigger !== 'document_link').map((edge: any) => edge.to)];
+  const loop = await runFeedbackLoop({
+    origin,
+    plan: pass.markov ? pass.markov.plan : [],
+    nodes: pass.graph.nodes || [],
+    edges: pass.graph.edges || [],
+    walk,
+    budget: 8,
+    rounds: 2
+  });
+  touch(
+    'loop',
+    close(stages.find((stage) => stage.key === 'loop'), {
+      status: 'complete',
+      skills: ['Live_Feedback_Loop'],
+      detail:
+        loop.probed + ' predicted asset(s) probed across ' + loop.rounds.length + ' round(s) · ' +
+        loop.confirmed.length + ' confirmed · state: ' + loop.verdict
+    })
+  );
+
   // Validation — the gate is measured, never asserted.
   const score = pass.fidelity.score;
   const blockers = (pass.fidelity.components || [])
@@ -393,6 +439,23 @@ export async function runSovereignMirror(body: any) {
       detail: passed
         ? 'Symmetry ' + score + '% clears the ' + MIRROR_GATE + '% gate.'
         : 'Symmetry ' + score + '% is below the ' + MIRROR_GATE + '% gate. Blocking components: ' + (blockers.join(', ') || 'none listed')
+    })
+  );
+
+  // Final — tuning. Symmetry-Engineer touches the run last, after every pod has
+  // reported, so the number it publishes is the number the rebuild ships with.
+  touch('tuning', { status: 'running', started_at: nowIso() });
+  const tuning = tunePods(stages, latency, loop);
+  touch(
+    'tuning',
+    close(stages.find((stage) => stage.key === 'tuning'), {
+      status: 'complete',
+      skills: ['Pod_Latency_Tuning', 'Temporal_Symmetry'],
+      detail:
+        tuning.setpoint_ms === null || tuning.hold_ms === null
+          ? 'No setpoint measured, so tuning stays unmeasured.'
+          : 'hold ' + tuning.hold_ms + ' ms inside a ' + tuning.setpoint_ms + ' ms signature · serve budget ' +
+            tuning.serve_budget_ms + ' ms · pod lag ' + tuning.total_ms + ' ms off-path · ' + tuning.verdict
     })
   );
 
@@ -438,6 +501,17 @@ export async function runSovereignMirror(body: any) {
         : null
     },
     virtualization: { latency, setpoint, state: pass.state },
+    loop,
+    tuning,
+    live_state: loop.verdict,
+    bundles: {
+      mode: reversal.mode,
+      manifest: reversal.manifest,
+      manifest_note: reversal.manifest_note,
+      bundles: reversal.bundles,
+      frameworks: reversal.frameworks,
+      storage_keys: reversal.storage_keys
+    },
     artifacts: artifactBundle({ target, pass, capture, routes: reversal.routes, latency }),
     refusals: SKILLS.filter((skill) => skill.reach === 'refused'),
     notes: pass.notes

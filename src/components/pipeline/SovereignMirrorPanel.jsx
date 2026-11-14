@@ -11,6 +11,9 @@ import MirrorLaunch from "@/components/pipeline/MirrorLaunch";
 import MirrorStages from "@/components/pipeline/MirrorStages";
 import MirrorGate from "@/components/pipeline/MirrorGate";
 import MirrorParity from "@/components/pipeline/MirrorParity";
+import MirrorBundles from "@/components/pipeline/MirrorBundles";
+import MirrorLoop from "@/components/pipeline/MirrorLoop";
+import MirrorTuning from "@/components/pipeline/MirrorTuning";
 import MirrorArtifacts from "@/components/pipeline/MirrorArtifacts";
 
 export default function SovereignMirrorPanel() {
@@ -37,7 +40,7 @@ export default function SovereignMirrorPanel() {
         <div className="border-b border-line-soft p-3">
           <h2 className="font-display text-sm text-ink">Sovereign mirror pipeline</h2>
           <p className="mt-0.5 text-[11px] leading-relaxed text-ink-muted">
-            One target in, four stages out: discovery, reversal, capture, virtualization, then a measured symmetry gate.
+            One target in: discovery, reversal, capture, virtualization, then a live loop that confirms its own predictions, a measured symmetry gate, and a final latency tune.
           </p>
         </div>
         <div className="p-3">
@@ -62,6 +65,9 @@ export default function SovereignMirrorPanel() {
             diff={run.discovery?.diff}
             isomorphism={run.discovery?.isomorphism}
           />
+          <MirrorBundles bundles={run.bundles} />
+          <MirrorLoop loop={run.loop} />
+          <MirrorTuning tuning={run.tuning} />
 
           {run.reversal && (
             <div className="border border-line-soft bg-surface-panel">
