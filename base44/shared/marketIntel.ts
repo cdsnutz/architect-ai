@@ -21,7 +21,7 @@
 
 import { assertPublicUrl } from './readOnly.ts';
 import { assertAuthorization } from './symmetry.ts';
-import { readBundleIntelligence } from './bundleIntel.ts';
+import { mapDeclaredEndpoints } from './endpointMap.ts';
 
 const UA = 'Mozilla/5.0 (compatible; RevEngineCommand/1.0; authorized read-only audit)';
 const TIMEOUT_MS = 9000;
@@ -700,35 +700,32 @@ async function buildShadow(surface: any) {
   if (!surface.scripts.length) {
     return {
       host: surface.host,
+      origin: surface.origin,
       state: 'no_bundles',
       mode: 'none',
-      bundles: 0,
-      routes: 0,
+      obfuscation: 0,
+      counts: { total: 0, confirmed: 0, dormant: 0, internal: 0, bundles: 0, chars: 0 },
+      bundles: [],
       endpoints: [],
+      leaks: [],
+      versions: [],
       frameworks: [],
-      note: 'The entry document requested no same-origin script, so there is no bundle to read and no endpoint to declare.'
+      note: 'The entry document requested no same-origin script, so there is no bundle to read and no endpoint to declare.',
+      limits: 'Read-only pass: only same-origin scripts are read, and only when the document itself requests them.'
     };
   }
 
-  const intel = await readBundleIntelligence(surface.origin, surface.scripts, 3, 400000);
-  const API = /(^|\/)(api|v\d|graphql|rest|rpc)\//i;
-  const endpoints = [...new Set(intel.routes as string[])].filter((route) => API.test(route)).slice(0, 20);
+  const observed = [
+    ...(surface.sitemap || []),
+    ...surface.pages.flatMap((page: any) => page.links || [])
+  ];
 
-  return {
+  return await mapDeclaredEndpoints({
+    origin: surface.origin,
     host: surface.host,
-    state: endpoints.length ? 'declared' : 'no_endpoints',
-    mode: intel.mode,
-    bundles: intel.bundles.length,
-    routes: (intel.routes as string[]).length,
-    endpoints,
-    frameworks: (intel.frameworks as string[]).slice(0, 6),
-    note: endpoints.length
-      ? endpoints.length + ' endpoint path(s) are named in ' + intel.bundles.length + ' public bundle(s). They are declarations, not traffic: nothing was called.'
-      : intel.note,
-    limits:
-      'Read from same-origin scripts only (' + intel.bundles.length + ' bundle(s), ' + intel.mode +
-      ' mode). An obfuscated payload is read by pattern: no string is decoded and no request is replayed.'
-  };
+    scriptUrls: surface.scripts,
+    observed
+  });
 }
 
 export async function runMarketIntel(input: { base44: any; body: any }) {
