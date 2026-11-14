@@ -11,6 +11,7 @@ import { base44 } from "@/api/base44Client";
 import IdeShell from "@/components/ide/IdeShell";
 import ToolkitSource from "@/components/toolkit/ToolkitSource";
 import RouteLadder from "@/components/toolkit/RouteLadder";
+import ContractRefusals from "@/components/toolkit/ContractRefusals";
 import EnginePanel from "@/components/browser/EnginePanel";
 import SubsystemMap from "@/components/toolkit/SubsystemMap";
 import CapabilityLanes from "@/components/toolkit/CapabilityLanes";
@@ -80,6 +81,7 @@ export default function ReverseSkill() {
         <div className="min-w-0 space-y-4">
           <EnginePanel />
           <RouteLadder />
+          <ContractRefusals />
           {loading ? (
             <p className="font-mono text-[11px] uppercase tracking-wider text-ink-dim">Reading the repository tree…</p>
           ) : (

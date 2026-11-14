@@ -35,3 +35,60 @@ export const REVERSE_ROUTES = [
   { goal: "Pwn / exploit development", skill: "skills/pwn-chain/", stage: "9 · Pressure-test it", lane: "off_contract" },
   { goal: "EDR bypass", skill: "skills/edr-bypass-re/", stage: "9 · Pressure-test it", lane: "off_contract" }
 ];
+
+/**
+ * The command families the contract names and refuses. They are written here so
+ * the boundary is enumerated rather than implied: a request for any of these is
+ * answered no by name, with the reason, instead of being quietly unsupported.
+ * Nothing in this list is reachable from the app.
+ */
+export const CONTRACT_REFUSALS = [
+  {
+    key: "scanning",
+    label: "Scanning",
+    detail:
+      "Port, service, directory and vulnerability sweeps, fuzzing and brute force all send traffic a third party never agreed to receive. Unauthenticated probing of a host is outside the contract even where a scan would be lawful."
+  },
+  {
+    key: "exploitation",
+    label: "Exploitation",
+    detail:
+      "Exploit development, pwn chains and N-day weaponisation exist to make a target fail. A read-only pass proves what a surface is, never what breaks it."
+  },
+  {
+    key: "edr_bypass",
+    label: "EDR / AV bypass",
+    detail:
+      "Evading endpoint detection is built to defeat a defender's controls on a machine you did not instrument. It is refused in every mode and under every authorization."
+  },
+  {
+    key: "payloads_c2",
+    label: "Payloads and command channels",
+    detail:
+      "Implants, staged loaders, beacons and remote control channels turn evidence into access. The lab produces documents, not code that calls home."
+  },
+  {
+    key: "credential_access",
+    label: "Credential access",
+    detail:
+      "Dumping, harvesting, replaying or intercepting credentials and session tokens is refused outright. State-key names are inventoried; values are never read."
+  },
+  {
+    key: "persistence_escalation",
+    label: "Privilege escalation and persistence",
+    detail:
+      "Local or domain escalation, scheduled-task and service persistence, and rootkit or bootkit installation all write to a live host. The lab writes to its own records only."
+  },
+  {
+    key: "lateral_movement",
+    label: "Lateral movement",
+    detail:
+      "Pivoting from one host to the next, or using a captured session to reach further systems, is refused. A pass reads one surface at a time, by name, with authorization on file."
+  },
+  {
+    key: "defense_tampering",
+    label: "Defence tampering",
+    detail:
+      "Clearing logs, disabling telemetry, or detecting and evading a sandbox destroys the very record a finding would rest on. Refused."
+  }
+];
