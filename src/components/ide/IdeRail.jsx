@@ -7,17 +7,38 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { Binary, Bug, FlaskConical, GitBranch, GitCompare, LayoutDashboard, Network, ScanLine } from "lucide-react";
+import {
+  Binary,
+  Bug,
+  Crosshair,
+  FlaskConical,
+  GitBranch,
+  GitCompare,
+  LayoutDashboard,
+  Network,
+  ScanLine,
+  Workflow
+} from "lucide-react";
+import { CLONE_MODULES } from "@/lib/pipeline";
+import { TOOLKIT_LIST } from "@/lib/toolkits";
 
+const ICONS = {
+  pipeline: Workflow,
+  workspace: ScanLine,
+  lab: FlaskConical,
+  symmetry: Network,
+  spec: GitBranch,
+  compare: GitCompare,
+  dashboard: LayoutDashboard,
+  ghidra: Binary,
+  "bug-hunter": Bug,
+  shannon: Crosshair
+};
+
+// Run order first, then the indexed toolkits that feed it.
 const ITEMS = [
-  { key: "workspace", to: "/workspace", icon: ScanLine, label: "Workspace" },
-  { key: "lab", to: "/lab", icon: FlaskConical, label: "Lab" },
-  { key: "dashboard", to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { key: "compare", to: "/compare", icon: GitCompare, label: "Compare" },
-  { key: "spec", to: "/spec", icon: GitBranch, label: "Rebuild spec" },
-  { key: "symmetry", to: "/symmetry", icon: Network, label: "Symmetry" },
-  { key: "bug-hunter", to: "/bug-hunter", icon: Bug, label: "Bug hunter" },
-  { key: "ghidra", to: "/ghidra", icon: Binary, label: "Ghidra" },
+  ...CLONE_MODULES,
+  ...TOOLKIT_LIST.map((toolkit) => ({ key: toolkit.key, to: toolkit.route, label: toolkit.name }))
 ];
 
 export default function IdeRail({ active }) {
@@ -27,7 +48,7 @@ export default function IdeRail({ active }) {
       className="sticky top-11 z-20 hidden h-[calc(100vh-2.75rem)] w-12 shrink-0 flex-col items-center gap-1 border-r border-line-soft bg-surface-sunken py-2 sm:flex"
     >
       {ITEMS.map((item) => {
-        const Icon = item.icon;
+        const Icon = ICONS[item.key] || Workflow;
         const isActive = item.key === active;
         return (
           <Link
@@ -37,9 +58,7 @@ export default function IdeRail({ active }) {
             aria-label={item.label}
             aria-current={isActive ? "page" : undefined}
             className={`relative flex h-9 w-9 items-center justify-center no-underline transition-colors ${
-              isActive
-                ? "bg-surface-raised text-signal"
-                : "text-ink-dim hover:bg-surface-panel hover:text-ink"
+              isActive ? "bg-surface-raised text-signal" : "text-ink-dim hover:bg-surface-panel hover:text-ink"
             }`}
           >
             {isActive && <span className="absolute left-0 top-0 h-full w-0.5 bg-signal" />}

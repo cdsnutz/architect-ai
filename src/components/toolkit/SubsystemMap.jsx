@@ -23,7 +23,7 @@ export default function SubsystemMap({ groups = [], totals = {} }) {
         <div>
           <h1 className="font-display text-sm text-ink">Subsystem map</h1>
           <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-dim">
-            {totals.groups || 0} modules · {totals.files || 0} files · {totals.java_files || 0} java
+            {totals.groups || 0} modules · {totals.files || 0} files · {totals.code_files || 0} code
             {totals.truncated ? " · tree truncated" : ""}
           </p>
         </div>
@@ -31,7 +31,7 @@ export default function SubsystemMap({ groups = [], totals = {} }) {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Filter modules…"
-          aria-label="Filter Ghidra modules"
+          aria-label="Filter modules"
           className="h-7 w-full border border-line bg-surface-base px-2 font-mono text-[11px] text-ink outline-none placeholder:text-ink-dim focus:border-signal sm:w-56"
         />
       </div>
@@ -42,11 +42,14 @@ export default function SubsystemMap({ groups = [], totals = {} }) {
             <div className="flex items-baseline justify-between gap-2">
               <span className="truncate font-mono text-[11px] text-ink">{group.key}</span>
               <span className="shrink-0 font-mono text-[10px] text-ink-dim">
-                {group.files}f · {group.java}j
+                {group.files}f · {group.code}c
               </span>
             </div>
             <div className="mt-1 h-0.5 w-full bg-line-soft">
-              <div className="h-0.5 bg-signal/60" style={{ width: Math.max(2, Math.round((group.files / max) * 100)) + "%" }} />
+              <div
+                className="h-0.5 bg-signal/60"
+                style={{ width: Math.max(2, Math.round((group.files / max) * 100)) + "%" }}
+              />
             </div>
           </li>
         ))}
@@ -58,7 +61,7 @@ export default function SubsystemMap({ groups = [], totals = {} }) {
         </p>
       )}
 
-      {groups.length > shown.length || needle ? (
+      {shown.length !== groups.length ? (
         <p className="border-t border-line-soft px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-dim">
           showing {shown.length} of {groups.length}
         </p>
