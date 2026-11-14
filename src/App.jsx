@@ -28,6 +28,7 @@ import OAuthConsent from './pages/OAuthConsent';
 import AgentVerdict from './pages/AgentVerdict';
 import Symmetry from './pages/Symmetry';
 import BugHunter from './pages/BugHunter';
+import Ghidra from './pages/Ghidra';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 const AuthenticatedApp = () => {
@@ -105,6 +106,12 @@ const AuthenticatedApp = () => {
         element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fbug-hunter" replace />} />}
       >
         <Route index element={<BugHunter />} />
+      </Route>
+      <Route
+        path="/ghidra"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fghidra" replace />} />}
+      >
+        <Route index element={<Ghidra />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
