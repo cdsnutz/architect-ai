@@ -27,6 +27,9 @@ import ResetPassword from './pages/ResetPassword';
 import OAuthConsent from './pages/OAuthConsent';
 import AgentVerdict from './pages/AgentVerdict';
 import Symmetry from './pages/Symmetry';
+import BugHunter from './pages/BugHunter';
+import Toolkit from './pages/Toolkit';
+import Pipeline from './pages/Pipeline';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 const AuthenticatedApp = () => {
@@ -98,6 +101,30 @@ const AuthenticatedApp = () => {
         element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fsymmetry" replace />} />}
       >
         <Route index element={<Symmetry />} />
+      </Route>
+      <Route
+        path="/bug-hunter"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fbug-hunter" replace />} />}
+      >
+        <Route index element={<BugHunter />} />
+      </Route>
+      <Route
+        path="/pipeline"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fpipeline" replace />} />}
+      >
+        <Route index element={<Pipeline />} />
+      </Route>
+      <Route
+        path="/ghidra"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fghidra" replace />} />}
+      >
+        <Route index element={<Toolkit toolkitKey="ghidra" />} />
+      </Route>
+      <Route
+        path="/shannon"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fshannon" replace />} />}
+      >
+        <Route index element={<Toolkit toolkitKey="shannon" />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

@@ -6,7 +6,7 @@
 */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
-import { secrets } from 'base44:runtime';
+import { githubToken, authHeaders } from '../../shared/github.ts';
 import {
   parseRepoUrl,
   selectPaths,
@@ -17,27 +17,6 @@ import {
 } from '../../shared/repoIngest.ts';
 
 const API = 'https://api.github.com';
-
-function githubToken() {
-  for (const name of ['GITHUB_API_KEY', 'GH_TOKEN']) {
-    try {
-      const value = secrets.get(name);
-      if (value) return value;
-    } catch {
-      // Secret not set — try the next one.
-    }
-  }
-  return '';
-}
-
-function authHeaders(token) {
-  const headers = {
-    Accept: 'application/vnd.github+json',
-    'User-Agent': 'revengine-ingest'
-  };
-  if (token) headers.Authorization = 'Bearer ' + token;
-  return headers;
-}
 
 async function gh(path, token) {
   const response = await fetch(API + path, {
@@ -65,7 +44,7 @@ async function readFile(owner, repo, ref, path, token) {
     '?ref=' +
     encodeURIComponent(ref);
   const response = await fetch(url, {
-    headers: { ...authHeaders(token), Accept: 'application/vnd.github.raw' },
+    headers: authHeaders(token, 'application/vnd.github.raw'),
     signal: AbortSignal.timeout(15000)
   });
   if (!response.ok) return null;

@@ -1,0 +1,114 @@
+{
+  "name": "BugHunterCatalog",
+  "type": "object",
+  "properties": {
+    "source_url": {
+      "type": "string",
+      "description": "Catalog repository that was read."
+    },
+    "branch": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "failed"
+      ],
+      "enumColors": [
+        "green",
+        "red"
+      ],
+      "default": "complete"
+    },
+    "synced_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "readme_chars": {
+      "type": "number",
+      "description": "Characters of README actually parsed."
+    },
+    "counts": {
+      "type": "object",
+      "description": "Totals by section and by lane."
+    },
+    "sections": {
+      "type": "array",
+      "description": "Catalog sections, each with its contract lane and tools.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "lane": {
+            "type": "string"
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "lane": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "source_url",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
