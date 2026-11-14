@@ -7,7 +7,7 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { FlaskConical, GitBranch, GitCompare, LayoutDashboard, ScanLine } from "lucide-react";
+import { FlaskConical, GitBranch, GitCompare, LayoutDashboard, Network, ScanLine } from "lucide-react";
 
 const ITEMS = [
   { key: "workspace", to: "/workspace", icon: ScanLine, label: "Workspace" },
@@ -15,6 +15,7 @@ const ITEMS = [
   { key: "dashboard", to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { key: "compare", to: "/compare", icon: GitCompare, label: "Compare" },
   { key: "spec", to: "/spec", icon: GitBranch, label: "Rebuild spec" },
+  { key: "symmetry", to: "/symmetry", icon: Network, label: "Symmetry" },
 ];
 
 export default function IdeRail({ active }) {

@@ -1,0 +1,116 @@
+{
+  "name": "SymmetryRun",
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "Human label for the pass."
+    },
+    "target_url": {
+      "type": "string",
+      "description": "Authorized surface the pass read as the baseline."
+    },
+    "candidate_url": {
+      "type": "string",
+      "description": "Your own deploy compared against the baseline, when one was supplied."
+    },
+    "auth_basis": {
+      "type": "string",
+      "enum": [
+        "owned",
+        "written_authorization",
+        "staging_mirror"
+      ],
+      "enumColors": [
+        "green",
+        "blue",
+        "purple"
+      ],
+      "description": "Why this target is authorized for a read-only pass."
+    },
+    "attestation": {
+      "type": "string",
+      "description": "Who authorized the target and for what."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "complete",
+        "failed"
+      ],
+      "enumColors": [
+        "gray",
+        "yellow",
+        "green",
+        "red"
+      ],
+      "default": "running"
+    },
+    "graph": {
+      "type": "object",
+      "description": "Trigger-edge dependency graph: resource nodes, call-site edges, which are observed and which inferred."
+    },
+    "entropy": {
+      "type": "object",
+      "description": "Asset families with predicted missing siblings and their probe outcomes."
+    },
+    "state": {
+      "type": "object",
+      "description": "Inventoried state key names only. Values are never read or stored."
+    },
+    "diff": {
+      "type": "object",
+      "description": "Baseline versus candidate comparison: document signals and route reachability."
+    },
+    "fidelity": {
+      "type": "object",
+      "description": "Fidelity score, level and the per-component breakdown, plus the L4 ceiling."
+    },
+    "notes": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "target_url",
+    "auth_basis",
+    "attestation",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

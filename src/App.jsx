@@ -26,6 +26,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import OAuthConsent from './pages/OAuthConsent';
 import AgentVerdict from './pages/AgentVerdict';
+import Symmetry from './pages/Symmetry';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 const AuthenticatedApp = () => {
@@ -91,6 +92,12 @@ const AuthenticatedApp = () => {
         element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fspec" replace />} />}
       >
         <Route index element={<Spec />} />
+      </Route>
+      <Route
+        path="/symmetry"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fsymmetry" replace />} />}
+      >
+        <Route index element={<Symmetry />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
