@@ -10,6 +10,7 @@ import { base44 } from "@/api/base44Client";
 import MirrorLaunch from "@/components/pipeline/MirrorLaunch";
 import MirrorStages from "@/components/pipeline/MirrorStages";
 import MirrorGate from "@/components/pipeline/MirrorGate";
+import MirrorParity from "@/components/pipeline/MirrorParity";
 import MirrorArtifacts from "@/components/pipeline/MirrorArtifacts";
 
 export default function SovereignMirrorPanel() {
@@ -56,6 +57,11 @@ export default function SovereignMirrorPanel() {
         <>
           <MirrorStages stages={run.stages || []} />
           <MirrorGate gate={run.gate} refusals={run.refusals} />
+          <MirrorParity
+            candidateUrl={run.candidate_url}
+            diff={run.discovery?.diff}
+            isomorphism={run.discovery?.isomorphism}
+          />
 
           {run.reversal && (
             <div className="border border-line-soft bg-surface-panel">

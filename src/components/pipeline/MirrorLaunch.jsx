@@ -31,6 +31,10 @@ export default function MirrorLaunch({ onRun, busy }) {
       setError("State who authorized this target. The pass will not run without it.");
       return;
     }
+    if (candidate.trim() && !candidate.trim().startsWith("http")) {
+      setError("Your deploy needs a full URL, e.g. https://staging.you-own.com.");
+      return;
+    }
     setError("");
     onRun({ target_url: target.trim(), candidate_url: candidate.trim(), auth_basis: basis, attestation: attestation.trim() });
   };

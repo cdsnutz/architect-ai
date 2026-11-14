@@ -414,7 +414,13 @@ export async function runSovereignMirror(body: any) {
       blockers,
       ceiling: pass.fidelity.ceiling
     },
-    discovery: { graph: pass.graph, entropy: pass.entropy, isomorphism: pass.isomorphism, markov: pass.markov },
+    discovery: {
+      graph: pass.graph,
+      entropy: pass.entropy,
+      isomorphism: pass.isomorphism,
+      markov: pass.markov,
+      diff: pass.diff || null
+    },
     reversal: { ...reversal, transitions },
     capture: {
       captured: Boolean(capture),
