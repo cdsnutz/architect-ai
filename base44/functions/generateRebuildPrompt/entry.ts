@@ -14,8 +14,10 @@ export default async function (req) {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
+    // Gate on the fields getEntitlement actually returns. A user with no
+    // analysis on record has nothing paid to generate from.
     const entitlement = await getEntitlement(base44, user);
-    if (!entitlement.admin && entitlement.granted === 0) {
+    if (!entitlement.admin && (!entitlement.hasAccess || entitlement.analysesRun === 0)) {
       return Response.json({ error: 'A paid website analysis is required to generate prompts.' }, { status: 403 });
     }
 
@@ -30,6 +32,9 @@ export default async function (req) {
 
     const record = await base44.entities.SiteAnalysis.get(analysis_id);
     if (!record) return Response.json({ error: 'Analysis not found.' }, { status: 404 });
+    if (!entitlement.admin && record.created_by_id !== user.id) {
+      return Response.json({ error: 'Analysis not found.' }, { status: 404 });
+    }
 
     if (brand_name) {
       if (record.white_label_prompt && record.white_label_brand === brand_name) {

@@ -12,6 +12,7 @@
 // different browser than the one it is documented against.
 
 import { secrets } from "base44:runtime";
+import { assertPublicUrl } from "./readOnly.ts";
 
 export const ENGINE = {
   id: "cloakbrowser",
@@ -134,21 +135,20 @@ export async function probeRunner(runner = runnerConfig()) {
 // but an http(s) surface.
 export async function captureViaRunner(
   targetUrl: string,
-  options: { proxy?: string; geoip?: boolean; preset?: string; headed?: boolean } = {}
+  options: { geoip?: boolean; preset?: string; headed?: boolean } = {}
 ) {
   const runner = runnerConfig();
   if (!runner.url) {
     return { ok: false, status: 0, error: "CLOAKBROWSER_RUNNER_URL is not set, so there is no runner to call." };
   }
 
-  let parsed: URL;
+  // The runner is the operator's own licensed host: it must never be aimed at a
+  // private or internal address on the caller's say-so.
+  let safeTarget: string;
   try {
-    parsed = new URL(targetUrl);
-  } catch (error) {
-    return { ok: false, status: 0, error: "The target must be an absolute http(s) URL." };
-  }
-  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-    return { ok: false, status: 0, error: "Only http(s) targets can be captured." };
+    safeTarget = assertPublicUrl(targetUrl);
+  } catch (error: any) {
+    return { ok: false, status: 0, error: (error && error.message) || "Only public http(s) targets can be captured." };
   }
 
   try {
@@ -156,8 +156,10 @@ export async function captureViaRunner(
       method: "POST",
       headers: runnerHeaders(runner.token),
       body: JSON.stringify({
-        url: parsed.toString(),
-        proxy: options.proxy || undefined,
+        url: safeTarget,
+        // The exit proxy is operator configuration only: a caller-supplied proxy
+        // would route the operator's browser through an attacker's host.
+        proxy: secret("CLOAKBROWSER_PROXY") || undefined,
         geoip: Boolean(options.geoip),
         preset: options.preset || "careful",
         headed: Boolean(options.headed)
@@ -178,6 +180,19 @@ export async function captureViaRunner(
               : raw,
         evidence: data
       };
+    }
+    // A redirect inside the browser can land anywhere; the report is only
+    // returned when the surface it actually read is still public.
+    if (typeof data.final_url === "string" && data.final_url) {
+      try {
+        assertPublicUrl(data.final_url);
+      } catch {
+        return {
+          ok: false,
+          status: 0,
+          error: "The runner finished on a private or internal address, so its evidence is withheld."
+        };
+      }
     }
     return { ok: true, status: response.status, evidence: data };
   } catch (error: any) {

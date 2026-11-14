@@ -31,8 +31,9 @@ export default async function (req) {
       );
     }
 
+    // body.proxy is deliberately ignored: the exit proxy is operator config,
+    // never something the caller chooses.
     const result = await captureViaRunner(targetUrl, {
-      proxy: body.proxy ? String(body.proxy) : undefined,
       geoip: Boolean(body.geoip),
       preset: body.preset ? String(body.preset) : undefined,
       headed: Boolean(body.headed)
