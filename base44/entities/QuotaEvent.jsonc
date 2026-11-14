@@ -1,0 +1,40 @@
+{
+  "name": "QuotaEvent",
+  "type": "object",
+  "properties": {
+    "action": {
+      "type": "string",
+      "description": "Guarded operation this record counts, e.g. analyze_site or run_request."
+    }
+  },
+  "required": [
+    "action"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

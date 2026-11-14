@@ -17,6 +17,7 @@ import {
 } from '../../shared/lab.ts';
 import { selectProbes, runProbe, formatProbes, assertPublicUrl } from '../../shared/readOnly.ts';
 import { startRun, markRunning, markComplete, finishRun } from '../../shared/runTracker.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 function summarizeFindings(findings: unknown): string {
   if (!Array.isArray(findings) || findings.length === 0) return '';
@@ -52,6 +53,9 @@ export default async function (req) {
     if (source && source.created_by_id && source.created_by_id !== user.id && user.role !== 'admin') {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const quota = await guardQuota(base44, user, 'run_challenge', 10);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     const targets: string[] = [];
     for (const raw of Array.isArray(source && source.authorized_targets) ? source.authorized_targets : []) {

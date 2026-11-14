@@ -7,6 +7,7 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { missingCaptureInputs, requestStageReviews, applyStageReviews, reviewSummary } from '../../shared/agentStage.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 export default async function (req: Request): Promise<Response> {
   try {
@@ -20,6 +21,15 @@ export default async function (req: Request): Promise<Response> {
 
     const spec = await base44.entities.RebuildSpec.get(specId).catch((e) => (e.status === 404 ? null : Promise.reject(e)));
     if (!spec) return Response.json({ error: 'Spec not found' }, { status: 404 });
+
+    // The spec must be the caller's own: an agent sign-off rewrites it, so the
+    // owner is checked here rather than left to the record's read rule.
+    if (spec.created_by_id && spec.created_by_id !== user.id && user.role !== 'admin') {
+      return Response.json({ error: 'Spec not found' }, { status: 404 });
+    }
+
+    const quota = await guardQuota(base44, user, 'stage_review', 4);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     const missing = missingCaptureInputs(spec);
     if (missing.length) {

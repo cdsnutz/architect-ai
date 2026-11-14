@@ -9,6 +9,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { FOCUSES, skillsForFocus } from '../../shared/labSkills.ts';
 import { PLAN_SCHEMA, buildPlanPrompt, normalizePlan } from '../../shared/lab.ts';
 import { assertPublicUrl } from '../../shared/readOnly.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 export default async function (req) {
   try {
@@ -21,6 +22,9 @@ export default async function (req) {
     if (request.length < 12) {
       return Response.json({ error: 'Describe the problem in a sentence or two before drafting a plan.' }, { status: 400 });
     }
+
+    const quota = await guardQuota(base44, user, 'plan_request', 20);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     const focus = FOCUSES.some((option) => option.key === body.focus) ? body.focus : 'custom';
 

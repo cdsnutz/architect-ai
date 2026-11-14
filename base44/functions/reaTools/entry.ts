@@ -15,6 +15,7 @@ import {
   finishRun,
   mapDetail
 } from '../../shared/runTracker.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 import {
   MAX_FILES,
   MAX_FILE_CHARS,
@@ -140,6 +141,9 @@ export default async function (req) {
 
     if (action === 'analyze') {
       if (serviceRole) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+      const quota = await guardQuota(base44, user, 'source_analysis', 10);
+      if (!quota.allowed) return quotaRefusal(quota);
 
       const rawFiles = Array.isArray(body.files) ? body.files.slice(0, MAX_FILES) : [];
       const files = rawFiles

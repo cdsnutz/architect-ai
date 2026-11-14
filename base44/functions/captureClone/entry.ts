@@ -15,6 +15,7 @@ import { contrastCheck, deriveFeatureMatrix, scoreParity, sweepArtifacts, derive
 import { startRun, markRunning, markComplete, markNeedsInput, finishRun } from '../../shared/runTracker.ts';
 import { seedStages, stageRunning, stageComplete, stageNeedsInput } from '../../shared/lab.ts';
 import { missingCaptureInputs, requestStageReviews, applyStageReviews, reviewSummary } from '../../shared/agentStage.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 const DEFAULT_STACK = 'Node 20 + TypeScript + Fastify + Postgres (Neon) + Docker';
 const SIGN_OFF_DEADLINE_MS = 35000;
@@ -218,6 +219,9 @@ export default async function (req) {
     if (!wanted) {
       return Response.json({ error: 'That data request has no authorized host to capture.' }, { status: 400 });
     }
+
+    const quota = await guardQuota(base44, user, 'capture_clone', 6);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     const skillIds = wiredSkillIds();
     const skills = SKILLS.filter((skill) => skillIds.includes(skill.id));

@@ -10,6 +10,7 @@ import { extractEvidence, mapLogic } from '../../shared/analysis.ts';
 import { probeContentNegotiation, formatProbe } from '../../shared/probe.ts';
 import { assertPublicUrl } from '../../shared/readOnly.ts';
 import { POD_STAGES, mapDetail, startRun, markRunning, markComplete, finishRun } from '../../shared/runTracker.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 export default async function (req) {
   let runId = null;
@@ -28,6 +29,9 @@ export default async function (req) {
     } catch (guardError) {
       return Response.json({ error: (guardError && guardError.message) || 'Please provide a valid http(s) URL.' }, { status: 400 });
     }
+
+    const quota = await guardQuota(base44, user, 'analyze_site', 10);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     const run = await startRun(base44, targetUrl, 'live', POD_STAGES);
     runId = run ? run.id : null;

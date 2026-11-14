@@ -7,6 +7,7 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { githubToken, authHeaders } from '../../shared/github.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 import {
   parseRepoUrl,
   selectPaths,
@@ -64,6 +65,9 @@ export default async function (req) {
     if (!parsed) {
       return Response.json({ error: 'Enter a GitHub repository as owner/repo or a github.com URL.' }, { status: 400 });
     }
+
+    const quota = await guardQuota(base44, user, 'ingest_repo', 15);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     const token = githubToken();
     const { owner, repo } = parsed;

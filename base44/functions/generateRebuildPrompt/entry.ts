@@ -7,6 +7,7 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { getEntitlement } from '../../shared/entitlement.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 export default async function (req) {
   try {
@@ -35,6 +36,9 @@ export default async function (req) {
     if (!entitlement.admin && record.created_by_id !== user.id) {
       return Response.json({ error: 'Analysis not found.' }, { status: 404 });
     }
+
+    const quota = await guardQuota(base44, user, 'rebuild_prompt', 10);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     if (brand_name) {
       if (record.white_label_prompt && record.white_label_brand === brand_name) {

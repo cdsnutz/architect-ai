@@ -8,6 +8,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { extractEvidence, mapLogic } from '../../shared/analysis.ts';
 import { PASTED_POD_STAGES, mapDetail, startRun, markRunning, markComplete, markSkipped, finishRun } from '../../shared/runTracker.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 const MAX_HTML = 900000;
 
@@ -29,6 +30,9 @@ export default async function (req) {
     if (html.length > MAX_HTML) {
       return Response.json({ error: 'That page is too large. Paste the HTML of a single page (under ~900k characters).' }, { status: 400 });
     }
+
+    const quota = await guardQuota(base44, user, 'analyze_pasted', 10);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     const slug = (label || 'gated-page').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const url = /^https?:\/\/.+\..+/i.test(rawUrl) ? rawUrl : 'pasted://' + (slug || 'gated-page');

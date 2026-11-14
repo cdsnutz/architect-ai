@@ -10,6 +10,7 @@ import { skillsByIds, skillsForFocus } from '../../shared/labSkills.ts';
 import { LAB_STAGES, FINDINGS_SCHEMA, buildFindingsPrompt, normalizeFindings, normalizeTraces, clampConfidence } from '../../shared/lab.ts';
 import { selectProbes, runProbe, formatProbes, assertPublicUrl } from '../../shared/readOnly.ts';
 import { startRun, markRunning, markComplete, finishRun } from '../../shared/runTracker.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 export default async function (req) {
   let runId = null;
@@ -30,6 +31,9 @@ export default async function (req) {
     if (record.created_by_id && record.created_by_id !== user.id && user.role !== 'admin') {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const quota = await guardQuota(base44, user, 'run_request', 10);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     const targets: string[] = [];
     for (const raw of Array.isArray(record.authorized_targets) ? record.authorized_targets : []) {
