@@ -78,7 +78,7 @@ export default async function (req) {
     });
 
     console.log(
-      'ingestBugHunter: ' + owner + '/' + repo + ' read ' + counts.tools + ' tools across ' + counts.sections + ' sections'
+      'ingestBugHunter read ' + owner + '/' + repo + ': ' + counts.tools + ' tools across ' + counts.sections + ' sections'
     );
 
     return Response.json({ record });
