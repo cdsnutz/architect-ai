@@ -30,6 +30,7 @@ import Symmetry from './pages/Symmetry';
 import Structure from './pages/Structure';
 import ReverseSkill from './pages/ReverseSkill';
 import BugHunter from './pages/BugHunter';
+import Gap from './pages/Gap';
 import Toolkit from './pages/Toolkit';
 import Pipeline from './pages/Pipeline';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -121,6 +122,12 @@ const AuthenticatedApp = () => {
         element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fpipeline" replace />} />}
       >
         <Route index element={<Pipeline />} />
+      </Route>
+      <Route
+        path="/gap"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fgap" replace />} />}
+      >
+        <Route index element={<Gap />} />
       </Route>
       <Route
         path="/ghidra"
