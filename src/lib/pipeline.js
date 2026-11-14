@@ -48,6 +48,15 @@ export const CLONE_STAGES = [
     gate: "The pass runs only on a stated basis: owned, written authorization, or staging mirror."
   },
   {
+    key: "mirror",
+    label: "Mirror it in one pass",
+    module: "/pipeline",
+    moduleLabel: "Pipeline",
+    does: "Run the sovereign mirror pipeline: Shannon-Scout and Topology-Mapper discover assets, Ghidra-Decoder and REA-Logic-Agent read the public bundles for routes and transitions, Replica-Weaver inventories the DOM, and Symmetry-Engineer measures the timing setpoint.",
+    produces: "MirrorRun: staged evidence, symmetry score, handoff artifacts",
+    gate: "Symmetry has to clear 99% before anything is called a mirror, and state values are never read."
+  },
+  {
     key: "audit",
     label: "Audit the structure",
     module: "/structure",

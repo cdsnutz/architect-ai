@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import IdeShell from "@/components/ide/IdeShell";
 import StageCard from "@/components/pipeline/StageCard";
+import SovereignMirrorPanel from "@/components/pipeline/SovereignMirrorPanel";
 import { CLONE_STAGES } from "@/lib/pipeline";
 import { TOOLKIT_LIST } from "@/lib/toolkits";
 
@@ -34,6 +35,8 @@ export default function Pipeline() {
             rests on.
           </p>
         </div>
+
+        <SovereignMirrorPanel />
 
         <ol className="space-y-2">
           {CLONE_STAGES.map((stage, index) => (

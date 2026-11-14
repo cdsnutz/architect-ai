@@ -1,0 +1,198 @@
+{
+  "name": "MirrorRun",
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "Human label for the mirror pass."
+    },
+    "target_url": {
+      "type": "string",
+      "description": "Authorized surface the pass read."
+    },
+    "candidate_url": {
+      "type": "string",
+      "description": "Your own deploy, when one was supplied for parity scoring."
+    },
+    "auth_basis": {
+      "type": "string",
+      "enum": [
+        "owned",
+        "written_authorization",
+        "staging_mirror"
+      ],
+      "enumColors": [
+        "green",
+        "blue",
+        "purple"
+      ],
+      "description": "Why the target is authorized for a read-only pass."
+    },
+    "attestation": {
+      "type": "string",
+      "description": "Who authorized the target and for what."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "running",
+        "complete",
+        "needs_input",
+        "failed"
+      ],
+      "enumColors": [
+        "yellow",
+        "green",
+        "blue",
+        "red"
+      ],
+      "default": "running"
+    },
+    "stages": {
+      "type": "array",
+      "description": "Ordered pipeline stages with the pods and agents that own each one.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "pods": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "agents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "started_at": {
+            "type": "string"
+          },
+          "finished_at": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "symmetry_score": {
+      "type": "number",
+      "description": "Measured symmetry between the evidence and a candidate, 0-100."
+    },
+    "gate": {
+      "type": "object",
+      "description": "Threshold, score, verdict and the components that block it."
+    },
+    "reversal": {
+      "type": "object",
+      "description": "Route literals and framework markers read from public bundles, plus transition classes."
+    },
+    "capture": {
+      "type": "object",
+      "description": "Page and asset inventory. Nothing was inlined or re-served."
+    },
+    "virtualization": {
+      "type": "object",
+      "description": "Timing signature, PID setpoint and state key names. Values are never read."
+    },
+    "artifacts": {
+      "type": "array",
+      "description": "Deployable handoff files for a surface you are authorized to rebuild.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "refusals": {
+      "type": "array",
+      "description": "Requested skills the lab declines, with the reason.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "agent": {
+            "type": "string"
+          },
+          "reach": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "target_url",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
