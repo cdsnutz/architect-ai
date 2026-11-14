@@ -28,6 +28,7 @@ import OAuthConsent from './pages/OAuthConsent';
 import AgentVerdict from './pages/AgentVerdict';
 import Symmetry from './pages/Symmetry';
 import Structure from './pages/Structure';
+import ReverseSkill from './pages/ReverseSkill';
 import BugHunter from './pages/BugHunter';
 import Toolkit from './pages/Toolkit';
 import Pipeline from './pages/Pipeline';
@@ -126,6 +127,12 @@ const AuthenticatedApp = () => {
         element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fghidra" replace />} />}
       >
         <Route index element={<Toolkit toolkitKey="ghidra" />} />
+      </Route>
+      <Route
+        path="/reverse-skill"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Freverse-skill" replace />} />}
+      >
+        <Route index element={<ReverseSkill />} />
       </Route>
       <Route
         path="/shannon"

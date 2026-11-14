@@ -16,6 +16,7 @@ import {
   GitCompare,
   LayoutDashboard,
   Network,
+  Route as RouteIcon,
   ScanLine,
   Waypoints,
   Workflow
@@ -34,7 +35,8 @@ const ICONS = {
   structure: Waypoints,
   ghidra: Binary,
   "bug-hunter": Bug,
-  shannon: Crosshair
+  shannon: Crosshair,
+  "reverse-skill": RouteIcon
 };
 
 // Run order first, then the indexed toolkits that feed it.

@@ -34,7 +34,7 @@ export const CLONE_STAGES = [
     label: "Read the evidence",
     module: "/lab",
     moduleLabel: "Lab",
-    does: "Walk the authorized surface and tag each finding observed or inferred, with its evidence, gap and next probe. Toolkits on hand: Ghidra for binary claims, Shannon for source-level attack surface.",
+    does: "Walk the authorized surface and tag each finding observed or inferred, with its evidence, gap and next probe. Toolkits on hand: Ghidra for binary claims, reverse-skill for the scenario ladder, Shannon for source-level attack surface.",
     produces: "Findings and ledger traces",
     gate: "An unobserved claim is labelled, never promoted to fact."
   },

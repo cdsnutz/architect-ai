@@ -101,6 +101,54 @@ export const TOOLKITS = {
     ]
   },
 
+  "reverse-skill": {
+    key: "reverse-skill",
+    route: "/reverse-skill",
+    name: "reverse-skill",
+    owner: "zhaoxuya520",
+    repo: "reverse-skill",
+    crumb: "reverse-skill / scenario router",
+    note: "reference index · no execution",
+    role: "Scenario router",
+    plugsIn: "3 · Read the evidence",
+    usedFor:
+      "A client-neutral routing pack: it reads the task in front of an agent, picks one playbook instead of guessing, and keeps a case record of evidence, findings and path. This module indexes the package so a dossier can name the exact playbook and the component a claim rests on. The playbooks themselves run on the operator's own host.",
+    licenseNote:
+      "MIT: permissive, so referencing and quoting it is straightforward. Its own notice still travels with any copy of the code.",
+    capabilities: [
+      {
+        name: "Scenario routing",
+        detail: "Turns a surface (APK, ELF, .NET, frontend JS encryption, PCAP, firmware) into one named playbook, so a pass stops improvising commands.",
+        lane: "in_contract"
+      },
+      {
+        name: "Case contract",
+        detail: "Evidence, then finding, then path, with a report and a field journal: the same shape this lab's dossier already holds a claim in.",
+        lane: "in_contract"
+      },
+      {
+        name: "Ops contracts",
+        detail: "skills/ops states what each step may touch before it runs, which is the boundary a read-only pass has to name.",
+        lane: "in_contract"
+      },
+      {
+        name: "Tool index",
+        detail: "Its refresh script detects which tools are installed on the operator's own host. Nothing it finds leaves that host.",
+        lane: "authorized"
+      },
+      {
+        name: "Live client adapters",
+        detail: "Ships plugin manifests for Claude Code, Codex, Cursor and compatible clients. Installing one is a host you control, not this app.",
+        lane: "authorized"
+      },
+      {
+        name: "Scanning, exploitation, EDR bypass",
+        detail: "Pentest tooling, pwn chains and EDR evasion write against a target or a process. Listed for completeness; the lab never runs them.",
+        lane: "off_contract"
+      }
+    ]
+  },
+
   "bug-hunter": {
     key: "bug-hunter",
     route: "/bug-hunter",
