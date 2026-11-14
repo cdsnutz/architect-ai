@@ -67,6 +67,11 @@ async function readText(url: string): Promise<string> {
     redirect: 'follow',
     signal: AbortSignal.timeout(TIMEOUT_MS)
   });
+  try {
+    assertPublicUrl(res.url);
+  } catch {
+    throw new Error('The asset redirected off its authorized public surface.');
+  }
   return (await res.text()).slice(0, BODY_CAP);
 }
 

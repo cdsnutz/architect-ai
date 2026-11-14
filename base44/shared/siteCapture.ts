@@ -146,6 +146,13 @@ async function readPage(url: string): Promise<{ row: PageRow; html: string }> {
       signal: controller.signal,
       headers: { 'User-Agent': 'ArchitectAI-lab/1.0 (read-only capture)' }
     });
+    // redirect:'follow' can land anywhere: the surface actually read has to be
+    // public before a byte of it is parsed into the dossier.
+    try {
+      assertPublicUrl(response.url);
+    } catch {
+      throw new Error('The page redirected off its authorized public surface.');
+    }
     const text = (await response.text()).slice(0, MAX_BYTES);
     const parsed = parsePage(text, url);
     const row: PageRow = {
@@ -231,6 +238,7 @@ export async function captureSite(startUrl: string, options: { maxPages?: number
         redirect: 'follow',
         headers: { 'User-Agent': 'ArchitectAI-lab/1.0 (read-only capture)' }
       });
+      assertPublicUrl(response.url);
       const text = (await response.text()).slice(0, 150000);
       ruleCount += collectCss(text, colors, colorPairs);
     } catch (error) {
