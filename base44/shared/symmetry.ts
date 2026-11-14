@@ -148,18 +148,20 @@ function triggerBefore(text: string, index: number): { trigger: string; tag: Tag
   return { trigger: 'code_literal', tag: 'inferred' };
 }
 
-export function extractGraph(doc: Doc, origin: string, bundleText: string) {
+export function extractGraph(doc: Doc, origin: string, bundles: { url: string; text: string }[] = []) {
   const nodes = new Map<string, GraphNode>();
   const edges: GraphEdge[] = [];
   const docId = 'document';
   nodes.set(docId, { id: docId, url: doc.url, kind: 'document', tag: 'observed' });
 
-  const push = (url: string, kind: string, tag: Tag, trigger: string) => {
+  const pushFrom = (fromId: string, url: string, kind: string, tag: Tag, trigger: string) => {
     if (!url) return;
     const id = kind + ':' + url;
     if (!nodes.has(id)) nodes.set(id, { id, url, kind, tag });
-    edges.push({ from: docId, to: id, trigger, tag });
+    edges.push({ from: fromId, to: id, trigger, tag });
   };
+
+  const push = (url: string, kind: string, tag: Tag, trigger: string) => pushFrom(docId, url, kind, tag, trigger);
 
   for (const tag of ASSET_TAGS) {
     for (const match of doc.body.matchAll(tag.rx)) {
@@ -167,18 +169,36 @@ export function extractGraph(doc: Doc, origin: string, bundleText: string) {
     }
   }
 
-  // Inline code: literal paths and the call site that would fire them.
+  // Inline code: literal paths and the call site that would fire them. A bundle
+  // owns the endpoints it calls, so the edge runs from that script, not the document.
   const inline = (doc.body.match(/<script\b[^>]*>([\s\S]*?)<\/script>/gi) || []).join('\n');
-  const codeSources = [inline, bundleText];
+  const codeSources = [
+    { from: docId, text: inline },
+    ...bundles.map((bundle) => ({ from: 'script:' + bundle.url, text: bundle.text }))
+  ];
   for (const source of codeSources) {
-    if (!source) continue;
-    for (const match of source.matchAll(LITERAL_RX)) {
+    if (!source.text) continue;
+    for (const match of source.text.matchAll(LITERAL_RX)) {
       const resolved = absolute(match[1], doc.url);
       if (!resolved) continue;
       if (/\.(png|jpe?g|gif|svg|webp|woff2?|ttf|ico)(\?|$)/i.test(resolved)) continue;
       const at = match.index || 0;
-      const { trigger, tag } = triggerBefore(source, at);
-      push(resolved, 'endpoint', tag, trigger);
+      const { trigger, tag } = triggerBefore(source.text, at);
+      // A bare fragment quoted in a bundle ("/i", "/core-js") is not an asset.
+      // Keep it only when the path has real shape or a call site fires it.
+      let path = '';
+      try {
+        path = new URL(resolved).pathname;
+      } catch {
+        continue;
+      }
+      const shaped = /\.[a-z0-9]{2,5}(\?|$)/i.test(path) || path.split('/').filter(Boolean).length >= 2 || resolved.includes('?');
+      const called = ['fetch_call', 'xhr_open', 'socket_open', 'lazy_import'].includes(trigger);
+      const last = path.split('/').filter(Boolean).pop() || '';
+      const prose = /^(licen[cs]e|readme|changelog|notice|authors|contributing|core-js|index)$/i.test(last);
+      if (prose || last.length < 3) continue;
+      if (!shaped && !called) continue;
+      pushFrom(source.from, resolved, 'endpoint', tag, trigger);
     }
   }
 
@@ -509,6 +529,23 @@ export function scoreFidelity(input: {
   };
 }
 
+// Document order of first appearance: the walk the transition model is built on.
+function walkOf(graph: any): string[] {
+  const seen = new Set<string>();
+  const order: string[] = [];
+  const push = (id: string) => {
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    order.push(id);
+  };
+  push('document');
+  for (const edge of graph.edges || []) {
+    if (edge.trigger === 'document_link') continue;
+    push(edge.to);
+  }
+  return order.slice(0, 120);
+}
+
 export async function runSymmetryPass(input: { target: string; candidate?: string }) {
   const target = assertPublicUrl(input.target);
   const origin = new URL(target).origin;
@@ -517,7 +554,7 @@ export async function runSymmetryPass(input: { target: string; candidate?: strin
     throw new Error('The target answered HTTP ' + doc.status + ', so there is no surface to map.');
   }
 
-  const bundleUrls = extractGraph(doc, origin, '').nodes
+  const bundleUrls = extractGraph(doc, origin).nodes
     .filter((node) => node.kind === 'script' && node.url.startsWith(origin) && !/\.map(\?|$)/i.test(node.url))
     .map((node) => node.url)
     .slice(0, MAX_BUNDLES);
@@ -525,19 +562,26 @@ export async function runSymmetryPass(input: { target: string; candidate?: strin
   const bundles = await Promise.all(
     bundleUrls.map(async (url) => {
       try {
-        return await readText(url);
+        return { url, text: await readText(url) };
       } catch {
-        return '';
+        return { url, text: '' };
       }
     })
   );
-  const code = bundles.filter(Boolean).join('\n');
+  const code = bundles.map((bundle) => bundle.text).filter(Boolean).join('\n');
 
-  const graph = extractGraph(doc, origin, code);
+  const graph = extractGraph(doc, origin, bundles);
   const entropy = await predictAssets(graph.nodes, origin);
   const state = readState(doc, code);
-  const diff = input.candidate ? await diffSurfaces(doc, input.candidate) : null;
-  const fidelity = scoreFidelity({ graph, entropy, state, diff });
+
+  const candidateDoc = input.candidate ? await readDocument(input.candidate) : null;
+  const candidateGraph = candidateDoc ? extractGraph(candidateDoc, new URL(candidateDoc.url).origin) : null;
+  const diff = candidateDoc ? await diffSurfaces(doc, candidateDoc.url, candidateDoc) : null;
+  const isomorphism = topologyParity(graph, candidateGraph);
+  const markov = markovPlan([walkOf(graph)], graph.nodes, graph.edges);
+  const latency = latencyModel(await readTimings(target, UA));
+
+  const fidelity = scoreFidelity({ graph, entropy, state, diff, latency, isomorphism });
 
   return {
     target_url: target,
@@ -545,9 +589,14 @@ export async function runSymmetryPass(input: { target: string; candidate?: strin
     entropy,
     state,
     diff,
+    isomorphism,
+    markov,
+    latency,
     fidelity,
     notes:
       'Read-only authorized pass: ' + graph.counts.nodes + ' nodes, ' + graph.counts.edges + ' edges, ' +
-      entropy.confirmed + ' entropy hits. Documents trimmed to ' + BODY_CAP + ' bytes; no form submitted, no credential sent, nothing re-served.'
+      entropy.confirmed + ' entropy hits, ' + latency.samples + ' timing samples, ' + markov.plan.length +
+      ' prefetch candidates' + (isomorphism ? ', structural parity ' + isomorphism.score + '%' : '') +
+      '. Documents trimmed to ' + BODY_CAP + ' bytes; no form submitted, no credential sent, nothing re-served.'
   };
 }

@@ -15,6 +15,9 @@ import GraphPanel from "@/components/symmetry/GraphPanel";
 import EntropyPanel from "@/components/symmetry/EntropyPanel";
 import StatePanel from "@/components/symmetry/StatePanel";
 import DiffPanel from "@/components/symmetry/DiffPanel";
+import IsomorphismPanel from "@/components/symmetry/IsomorphismPanel";
+import MarkovPanel from "@/components/symmetry/MarkovPanel";
+import LatencyPanel from "@/components/symmetry/LatencyPanel";
 
 const EMPTY = {
   label: "",
@@ -108,17 +111,21 @@ export default function Symmetry() {
 
               <div className="grid gap-4 xl:grid-cols-2">
                 <GraphPanel graph={active.graph} />
+                <LatencyPanel latency={active.latency} />
                 <EntropyPanel entropy={active.entropy} />
+                <IsomorphismPanel isomorphism={active.isomorphism} />
                 <StatePanel state={active.state} />
                 <DiffPanel diff={active.diff} />
+                <MarkovPanel markov={active.markov} />
               </div>
             </>
           ) : (
             <div className="border border-line-soft bg-surface-panel p-6">
               <h1 className="font-display text-sm text-ink">No symmetry pass yet</h1>
               <p className="mt-2 max-w-prose text-[11px] leading-relaxed text-ink-muted">
-                Map a property you own or are authorized to test. The pass builds a trigger-edge dependency graph, predicts unlinked
-                assets, inventories state keys by name, and diffs your own rebuild against the baseline.
+                Map a property you own or are authorized to test. The pass reads five dimensions: trigger-edge dependency graph, structural
+                parity against your candidate, the target's latency signature and the hold your mirror needs, a first-order transition model
+                for prefetch, entropy-ranked asset recovery, and a state-key inventory by name only.
               </p>
             </div>
           )}

@@ -102,22 +102,27 @@ export function latencyModel(samples: number[]) {
 
 type WalkNode = { id: string; kind: string };
 
-export function markovPlan(walks: string[][], nodes: WalkNode[]) {
+export function markovPlan(walks: string[][], nodes: WalkNode[], edges: { from: string; to: string; tag?: string }[] = []) {
   const kind = new Map(nodes.map((node) => [node.id, node.kind]));
   const pairs = new Map<string, Map<string, number>>();
   const states = new Set<string>();
 
+  const observe = (from: string, to: string) => {
+    if (!from || !to || from === to) return;
+    states.add(from);
+    states.add(to);
+    const row = pairs.get(from) || new Map<string, number>();
+    row.set(to, (row.get(to) || 0) + 1);
+    pairs.set(from, row);
+  };
+
   for (const walk of walks) {
-    for (let index = 0; index < walk.length - 1; index += 1) {
-      const from = walk[index];
-      const to = walk[index + 1];
-      if (!from || !to || from === to) continue;
-      states.add(from);
-      states.add(to);
-      const row = pairs.get(from) || new Map<string, number>();
-      row.set(to, (row.get(to) || 0) + 1);
-      pairs.set(from, row);
-    }
+    for (let index = 0; index < walk.length - 1; index += 1) observe(walk[index], walk[index + 1]);
+  }
+  // A call site is a transition too: whenever this script runs, it asks for that
+  // endpoint. Document-level edges are the walk itself, so they are already counted.
+  for (const edge of edges) {
+    if (edge.tag === 'inferred' && edge.from !== 'document') observe(edge.from, edge.to);
   }
 
   const transitions: { from: string; to: string; count: number; prob: number }[] = [];

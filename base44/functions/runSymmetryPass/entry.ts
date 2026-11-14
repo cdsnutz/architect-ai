@@ -62,11 +62,14 @@ export default async function (req) {
       entropy: result.entropy,
       state: result.state,
       diff: result.diff,
+      isomorphism: result.isomorphism,
+      markov: result.markov,
+      latency: result.latency,
       fidelity: result.fidelity,
       notes: result.notes
     });
 
-    return Response.json({ run: saved, graph: result.graph, entropy: result.entropy, state: result.state, diff: result.diff, fidelity: result.fidelity });
+    return Response.json({ run: saved });
   } catch (error) {
     const reason = error && error.message ? error.message : 'unknown error';
     console.log('runSymmetryPass failed: ' + reason);
