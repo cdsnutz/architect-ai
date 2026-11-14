@@ -31,6 +31,7 @@ import Structure from './pages/Structure';
 import ReverseSkill from './pages/ReverseSkill';
 import BugHunter from './pages/BugHunter';
 import Gap from './pages/Gap';
+import WarRoom from './pages/WarRoom';
 import Toolkit from './pages/Toolkit';
 import Pipeline from './pages/Pipeline';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -128,6 +129,12 @@ const AuthenticatedApp = () => {
         element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fgap" replace />} />}
       >
         <Route index element={<Gap />} />
+      </Route>
+      <Route
+        path="/war-room"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fwar-room" replace />} />}
+      >
+        <Route index element={<WarRoom />} />
       </Route>
       <Route
         path="/ghidra"

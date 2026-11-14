@@ -19,6 +19,7 @@ import {
   Radar,
   Route as RouteIcon,
   ScanLine,
+  Target,
   Waypoints,
   Workflow
 } from "lucide-react";
@@ -38,11 +39,13 @@ const ICONS = {
   "bug-hunter": Bug,
   shannon: Crosshair,
   "reverse-skill": RouteIcon,
-  gap: Radar
+  gap: Radar,
+  "war-room": Target
 };
 
 // Run order first, then the indexed toolkits that feed it.
 const ITEMS = [
+  { key: "war-room", to: "/war-room", label: "War room" },
   { key: "gap", to: "/gap", label: "Gap analyzer" },
   ...CLONE_MODULES,
   ...RAIL_TOOLKITS.map((toolkit) => ({ key: toolkit.key, to: toolkit.route, label: toolkit.name }))
