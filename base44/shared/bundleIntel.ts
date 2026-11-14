@@ -11,6 +11,8 @@
 // Everything here is a static read of files the target already publishes. No
 // payload is evaluated and no obfuscated string is decoded.
 
+import { assertPublicUrl } from './readOnly.ts';
+
 const UA = 'REVENGINE-SovereignMirror/1.0 (+authorized read-only pass)';
 const MANIFEST_CAP = 300000;
 const MANIFEST_CANDIDATES = ['/.vite/manifest.json', '/asset-manifest.json', '/manifest.json', '/build-manifest.json'];
@@ -30,6 +32,12 @@ async function getText(url: string) {
       redirect: 'follow',
       signal: AbortSignal.timeout(9000)
     });
+    // A redirect can leave the public surface; refuse to read what it landed on.
+    try {
+      assertPublicUrl(res.url);
+    } catch {
+      return '';
+    }
     if (!res.ok) return '';
     const type = res.headers.get('content-type') || '';
     if (!/json|javascript|text/i.test(type)) return '';
@@ -170,6 +178,7 @@ export async function readBundleIntelligence(origin: string, scriptUrls: string[
           redirect: 'follow',
           signal: AbortSignal.timeout(9000)
         });
+        assertPublicUrl(res.url);
         if (!res.ok) return { url, text: '' };
         return { url, text: (await res.text()).slice(0, cap) };
       } catch {

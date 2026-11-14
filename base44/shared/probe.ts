@@ -9,6 +9,8 @@
 // Sends no credentials, no cookies and no request bodies, never repeats a path,
 // and never targets an endpoint that could change state.
 
+import { assertPublicUrl } from './readOnly.ts';
+
 const UA = 'Mozilla/5.0 (compatible; LogicMapper/1.0)';
 const MAX_TARGETS = 3;
 const TIMEOUT_MS = 8000;
@@ -67,6 +69,8 @@ async function hit(url: string, headers: Record<string, string>): Promise<Hit> {
     redirect: 'follow',
     signal: AbortSignal.timeout(TIMEOUT_MS)
   });
+  // A redirect can leave the public surface; refuse to read what it landed on.
+  assertPublicUrl(res.url);
   const text = (await res.text()).slice(0, BODY_CAP);
   const latency = Date.now() - started;
   const contentType = (res.headers.get('content-type') || '').split(';')[0];

@@ -8,6 +8,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { extractEvidence, mapLogic } from '../../shared/analysis.ts';
 import { probeContentNegotiation, formatProbe } from '../../shared/probe.ts';
+import { assertPublicUrl } from '../../shared/readOnly.ts';
 import { POD_STAGES, mapDetail, startRun, markRunning, markComplete, finishRun } from '../../shared/runTracker.ts';
 
 export default async function (req) {
@@ -17,17 +18,15 @@ export default async function (req) {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { url } = await req.json();
-    if (!url || typeof url !== 'string' || !/^https?:\/\/.+\..+/i.test(url.trim())) {
-      return Response.json({ error: 'Please provide a valid http(s) URL.' }, { status: 400 });
-    }
-    const targetUrl = url.trim();
-
-    const host = new URL(targetUrl).hostname.toLowerCase();
-    if (host === 'base44.com' || host.endsWith('.base44.com')) {
-      return Response.json({
-        error: 'The Base44 platform itself is out of scope. Analyze your own app or a site you are authorised to test.'
-      }, { status: 400 });
+    const { url } = await req.json().catch(() => ({}));
+    // The caller picks this URL, so it goes through the app's public-host guard,
+    // the same one every other fetch flow uses: no private hosts, no internal
+    // suffixes, no non-standard ports, no Base44 itself.
+    let targetUrl = '';
+    try {
+      targetUrl = assertPublicUrl(url);
+    } catch (guardError) {
+      return Response.json({ error: (guardError && guardError.message) || 'Please provide a valid http(s) URL.' }, { status: 400 });
     }
 
     const run = await startRun(base44, targetUrl, 'live', POD_STAGES);
@@ -41,6 +40,13 @@ export default async function (req) {
         redirect: 'follow',
         signal: AbortSignal.timeout(20000)
       });
+      // A redirect can leave the public surface: refuse whatever it landed on.
+      try {
+        assertPublicUrl(res.url);
+      } catch {
+        await finishRun(base44, runId, 'failed', { error: 'The target redirected off the authorized public surface.' });
+        return Response.json({ error: 'That URL redirects to a private or internal host and will not be read.' }, { status: 400 });
+      }
       if (!res.ok) {
         await finishRun(base44, runId, 'failed', { error: 'The site responded with HTTP ' + res.status });
         return Response.json({ error: 'The site responded with HTTP ' + res.status + ' and could not be analyzed.' }, { status: 502 });

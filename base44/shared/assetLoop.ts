@@ -11,6 +11,7 @@
 // loop over predictions, never a sweep of the asset space.
 
 import { markovPlan } from './symmetryDims.ts';
+import { assertPublicUrl } from './readOnly.ts';
 
 const UA = 'REVENGINE-SovereignMirror/1.0 (+authorized read-only pass)';
 const PROBE_CAP = 10;
@@ -24,14 +25,25 @@ async function reachable(url: string) {
       redirect: 'follow',
       signal: AbortSignal.timeout(8000)
     });
-    const ok = res.ok;
-    if (res.body) {
-      try {
-        await res.body.cancel();
-      } catch {
-        // A body that will not cancel is harmless; the probe already landed.
+    const drain = async () => {
+      if (res.body) {
+        try {
+          await res.body.cancel();
+        } catch {
+          // A body that will not cancel is harmless; the probe already landed.
+        }
       }
+    };
+    // A redirect can leave the public surface; a probe that landed on an
+    // internal host is not evidence of the asset being live.
+    try {
+      assertPublicUrl(res.url);
+    } catch {
+      await drain();
+      return false;
     }
+    const ok = res.ok;
+    await drain();
     return ok;
   } catch {
     return false;

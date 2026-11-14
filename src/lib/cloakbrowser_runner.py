@@ -21,14 +21,20 @@ Two modes:
     GET  /health   -> readiness, never the licence key
     POST /capture  -> {"url": "...", "geoip": true, "preset": "careful", "proxy": null}
 
-Set CLOAKBROWSER_RUNNER_TOKEN on both sides: the app sends it as a bearer token
-and this host refuses every request that does not carry it.
+CLOAKBROWSER_RUNNER_TOKEN is required in serve mode: without it the runner
+refuses to start, so the browser is never exposed unauthenticated. The app sends
+it as a bearer token and every request without it is refused.
+
+Serve binds to loopback by default. A host that must be reached through a
+platform proxy (Fly, a container, a reverse proxy) has to pass --host 0.0.0.0
+explicitly, which is the only way this runner listens on a public interface.
 
 Exit codes: 0 captured, 2 bad input, 3 engine not installed,
             4 navigation failed (evidence is still printed).
 """
 
 import argparse
+import hmac
 import json
 import os
 import sys
@@ -109,10 +115,17 @@ def capture(target_url, proxy=None, geoip=False, headed=False, preset="careful",
             pass
 
 
-def serve(port):
+def serve(port, host="127.0.0.1"):
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
     token = (os.environ.get("CLOAKBROWSER_RUNNER_TOKEN") or "").strip()
+    if not token:
+        print(
+            "refusing to serve: set CLOAKBROWSER_RUNNER_TOKEN and the same value in the app. "
+            "An unauthenticated runner would let anyone drive this browser.",
+            file=sys.stderr,
+        )
+        return 2
 
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -129,10 +142,11 @@ def serve(port):
             self.wfile.write(body)
 
         def authorized(self):
+            # Fail closed: no token means no browser control, never open access.
             if not token:
-                return True
+                return False
             header = self.headers.get("Authorization", "")
-            return header == "Bearer " + token
+            return hmac.compare_digest(header, "Bearer " + token)
 
         def do_GET(self):
             if self.path.rstrip("/") not in ("/health", ""):
@@ -171,8 +185,9 @@ def serve(port):
             )
             self.reply(200 if evidence.get("ok") else 502, evidence)
 
-    print("cloakbrowser runner listening on 0.0.0.0:%d" % port, file=sys.stderr)
-    ThreadingHTTPServer(("0.0.0.0", port), Handler).serve_forever()
+    print("cloakbrowser runner listening on %s:%d" % (host, port), file=sys.stderr)
+    ThreadingHTTPServer((host, port), Handler).serve_forever()
+    return 0
 
 
 def main():
@@ -180,6 +195,8 @@ def main():
     parser.add_argument("--url", help="Authorized http(s) target (CLI mode).")
     parser.add_argument("--serve", action="store_true", help="Serve /health and /capture instead.")
     parser.add_argument("--port", type=int, default=int(os.environ.get("PORT") or 8787))
+    parser.add_argument("--host", default=os.environ.get("CLOAKBROWSER_RUNNER_HOST") or "127.0.0.1",
+                        help="Interface to bind (serve mode). Default loopback; pass 0.0.0.0 behind a platform proxy.")
     parser.add_argument("--proxy", default=os.environ.get("CLOAKBROWSER_PROXY") or None,
                         help="http://user:pass@host:port. Omit for a direct connection.")
     parser.add_argument("--geoip", action="store_true", help="Align timezone/locale with the proxy IP.")
@@ -190,8 +207,7 @@ def main():
     args = parser.parse_args()
 
     if args.serve:
-        serve(args.port)
-        return 0
+        return serve(args.port, args.host)
 
     if not args.url:
         parser.error("--url is required unless --serve is passed")
