@@ -11,7 +11,7 @@
 // Everything here is a static read of files the target already publishes. No
 // payload is evaluated and no obfuscated string is decoded.
 
-import { assertPublicUrl } from './readOnly.ts';
+import { assertPublicUrl, safeFetch } from './readOnly.ts';
 
 const UA = 'REVENGINE-SovereignMirror/1.0 (+authorized read-only pass)';
 const MANIFEST_CAP = 300000;
@@ -27,9 +27,8 @@ const FRAMEWORK = /\b(react|vue|svelte|angular|next|nuxt|remix|astro|ember|jquer
 
 async function getText(url: string) {
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       headers: { 'User-Agent': UA, Accept: '*/*' },
-      redirect: 'follow',
       signal: AbortSignal.timeout(9000)
     });
     // A redirect can leave the public surface; refuse to read what it landed on.
@@ -173,9 +172,8 @@ export async function readBundleIntelligence(origin: string, scriptUrls: string[
   const texts = await Promise.all(
     targets.map(async (url) => {
       try {
-        const res = await fetch(url, {
+        const res = await safeFetch(url, {
           headers: { 'User-Agent': UA, Accept: '*/*' },
-          redirect: 'follow',
           signal: AbortSignal.timeout(9000)
         });
         assertPublicUrl(res.url);

@@ -32,6 +32,9 @@ export function assertPublicUrl(raw: unknown): string {
   if (!host.includes('.') || PRIVATE_HOST.test(host) || INTERNAL_SUFFIX.test(host)) {
     throw new Error('Private or internal hosts cannot be probed: ' + host);
   }
+  // A literal address in the URL is the address it connects to, so it is
+  // classified here; a name is classified by what it resolves to (below).
+  if (isLiteralAddress(host)) assertPublicAddress(host);
   if (host === 'base44.com' || host.endsWith('.base44.com')) {
     throw new Error('The Base44 platform itself is out of scope.');
   }
@@ -40,6 +43,194 @@ export function assertPublicUrl(raw: unknown): string {
   }
   if (parsed.pathname.length > 300) throw new Error('That path is too long to probe.');
   return parsed.origin + parsed.pathname + parsed.search;
+}
+
+// ── Address guard ───────────────────────────────────────────────────────────
+// A hostname string says nothing about the address the socket actually opens:
+// a public-looking name can answer with 169.254.169.254, an RFC1918 address or
+// the app's own loopback, and it can flip to one of those between the check and
+// the connect (DNS rebinding). So every outbound read resolves the name, refuses
+// any answer that is not public unicast, re-resolves after the connection before
+// a single body byte is read, and validates each redirect hop before following
+// it. Nothing here trusts the URL string alone.
+
+const MAX_REDIRECTS = 5;
+const REDIRECT_STATUS = [301, 302, 303, 307, 308];
+
+// Reserved, private, loopback, link-local, CGNAT, documentation, multicast and
+// benchmark ranges: none of them is a public surface worth reading.
+const V4_BLOCKS: [string, number][] = [
+  ['0.0.0.0', 8],
+  ['10.0.0.0', 8],
+  ['100.64.0.0', 10],
+  ['127.0.0.0', 8],
+  ['169.254.0.0', 16],
+  ['172.16.0.0', 12],
+  ['192.0.0.0', 24],
+  ['192.0.2.0', 24],
+  ['192.168.0.0', 16],
+  ['198.18.0.0', 15],
+  ['198.51.100.0', 24],
+  ['203.0.113.0', 24],
+  ['224.0.0.0', 4],
+  ['240.0.0.0', 4]
+];
+
+function v4Value(ip: string): number | null {
+  const parts = ip.split('.');
+  if (parts.length !== 4) return null;
+  let value = 0;
+  for (const part of parts) {
+    if (!/^\d{1,3}$/.test(part)) return null;
+    const octet = Number(part);
+    if (octet > 255) return null;
+    value = value * 256 + octet;
+  }
+  return value;
+}
+
+function maskFor(bits: number): number {
+  return bits <= 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0;
+}
+
+function v4Blocked(ip: string): boolean {
+  const value = v4Value(ip);
+  // Anything that is not a well-formed dotted quad is refused, never guessed.
+  if (value === null) return true;
+  return V4_BLOCKS.some(([base, bits]) => {
+    const mask = maskFor(bits);
+    const network = (v4Value(base) as number) & mask;
+    return ((value & mask) >>> 0) === (network >>> 0);
+  });
+}
+
+function v6Blocked(raw: string): boolean {
+  const ip = raw.toLowerCase().split('%')[0];
+  if (ip === '::' || ip === '::1') return true;
+
+  // IPv4-mapped and IPv4-embedded forms are decided by the address they carry.
+  const dotted = /(?:^|:)(\d{1,3}(?:\.\d{1,3}){3})$/.exec(ip);
+  if (dotted) return v4Blocked(dotted[1]);
+  const hexPair = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(ip);
+  if (hexPair) {
+    const high = parseInt(hexPair[1], 16);
+    const low = parseInt(hexPair[2], 16);
+    return v4Blocked([high >> 8, high & 255, low >> 8, low & 255].join('.'));
+  }
+
+  const head = ip.split(':')[0];
+  if (/^f[cd][0-9a-f]{0,2}$/.test(head)) return true; // fc00::/7 unique local
+  if (/^fe[89ab][0-9a-f]{0,2}$/.test(head)) return true; // fe80::/10 link local
+  if (/^ff[0-9a-f]{0,2}$/.test(head)) return true; // multicast
+  if (head === '2001' && /^2001:0{,1}db8/.test(ip)) return true; // documentation
+  if (ip.startsWith('64:ff9b:')) return true; // NAT64
+  if (head === '2002') return true; // 6to4 embeds an arbitrary IPv4
+  if (/^0{1,4}$/.test(head) && ip.startsWith('::')) return true; // unspecified
+  return !/^[0-9a-f:]+$/.test(ip); // not IPv6-shaped at all
+}
+
+function isLiteralAddress(host: string): boolean {
+  const value = String(host || '').replace(/^\[|\]$/g, '');
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(value) || value.includes(':');
+}
+
+export function assertPublicAddress(raw: string): string {
+  const address = String(raw || '').trim().replace(/^\[|\]$/g, '');
+  const blocked = address.includes(':') ? v6Blocked(address) : v4Blocked(address);
+  if (blocked) {
+    throw new Error('Refusing to read a private, loopback, link-local or metadata address: ' + address);
+  }
+  return address;
+}
+
+async function lookupHost(host: string): Promise<string[]> {
+  const runtime = (globalThis as any).Deno;
+  if (runtime && typeof runtime.resolveDns === 'function') {
+    const found: string[] = [];
+    for (const type of ['A', 'AAAA']) {
+      try {
+        const records = await runtime.resolveDns(host, type);
+        (records || []).forEach((record: string) => found.push(String(record)));
+      } catch {
+        // A name with no record of one family is expected, not a failure.
+      }
+    }
+    if (found.length) return found;
+  }
+  const dns: any = await import('node:dns');
+  const lookup =
+    dns && dns.promises && dns.promises.lookup
+      ? dns.promises.lookup
+      : dns && dns.default && dns.default.promises && dns.default.promises.lookup
+        ? dns.default.promises.lookup
+        : null;
+  if (!lookup) return [];
+  const answers = await lookup(host, { all: true });
+  return (answers || []).map((answer: any) => String(answer && answer.address ? answer.address : answer));
+}
+
+// Resolves the host and fails closed: an unpublished host, or one carrying even
+// a single internal answer among public ones, is never read.
+export async function resolvePublicHost(hostname: string): Promise<string[]> {
+  const host = String(hostname || '').replace(/^\[|\]$/g, '');
+  if (isLiteralAddress(host)) return [assertPublicAddress(host)];
+
+  let answers: string[] = [];
+  try {
+    answers = await lookupHost(host);
+  } catch {
+    answers = [];
+  }
+  if (!answers.length) {
+    throw new Error('The target host did not resolve to a public address, so it will not be read: ' + host);
+  }
+  answers.forEach((answer) => assertPublicAddress(answer));
+  return answers;
+}
+
+// The only outbound read path in the lab. Callers hand it a URL and the same
+// init they would give fetch(); redirects are followed hop by hop, each one
+// validated and resolved before the connection is made.
+export async function safeFetch(raw: string, init: RequestInit = {}, hop = 0): Promise<Response> {
+  const url = assertPublicUrl(raw);
+  const host = new URL(url).hostname;
+
+  // Check before the connection, then check again after it: a name that flipped
+  // to an internal address is caught before the body is read. The answer set may
+  // legitimately rotate (a CDN doing its job), so only a non-public answer or a
+  // name that stops resolving fails the read.
+  await resolvePublicHost(host);
+  const response = await fetch(url, { ...init, redirect: 'manual' });
+  await resolvePublicHost(host);
+
+  const location = response.headers.get('location');
+  if (!location || REDIRECT_STATUS.indexOf(response.status) === -1) return response;
+
+  const release = async () => {
+    try {
+      await response.body?.cancel();
+    } catch {
+      // A redirect response usually carries no body to release.
+    }
+  };
+
+  if (hop >= MAX_REDIRECTS) {
+    await release();
+    throw new Error('The target redirected more than ' + MAX_REDIRECTS + ' times to be read safely.');
+  }
+
+  let next = '';
+  try {
+    next = assertPublicUrl(new URL(location, url).toString());
+  } catch {
+    await release();
+    throw new Error('The target redirected off the authorized public surface.');
+  }
+
+  await release();
+  const method = String(init.method || 'GET').toUpperCase();
+  const nextInit: RequestInit = method === 'GET' || method === 'HEAD' ? init : { ...init, method: 'GET', body: undefined };
+  return await safeFetch(next, nextInit, hop + 1);
 }
 
 export type Hit = {
@@ -72,10 +263,9 @@ function shapeOf(text: string, contentType: string): string {
 
 async function readOnce(url: string, accept: string, extra: Record<string, string> = {}): Promise<Hit> {
   const started = Date.now();
-  const res = await fetch(url, {
+  const res = await safeFetch(url, {
     method: 'GET',
     headers: { 'User-Agent': UA, Accept: accept, 'Cache-Control': 'no-cache', ...extra },
-    redirect: 'follow',
     signal: AbortSignal.timeout(TIMEOUT_MS)
   });
   // A redirect can leave the public surface; refuse to read whatever it landed on.
@@ -482,10 +672,9 @@ async function probeSourcemap(skill: string, target: string): Promise<ProbeResul
   const checked = await Promise.all(
     chosen.map(async (url) => {
       try {
-        const res = await fetch(url + '.map', {
+        const res = await safeFetch(url + '.map', {
           method: 'HEAD',
           headers: { 'User-Agent': UA },
-          redirect: 'follow',
           signal: AbortSignal.timeout(TIMEOUT_MS)
         });
         return {

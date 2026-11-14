@@ -15,7 +15,7 @@
 // page actually carries. Nothing here ranks, clicks, spoofs or re-serves: the
 // output is a map, and every number on it came from a response.
 
-import { assertPublicUrl } from './readOnly.ts';
+import { assertPublicUrl, safeFetch } from './readOnly.ts';
 import { FRAMEWORK_MARKERS } from './readOnly.ts';
 
 const UA = 'Mozilla/5.0 (compatible; RevEngineGapAudit/1.0; public read-only audit)';
@@ -66,10 +66,9 @@ type Surface = {
 
 async function fetchText(url: string, accept: string) {
   const started = Date.now();
-  const res = await fetch(url, {
+  const res = await safeFetch(url, {
     method: 'GET',
     headers: { 'User-Agent': UA, Accept: accept, 'Cache-Control': 'no-cache' },
-    redirect: 'follow',
     signal: AbortSignal.timeout(TIMEOUT_MS)
   });
   try {

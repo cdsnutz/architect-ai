@@ -9,7 +9,7 @@
 // Sends no credentials, no cookies and no request bodies, never repeats a path,
 // and never targets an endpoint that could change state.
 
-import { assertPublicUrl } from './readOnly.ts';
+import { assertPublicUrl, safeFetch } from './readOnly.ts';
 
 const UA = 'Mozilla/5.0 (compatible; LogicMapper/1.0)';
 const MAX_TARGETS = 3;
@@ -64,9 +64,8 @@ function shapeOf(text: string, contentType: string): string {
 
 async function hit(url: string, headers: Record<string, string>): Promise<Hit> {
   const started = Date.now();
-  const res = await fetch(url, {
+  const res = await safeFetch(url, {
     headers: { 'User-Agent': UA, ...headers },
-    redirect: 'follow',
     signal: AbortSignal.timeout(TIMEOUT_MS)
   });
   // A redirect can leave the public surface; refuse to read what it landed on.

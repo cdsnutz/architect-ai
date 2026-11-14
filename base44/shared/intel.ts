@@ -19,7 +19,7 @@
 //    surface already uses, probed inside a fixed budget. Only a confirmed
 //    response is reported as an asset; everything else stays a prediction.
 
-import { assertPublicUrl } from './readOnly.ts';
+import { assertPublicUrl, safeFetch } from './readOnly.ts';
 import { assertAuthorization } from './symmetry.ts';
 
 const UA = 'Mozilla/5.0 (compatible; RevEngineSovereignIntel/1.0; authorized read-only audit)';
@@ -73,9 +73,8 @@ function nowIso() {
 
 async function get(url: string, accept: string, cap: number) {
   const started = Date.now();
-  const response = await fetch(url, {
+  const response = await safeFetch(url, {
     method: 'GET',
-    redirect: 'follow',
     headers: { 'User-Agent': UA, Accept: accept },
     signal: AbortSignal.timeout(TIMEOUT_MS)
   });

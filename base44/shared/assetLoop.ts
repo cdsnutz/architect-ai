@@ -11,7 +11,7 @@
 // loop over predictions, never a sweep of the asset space.
 
 import { markovPlan } from './symmetryDims.ts';
-import { assertPublicUrl } from './readOnly.ts';
+import { assertPublicUrl, safeFetch } from './readOnly.ts';
 
 const UA = 'REVENGINE-SovereignMirror/1.0 (+authorized read-only pass)';
 const PROBE_CAP = 10;
@@ -19,10 +19,9 @@ const ROUND_CAP = 3;
 
 async function reachable(url: string) {
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       method: 'GET',
       headers: { 'User-Agent': UA, Accept: '*/*' },
-      redirect: 'follow',
       signal: AbortSignal.timeout(8000)
     });
     const drain = async () => {

@@ -10,7 +10,7 @@
 // Nothing here is executed, decoded or replayed, and every endpoint carries the
 // grade the capture can actually prove instead of an assumed one.
 
-import { assertPublicUrl } from './readOnly.ts';
+import { assertPublicUrl, safeFetch } from './readOnly.ts';
 import { detectObfuscation } from './bundleIntel.ts';
 
 const UA = 'REVENGINE-Honesty/1.0 (+authorized read-only pass)';
@@ -60,9 +60,8 @@ function versioned(path: string) {
 
 async function readBundle(url: string) {
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       headers: { 'User-Agent': UA, Accept: '*/*' },
-      redirect: 'follow',
       signal: AbortSignal.timeout(9000)
     });
     // A redirect can leave the public surface; refuse to read what it landed on.

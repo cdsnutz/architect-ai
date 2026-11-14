@@ -20,7 +20,7 @@
 //
 // The General sequences only what the other two observed into three weeks.
 
-import { assertPublicUrl } from './readOnly.ts';
+import { assertPublicUrl, safeFetch } from './readOnly.ts';
 import { assertAuthorization } from './symmetry.ts';
 import { runGapAudit } from './gapAudit.ts';
 
@@ -178,9 +178,8 @@ function clamp(text: string, max: number) {
 
 async function read(url: string, cap: number) {
   const started = Date.now();
-  const response = await fetch(url, {
+  const response = await safeFetch(url, {
     method: 'GET',
-    redirect: 'follow',
     headers: { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml,application/javascript,*/*' },
     signal: AbortSignal.timeout(TIMEOUT_MS)
   });

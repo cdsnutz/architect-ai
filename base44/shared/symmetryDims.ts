@@ -11,6 +11,8 @@
 // intercepts, delays or replays another origin's live traffic; the timing model
 // describes what a mirror *should* emit, it does not shape a proxied stream.
 
+import { safeFetch } from './readOnly.ts';
+
 const TIMEOUT_MS = 8000;
 const TIMING_SAMPLES = 4;
 const TIMING_GAP_MS = 90;
@@ -42,9 +44,8 @@ export async function readTimings(url: string, userAgent: string): Promise<numbe
   for (let index = 0; index < TIMING_SAMPLES; index += 1) {
     const started = performance.now();
     try {
-      const res = await fetch(url, {
+      const res = await safeFetch(url, {
         headers: { 'User-Agent': userAgent, Range: 'bytes=0-0', 'Cache-Control': 'no-cache' },
-        redirect: 'follow',
         signal: AbortSignal.timeout(TIMEOUT_MS)
       });
       samples.push(Math.round(performance.now() - started));

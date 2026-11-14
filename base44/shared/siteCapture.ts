@@ -9,7 +9,7 @@
 // links only, a hard page cap. It inventories what a visitor can reach, never
 // downloads source maps, never submits a form and never sends a body.
 
-import { assertPublicUrl } from './readOnly.ts';
+import { assertPublicUrl, safeFetch } from './readOnly.ts';
 
 const MAX_PAGES = 12;
 const TIMEOUT_MS = 9000;
@@ -140,9 +140,8 @@ async function readPage(url: string): Promise<{ row: PageRow; html: string }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const response = await fetch(url, {
+    const response = await safeFetch(url, {
       method: 'GET',
-      redirect: 'follow',
       signal: controller.signal,
       headers: { 'User-Agent': 'ArchitectAI-lab/1.0 (read-only capture)' }
     });
@@ -233,9 +232,8 @@ export async function captureSite(startUrl: string, options: { maxPages?: number
   let ruleCount = collectCss(inlineCss.slice(0, 120000), colors, colorPairs);
   for (const cssUrl of [...cssLinks]) {
     try {
-      const response = await fetch(cssUrl, {
+      const response = await safeFetch(cssUrl, {
         method: 'GET',
-        redirect: 'follow',
         headers: { 'User-Agent': 'ArchitectAI-lab/1.0 (read-only capture)' }
       });
       assertPublicUrl(response.url);

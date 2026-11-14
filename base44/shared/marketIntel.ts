@@ -19,7 +19,7 @@
 // needs an authenticated session against a third-party origin, and external
 // sentiment needs sources no authorization in this lab covers.
 
-import { assertPublicUrl } from './readOnly.ts';
+import { assertPublicUrl, safeFetch } from './readOnly.ts';
 import { assertAuthorization } from './symmetry.ts';
 import { mapDeclaredEndpoints } from './endpointMap.ts';
 
@@ -157,9 +157,8 @@ function extract(html: string, origin: string) {
 
 async function fetchPage(url: string) {
   const started = Date.now();
-  const response = await fetch(url, {
+  const response = await safeFetch(url, {
     method: 'GET',
-    redirect: 'follow',
     headers: { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml,*/*' },
     signal: AbortSignal.timeout(TIMEOUT_MS)
   });

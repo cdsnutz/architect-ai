@@ -13,7 +13,7 @@
 // surface against a baseline. Transport interception (the "ghost proxy") stays
 // out of contract: nothing here proxies, rewrites or replays a live stream.
 
-import { assertPublicUrl } from './readOnly.ts';
+import { assertPublicUrl, safeFetch } from './readOnly.ts';
 import { latencyModel, markovPlan, readTimings, topologyParity } from './symmetryDims.ts';
 
 const UA = 'Mozilla/5.0 (compatible; RevEngineSymmetry/1.0; authorized-target pass)';
@@ -61,10 +61,9 @@ export type Doc = {
 };
 
 async function readText(url: string): Promise<string> {
-  const res = await fetch(url, {
+  const res = await safeFetch(url, {
     method: 'GET',
     headers: { 'User-Agent': UA, Accept: 'application/javascript,text/javascript,text/css,*/*' },
-    redirect: 'follow',
     signal: AbortSignal.timeout(TIMEOUT_MS)
   });
   try {
@@ -76,10 +75,9 @@ async function readText(url: string): Promise<string> {
 }
 
 async function readDocument(url: string): Promise<Doc> {
-  const res = await fetch(url, {
+  const res = await safeFetch(url, {
     method: 'GET',
     headers: { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml,*/*', 'Cache-Control': 'no-cache' },
-    redirect: 'follow',
     signal: AbortSignal.timeout(TIMEOUT_MS)
   });
   try {
@@ -307,17 +305,15 @@ function predictFor(cluster: Cluster): string[] {
 
 async function probeAsset(url: string) {
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       method: 'HEAD',
       headers: { 'User-Agent': UA },
-      redirect: 'follow',
       signal: AbortSignal.timeout(TIMEOUT_MS)
     });
     const type = (res.headers.get('content-type') || '').split(';')[0];
     if (res.status === 405 || res.status === 501) {
-      const ranged = await fetch(url, {
+      const ranged = await safeFetch(url, {
         headers: { 'User-Agent': UA, Range: 'bytes=0-0' },
-        redirect: 'follow',
         signal: AbortSignal.timeout(TIMEOUT_MS)
       });
       return { status: ranged.status, type: (ranged.headers.get('content-type') || '').split(';')[0] };
@@ -390,10 +386,9 @@ export function readState(doc: Doc, code: string) {
 
 async function headStatus(url: string): Promise<number> {
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       method: 'HEAD',
       headers: { 'User-Agent': UA },
-      redirect: 'follow',
       signal: AbortSignal.timeout(TIMEOUT_MS)
     });
     return res.status;
