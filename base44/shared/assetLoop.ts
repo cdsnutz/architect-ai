@@ -40,6 +40,7 @@ async function reachable(url: string) {
 
 export async function runFeedbackLoop(input: {
   origin: string;
+  surface?: string;
   plan: any[];
   nodes: any[];
   edges: any[];
@@ -49,6 +50,19 @@ export async function runFeedbackLoop(input: {
 }) {
   const budget = Math.min(PROBE_CAP, Math.max(2, input.budget || 8));
   const maxRounds = Math.min(ROUND_CAP, Math.max(1, input.rounds || 2));
+  // Predictions are modelled on the origin; probes land on the surface you nominate.
+  // With a candidate deploy supplied, a miss means your mirror is missing it.
+  const surface = input.surface && input.surface !== input.origin ? input.surface : input.origin;
+  const onSurface = surface !== input.origin;
+
+  const toSurface = (url: string) => {
+    try {
+      const parsed = new URL(url);
+      return surface + parsed.pathname + parsed.search;
+    } catch {
+      return url;
+    }
+  };
 
   const nodes = [...(input.nodes || [])];
   let edges = [...(input.edges || [])];
@@ -83,7 +97,7 @@ export async function runFeedbackLoop(input: {
 
     for (const id of batch) {
       probed.add(id);
-      const url = urlOf.get(id) as string;
+      const url = toSurface(urlOf.get(id) as string);
       if (await reachable(url)) {
         hits.push(id);
         confirmed.push(url);
@@ -109,16 +123,19 @@ export async function runFeedbackLoop(input: {
     probed: probed.size,
     confirmed,
     missing,
-    next: frontier.map((id) => urlOf.get(id)),
+    next: frontier.map((id) => toSurface(urlOf.get(id) as string)),
     plan,
+    surface,
+    probes_your_deploy: onSurface,
     verdict,
     budget,
     max_rounds: maxRounds,
     note:
       probed.size === 0
         ? 'The transition model produced no same-origin asset it could predict, so the loop had nothing to confirm.'
-        : probed.size + ' predicted asset(s) probed across ' + rounds.length + ' round(s) · ' + confirmed.length +
-          ' confirmed by response · ' + missing.length + ' absent. ' +
+        : probed.size + ' predicted asset(s) probed against ' + (onSurface ? 'your deploy' : 'the origin') +
+          ' across ' + rounds.length + ' round(s) · ' + confirmed.length + ' confirmed by response · ' + missing.length + ' absent.' +
+          (onSurface ? ' A miss here is an asset your mirror does not serve yet.' : '') + ' ' +
           (verdict === 'live'
             ? 'The chain re-entered on confirmed evidence and drained its queue, which is the difference between a static clone and a live mirror.'
             : verdict === 'probing'

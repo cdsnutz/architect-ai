@@ -51,6 +51,7 @@ export default function MirrorTuning({ tuning }) {
           {tuning.serve_budget_ms !== null
             ? "serve budget for your deploy " + tuning.serve_budget_ms + " ms"
             : "no setpoint measured"}
+          {tuning.loop_surface ? " · loop " + tuning.loop_state + " on " + tuning.loop_surface : ""}
           {tuning.trim_targets?.length ? " · trim: " + tuning.trim_targets.map((target) => target.agents + " " + target.ms + "ms").join(", ") : ""}
         </p>
         <p className="mt-1 text-[11px] leading-relaxed text-ink-muted">{tuning.note}</p>

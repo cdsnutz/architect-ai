@@ -300,6 +300,7 @@ export function tunePods(stages: any[], latency: any, loop: any) {
     hold_ms: hold,
     trim_targets: trimTargets,
     loop_state: loop ? loop.verdict : 'unknown',
+    loop_surface: loop && loop.surface ? loop.surface : null,
     verdict,
     note
   };
@@ -407,6 +408,7 @@ export async function runSovereignMirror(body: any) {
   const walk = ['document', ...(pass.graph.edges || []).filter((edge: any) => edge.trigger !== 'document_link').map((edge: any) => edge.to)];
   const loop = await runFeedbackLoop({
     origin,
+    surface: candidate ? new URL(candidate).origin : origin,
     plan: pass.markov ? pass.markov.plan : [],
     nodes: pass.graph.nodes || [],
     edges: pass.graph.edges || [],
@@ -420,8 +422,9 @@ export async function runSovereignMirror(body: any) {
       status: 'complete',
       skills: ['Live_Feedback_Loop'],
       detail:
-        loop.probed + ' predicted asset(s) probed across ' + loop.rounds.length + ' round(s) · ' +
-        loop.confirmed.length + ' confirmed · state: ' + loop.verdict
+        loop.probed + ' predicted asset(s) probed ' + (loop.probes_your_deploy ? 'against your deploy' : 'against the origin') +
+        ' across ' + loop.rounds.length + ' round(s) · ' + loop.confirmed.length + ' confirmed · ' +
+        loop.missing.length + ' absent · state: ' + loop.verdict
     })
   );
 

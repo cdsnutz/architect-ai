@@ -23,7 +23,13 @@ export default function MirrorLoop({ loop }) {
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-dim">shannon feedback loop</p>
           <p className="mt-0.5 font-mono text-[10px] text-ink-muted">
             {loop.probed} probed / {loop.budget} budget · {loop.confirmed.length} confirmed
+            {loop.missing?.length ? " · " + loop.missing.length + " absent" : ""}
           </p>
+          {loop.surface && (
+            <p className="mt-0.5 truncate font-mono text-[10px] text-ink-dim">
+              probing {loop.probes_your_deploy ? "your deploy" : "the origin"} · {loop.surface}
+            </p>
+          )}
         </div>
         <span className={"border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider " + (STATE_STYLE[loop.verdict] || STATE_STYLE.cloned)}>
           {loop.verdict}
