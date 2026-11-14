@@ -33,6 +33,7 @@ import BugHunter from './pages/BugHunter';
 import Gap from './pages/Gap';
 import WarRoom from './pages/WarRoom';
 import Intel from './pages/Intel';
+import Command from './pages/Command';
 import Toolkit from './pages/Toolkit';
 import Pipeline from './pages/Pipeline';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -142,6 +143,12 @@ const AuthenticatedApp = () => {
         element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fintel" replace />} />}
       >
         <Route index element={<Intel />} />
+      </Route>
+      <Route
+        path="/command"
+        element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login?returnTo=%2Fcommand" replace />} />}
+      >
+        <Route index element={<Command />} />
       </Route>
       <Route
         path="/ghidra"

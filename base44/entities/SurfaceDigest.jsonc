@@ -1,0 +1,95 @@
+{
+  "name": "SurfaceDigest",
+  "type": "object",
+  "properties": {
+    "host": {
+      "type": "string",
+      "description": "Hostname the digest was taken from."
+    },
+    "url": {
+      "type": "string",
+      "description": "Surface read for this digest."
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "lead",
+        "winner"
+      ],
+      "enumColors": [
+        "green",
+        "blue"
+      ],
+      "description": "Whether this surface was the lead or a winner in the pass."
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "total_pages": {
+      "type": "number"
+    },
+    "pages": {
+      "type": "array",
+      "description": "Per-path text digest, the unit the agility index compares across dates.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number"
+          },
+          "words": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "host",
+    "url",
+    "role",
+    "captured_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

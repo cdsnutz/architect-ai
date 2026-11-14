@@ -17,6 +17,7 @@ import {
   GitCompare,
   LayoutDashboard,
   Network,
+  Orbit,
   Radar,
   Route as RouteIcon,
   ScanLine,
@@ -42,13 +43,15 @@ const ICONS = {
   "reverse-skill": RouteIcon,
   gap: Radar,
   "war-room": Target,
-  intel: Activity
+  intel: Activity,
+  command: Orbit
 };
 
 // Run order first, then the indexed toolkits that feed it.
 const ITEMS = [
   { key: "war-room", to: "/war-room", label: "War room" },
   { key: "intel", to: "/intel", label: "Intelligence" },
+  { key: "command", to: "/command", label: "Command matrix" },
   { key: "gap", to: "/gap", label: "Gap analyzer" },
   ...CLONE_MODULES,
   ...RAIL_TOOLKITS.map((toolkit) => ({ key: toolkit.key, to: toolkit.route, label: toolkit.name }))
