@@ -7,6 +7,7 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { compileSpec, contractsFromAnalysis, contractsFromRequest } from '../../shared/rebuildSpec.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 const DEFAULT_STACK = 'Node 20 + TypeScript + Fastify + Postgres (Neon) + Docker';
 
@@ -24,6 +25,9 @@ export default async function (req) {
     if (!analysis_id && !request_id) {
       return Response.json({ error: 'Pass an analysis_id or a request_id to compile a spec.' }, { status: 400 });
     }
+
+    const quota = await guardQuota(base44, user, 'build_spec', 12);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     let contracts;
     let meta;

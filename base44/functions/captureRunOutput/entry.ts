@@ -6,6 +6,7 @@
 */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 const MAX_STDOUT = 20000;
 
@@ -55,6 +56,9 @@ export default async function (req) {
 
     const spec = await base44.entities.RebuildSpec.get(spec_id);
     if (!spec) return Response.json({ error: 'Spec not found.' }, { status: 404 });
+
+    const quota = await guardQuota(base44, user, 'capture_run_output', 40);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     const metrics = body.metrics && typeof body.metrics === 'object' ? body.metrics : {};
     const exitCode = num(body.exit_code);

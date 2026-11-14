@@ -7,6 +7,7 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { validateDossier } from '../../shared/validation.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 // Scheduled sweep: validates the oldest dossiers that never got a validation pass.
 export default async function (req) {
@@ -15,6 +16,9 @@ export default async function (req) {
     const user = await base44.auth.me().catch((e) => (e.status === 401 ? null : Promise.reject(e)));
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+    const quota = await guardQuota(base44, user, 'rea_sweep', 2);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     const page = await base44.asServiceRole.entities.SiteAnalysis.filter(
       { validation: { $exists: false } },

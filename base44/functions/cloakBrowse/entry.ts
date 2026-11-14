@@ -17,6 +17,10 @@ export default async function (req) {
     const user = await base44.auth.me().catch((e) => (e.status === 401 ? null : Promise.reject(e)));
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
+    // This hands work to the operator's licensed browser host, and no page of the
+    // app calls it: it stays with the owner so it cannot be driven by a new account.
+    if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+
     const body = await req.json().catch(() => ({}));
     const targetUrl = String(body.target_url || body.url || '').trim();
     if (!targetUrl) return Response.json({ error: 'target_url is required' }, { status: 400 });

@@ -6,6 +6,7 @@
 */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.58';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 const MAX_MESSAGES = 40;
 
@@ -39,6 +40,9 @@ export default async function (req) {
       .get(specId)
       .catch((e) => (e.status === 404 ? null : Promise.reject(e)));
     if (!spec) return Response.json({ error: 'That conversation was not found.' }, { status: 404 });
+
+    const quota = await guardQuota(base44, user, 'thread_read', 60);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     const messages = (conversation.messages || [])
       .filter((message) => message && typeof message.content === 'string' && message.content.trim())

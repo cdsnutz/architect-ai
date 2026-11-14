@@ -18,6 +18,7 @@ import {
   gateSummary,
   runSkillPipeline
 } from '../../shared/replicaSkill.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 const ACTIONS = ['catalog', 'derive', 'parity', 'contrast', 'sweep', 'run_all'];
 const MAX_MATRIX = 40000;
@@ -68,6 +69,9 @@ export default async function (req) {
     if (action === 'catalog') {
       return Response.json({ skills: SKILL_CATALOG });
     }
+
+    const quota = await guardQuota(base44, user, 'replica_skill', 24);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     let spec = null;
     if (typeof body.spec_id === 'string' && body.spec_id) {

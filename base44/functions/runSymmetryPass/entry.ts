@@ -8,6 +8,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { assertPublicUrl } from '../../shared/readOnly.ts';
 import { assertAuthorization, runSymmetryPass } from '../../shared/symmetry.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 export default async function (req) {
   let runId = null;
@@ -40,6 +41,9 @@ export default async function (req) {
     } catch (error) {
       return Response.json({ error: error.message }, { status: 400 });
     }
+
+    const quota = await guardQuota(base44, user, 'symmetry_run', 10);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     const label = typeof body.label === 'string' && body.label.trim() ? body.label.trim().slice(0, 120) : target;
 

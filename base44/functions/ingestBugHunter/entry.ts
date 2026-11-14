@@ -9,6 +9,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { secrets } from 'base44:runtime';
 import { parseRepoUrl } from '../../shared/repoIngest.ts';
 import { DEFAULT_SOURCE, README_MAX_CHARS, parseCatalog } from '../../shared/bugHunter.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 function githubToken() {
   for (const name of ['GITHUB_API_KEY', 'GH_TOKEN']) {
@@ -33,6 +34,9 @@ export default async function (req) {
     if (!parsed) {
       return Response.json({ error: 'Enter the catalog as owner/repo or a github.com URL.' }, { status: 400 });
     }
+
+    const quota = await guardQuota(base44, user, 'ingest_catalog', 12);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     const { owner, repo } = parsed;
     const branch = String(body.branch || parsed.branch || 'main').slice(0, 120);

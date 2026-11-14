@@ -7,6 +7,7 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { runSovereignMirror } from '../../shared/sovereignMirror.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 export default async function (req) {
   let runId = null;
@@ -20,6 +21,9 @@ export default async function (req) {
     if (!body || typeof body.target_url !== 'string' || !body.target_url.trim()) {
       return Response.json({ error: 'target_url is required.' }, { status: 400 });
     }
+
+    const quota = await guardQuota(base44, user, 'mirror_run', 6);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     let seed;
     try {

@@ -7,6 +7,7 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { validateDossier } from '../../shared/validation.ts';
+import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 export default async function (req) {
   try {
@@ -23,6 +24,9 @@ export default async function (req) {
     if (record.created_by_id !== user.id && user.role !== 'admin') {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const quota = await guardQuota(base44, user, 'validate_dossier', 12);
+    if (!quota.allowed) return quotaRefusal(quota);
 
     const result = await validateDossier(base44, record);
     return Response.json(result);

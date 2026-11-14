@@ -78,6 +78,12 @@ export default async function (req) {
     }
 
     if (action === 'connect') {
+      // Each key acts as its owner, so an account cannot mint them without bound.
+      const active = await base44.entities.ReaConnection.count({ status: 'active' }).catch(() => 0);
+      if (active >= 5) {
+        return Response.json({ error: 'Five active agent keys is the ceiling for an account. Revoke one first.' }, { status: 429 });
+      }
+
       const label = typeof body.label === 'string' && body.label.trim() ? body.label.trim().slice(0, 80) : 'Local agent';
       const token = mintToken();
       const record = await base44.entities.ReaConnection.create({
