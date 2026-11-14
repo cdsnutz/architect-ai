@@ -14,6 +14,7 @@
 // out of contract: nothing here proxies, rewrites or replays a live stream.
 
 import { assertPublicUrl } from './readOnly.ts';
+import { latencyModel, markovPlan, readTimings, topologyParity } from './symmetryDims.ts';
 
 const UA = 'Mozilla/5.0 (compatible; RevEngineSymmetry/1.0; authorized-target pass)';
 const TIMEOUT_MS = 8000;
@@ -384,8 +385,8 @@ function rowOf(key: string, baseline: string, candidate: string): DiffRow {
   return { key, baseline, candidate, verdict };
 }
 
-export async function diffSurfaces(baseline: Doc, candidateUrl: string) {
-  const candidate = await readDocument(candidateUrl);
+export async function diffSurfaces(baseline: Doc, candidateUrl: string, preloaded?: Doc) {
+  const candidate = preloaded || (await readDocument(candidateUrl));
   const rows: DiffRow[] = [
     rowOf('http status', String(baseline.status), String(candidate.status)),
     rowOf('content type', baseline.content_type || 'none', candidate.content_type || 'none'),
@@ -428,15 +429,22 @@ export async function diffSurfaces(baseline: Doc, candidateUrl: string) {
   };
 }
 
-export function scoreFidelity(input: { graph: any; entropy: any; state: any; diff: any }) {
-  const { graph, entropy, state, diff } = input;
+export function scoreFidelity(input: {
+  graph: any;
+  entropy: any;
+  state: any;
+  diff: any;
+  latency?: any;
+  isomorphism?: any;
+}) {
+  const { graph, entropy, state, diff, latency, isomorphism } = input;
   const components: { name: string; weight: number; earned: number; note: string }[] = [];
 
   const assets = graph.counts.resources !== undefined ? graph.counts.resources : graph.counts.nodes;
   components.push({
     name: 'assets observed in the document',
-    weight: 25,
-    earned: Math.min(25, assets * 3),
+    weight: 20,
+    earned: Math.min(20, assets * 2),
     note: assets + ' resource' + (assets === 1 ? '' : 's') + ' named by the served HTML'
   });
 
@@ -446,8 +454,8 @@ export function scoreFidelity(input: { graph: any; entropy: any; state: any; dif
   const edges = dependencyEdges + graph.counts.inferred * 0.6;
   components.push({
     name: 'trigger edges',
-    weight: 25,
-    earned: Math.round(Math.min(25, edges * 2)),
+    weight: 20,
+    earned: Math.round(Math.min(20, edges * 1.6)),
     note:
       dependencyEdges + ' observed · ' + graph.counts.inferred + ' inferred from call sites · ' +
       navigationEdges + ' navigation links set aside'
@@ -455,23 +463,39 @@ export function scoreFidelity(input: { graph: any; entropy: any; state: any; dif
 
   components.push({
     name: 'entropy recovery',
-    weight: 20,
-    earned: Math.min(20, entropy.confirmed * 4),
+    weight: 15,
+    earned: Math.min(15, entropy.confirmed * 3),
     note: entropy.probed + ' siblings predicted, ' + entropy.confirmed + ' confirmed by response'
   });
 
   components.push({
     name: 'state inventory',
-    weight: 15,
-    earned: state.total ? 15 : 0,
+    weight: 10,
+    earned: state.total ? 10 : 0,
     note: state.total + ' state key name' + (state.total === 1 ? '' : 's') + ' inventoried'
   });
 
   components.push({
     name: 'candidate parity',
-    weight: 15,
-    earned: diff ? Math.round((diff.matched / Math.max(1, diff.total)) * 15) : 0,
+    weight: 10,
+    earned: diff ? Math.round((diff.matched / Math.max(1, diff.total)) * 10) : 0,
     note: diff ? diff.matched + ' of ' + diff.total + ' compared signals match' : 'no candidate surface supplied'
+  });
+
+  components.push({
+    name: 'temporal signature',
+    weight: 10,
+    earned: latency && latency.samples >= 3 ? (latency.signature === 'tight' ? 10 : 6) : latency && latency.samples ? 4 : 0,
+    note: latency && latency.target
+      ? latency.samples + ' time-to-first-byte samples · ±' + latency.target.jitter + ' ms · ' + latency.signature
+      : 'no timing sample came back'
+  });
+
+  components.push({
+    name: 'structural parity',
+    weight: 15,
+    earned: isomorphism ? Math.round((isomorphism.score * 15) / 100) : 0,
+    note: isomorphism ? isomorphism.verdict + ' at ' + isomorphism.score + '%' : 'no candidate surface to compare shape against'
   });
 
   const score = components.reduce((sum, part) => sum + part.earned, 0);

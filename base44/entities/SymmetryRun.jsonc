@@ -54,7 +54,7 @@
     },
     "entropy": {
       "type": "object",
-      "description": "Asset families with predicted missing siblings and their probe outcomes."
+      "description": "Asset families with predicted missing siblings, their heuristic probability and their probe outcomes."
     },
     "state": {
       "type": "object",
@@ -63,6 +63,18 @@
     "diff": {
       "type": "object",
       "description": "Baseline versus candidate comparison: document signals and route reachability."
+    },
+    "isomorphism": {
+      "type": "object",
+      "description": "Structural parity between baseline and candidate graphs: class histograms, trigger mix, path overlap, out-degree shape."
+    },
+    "markov": {
+      "type": "object",
+      "description": "First-order transition model over the observed request walk, and the prefetch candidates it implies."
+    },
+    "latency": {
+      "type": "object",
+      "description": "Temporal signature of the target: percentiles, jitter, the hold a mirror should add and the PID setpoint that drives it."
     },
     "fidelity": {
       "type": "object",
