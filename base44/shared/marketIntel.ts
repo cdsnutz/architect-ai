@@ -704,7 +704,7 @@ async function buildShadow(surface: any) {
       state: 'no_bundles',
       mode: 'none',
       obfuscation: 0,
-      counts: { total: 0, confirmed: 0, dormant: 0, internal: 0, bundles: 0, chars: 0 },
+      counts: { total: 0, referenced: 0, dormant: 0, internal: 0, bundles: 0, chars: 0 },
       bundles: [],
       endpoints: [],
       leaks: [],
