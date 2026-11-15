@@ -469,11 +469,23 @@ export async function runGapAudit(input: { lead: string; winners: string[] }) {
     .filter((row) => row.lead > 0 && row.lead < row.winners)
     .map((row) => ({ intent: row.intent, you: row.lead, winners: row.winners }));
   const focusPct = lead.paths ? Math.round((leadScored / lead.paths) * 100) : 0;
+
+  // A surface that publishes more paths than the read window holds is measured as a
+  // sample, and the record has to say so. Two truncated surfaces compared to each
+  // other describes the cap, not the market, so the cap leads the verdict instead of
+  // trailing it in the limits.
+  const truncated = [lead, ...winners].filter((surface) => surface.paths >= MAX_PATHS).map((surface) => surface.host);
+  const capNote = truncated.length
+    ? 'Read capped at ' + MAX_PATHS + ' paths per surface and ' + truncated.join(' and ') +
+      ' reached the cap, so every count below is a sample of a larger surface, not a total. '
+    : '';
+
   const architecture = {
     lead_paths: lead.paths,
     widest_winner_paths: widest,
     width_ratio: widest ? Math.round((lead.paths / widest) * 100) / 100 : null,
     winner_paths: winners.map((winner) => ({ host: winner.host, paths: winner.paths })),
+    sample: { cap: MAX_PATHS, truncated, complete: !truncated.length },
     focus_pct: focusPct,
     scored_paths: leadScored,
     loose_paths: loose.length,
@@ -512,6 +524,7 @@ export async function runGapAudit(input: { lead: string; winners: string[] }) {
             ', which is the one place this surface leads instead of trailing.'
           : '')
   };
+  if (capNote) architecture.verdict = capNote + architecture.verdict;
 
   // The strike leads with the architecture and carries the path overlap as support.
   // No percentage heads the claim: a ratio invites a method argument before the
