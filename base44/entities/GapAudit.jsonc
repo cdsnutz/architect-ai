@@ -1,0 +1,128 @@
+{
+  "name": "GapAudit",
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "Human label for the pass, e.g. 'gap \u00b7 factorfox.com vs 2 winners'."
+    },
+    "lead_url": {
+      "type": "string",
+      "description": "Lead surface read as the baseline."
+    },
+    "winner_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Winner surfaces read alongside the lead."
+    },
+    "ran_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the pass was read. Every figure in the strike is from this read."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "failed"
+      ],
+      "enumColors": [
+        "green",
+        "red"
+      ],
+      "default": "complete"
+    },
+    "coverage": {
+      "type": "object",
+      "description": "Intents and paths held, scored on the same rows the map displays."
+    },
+    "architecture": {
+      "type": "object",
+      "description": "Width against focus: paths published per surface, share sitting in shared intent territory, drift, and the thin spots."
+    },
+    "intents": {
+      "type": "array",
+      "description": "Per-intent rows: paths the lead holds against paths the winners hold.",
+      "items": {
+        "type": "object"
+      }
+    },
+    "voids": {
+      "type": "array",
+      "description": "Intent families the winners serve and the lead does not, or serves thinly.",
+      "items": {
+        "type": "object"
+      }
+    },
+    "keyword_voids": {
+      "type": "array",
+      "description": "Leaf keywords two or more winners share and the lead does not publish.",
+      "items": {
+        "type": "object"
+      }
+    },
+    "schema_gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Structured-data types the winners publish and the lead does not."
+    },
+    "briefs": {
+      "type": "array",
+      "description": "Execution briefs for the measured voids, each with the depth a winner actually ships.",
+      "items": {
+        "type": "object"
+      }
+    },
+    "strike": {
+      "type": "object",
+      "description": "The claim this record supports: pitch, evidence lines and the caveat that bounds them."
+    },
+    "limits": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "lead_url",
+    "status",
+    "ran_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

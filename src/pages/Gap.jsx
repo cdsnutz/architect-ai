@@ -10,6 +10,7 @@ import { base44 } from "@/api/base44Client";
 import IdeShell from "@/components/ide/IdeShell";
 import GapForm from "@/components/gap/GapForm";
 import GapStrike from "@/components/gap/GapStrike";
+import GapArchitecture from "@/components/gap/GapArchitecture";
 import GapSurfaces from "@/components/gap/GapSurfaces";
 import GapIntents from "@/components/gap/GapIntents";
 import GapVoids from "@/components/gap/GapVoids";
@@ -88,7 +89,13 @@ export default function Gap() {
 
         {audit && (
           <>
-            <GapStrike strike={audit.strike} coverage={audit.coverage} />
+            <GapStrike
+              strike={audit.strike}
+              coverage={audit.coverage}
+              auditId={audit.gap_audit_id}
+              recordError={audit.record_error}
+            />
+            <GapArchitecture architecture={audit.architecture} />
             <GapSurfaces lead={audit.lead} winners={audit.winners} unread={audit.unread} />
             <GapIntents intents={audit.intents} />
             <GapVoids voids={audit.voids} keywordVoids={audit.keyword_voids} schemaGaps={audit.schema_gaps} />

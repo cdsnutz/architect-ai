@@ -453,20 +453,72 @@ export async function runGapAudit(input: { lead: string; winners: string[] }) {
   const thin = voids.filter((gap) => gap.kind === 'thin');
   const topAbsent = absent.slice(0, 3).map((gap) => gap.intent);
   const topThin = thin.slice(0, 3).map((gap) => gap.intent);
-  // When the measure finds no intent gap, the pitch says so. A sentence asserting a
-  // missing territory the numbers deny is the defect this whole pass exists to remove.
+
+  // Architecture, not a percentage. Width is how much a surface publishes; focus is
+  // how much of it sits in an intent family the market already serves with more than
+  // one page. Both are counts from the same read, so neither can drift from the map.
+  const scored = new Set(winnerIntents);
+  const leadScored = lead.list.filter((path) => scored.has(intentOfPath(path))).length;
+  const loose = lead.list.filter((path) => {
+    const intent = intentOfPath(path);
+    return intent !== 'archive' && !scored.has(intent);
+  });
+  const widest = winners.reduce((max, winner) => Math.max(max, winner.paths), 0);
+  const widthText = lead.paths + ' paths against ' + winners.map((winner) => winner.host + ' ' + winner.paths).join(' and ');
+  const thinnest = intents
+    .filter((row) => row.lead > 0 && row.lead < row.winners)
+    .map((row) => ({ intent: row.intent, you: row.lead, winners: row.winners }));
+  const focusPct = lead.paths ? Math.round((leadScored / lead.paths) * 100) : 0;
+  const architecture = {
+    lead_paths: lead.paths,
+    widest_winner_paths: widest,
+    width_ratio: widest ? Math.round((lead.paths / widest) * 100) / 100 : null,
+    winner_paths: winners.map((winner) => ({ host: winner.host, paths: winner.paths })),
+    focus_pct: focusPct,
+    scored_paths: leadScored,
+    loose_paths: loose.length,
+    loose_examples: loose.slice(0, 4),
+    thinnest,
+    drift: {
+      absent: topAbsent,
+      thin: topThin,
+      winner_only: winnerIntents.filter((intent) => !leadIntents.has(intent)),
+      lead_only: [...leadIntents].filter((intent) => !scored.has(intent))
+    },
+    // Paths in a family no winner serves with more than one page. This is the one
+    // part of the map where the lead may already be ahead, so it is stated as an
+    // unmatched hold rather than sold as drift.
+    unmatched: {
+      intents: [...leadIntents].filter((intent) => !scored.has(intent)),
+      paths: loose.length,
+      examples: loose.slice(0, 4)
+    },
+    // The sentence the claim is built from. It names width first and territory second,
+    // because a path count that carries no intent is not a finding, it is a number.
+    verdict: absent.length
+      ? 'Your map publishes ' + widthText + ', ' +
+        (lead.paths >= widest ? 'the widest surface in this read' : 'wider than the market on this read') +
+        ', and still reaches nothing in ' + absent.length + ' intent famil' + (absent.length === 1 ? 'y' : 'ies') +
+        ' the winners serve with more than one page (' + topAbsent.join(', ') + '), so the distance is structural drift, not path count.'
+      : 'Your map publishes ' + widthText + (lead.paths >= widest ? ', the widest surface in this read' : '') +
+        '. Every intent family the winners serve with more than one page is present on yours, so this is not a coverage gap: ' +
+        leadScored + ' of your ' + lead.paths + ' paths (' + focusPct + '%) sit in territory the winners also serve' +
+        (thinnest.length
+          ? ', and the only thin spots are ' + thinnest.map((row) => row.intent + ' at ' + row.you + ' against ' + row.winners).join(' and ')
+          : ', with no family thinner than the winners on this read') +
+        '.' +
+        (loose.length
+          ? ' The ' + loose.length + ' paths no winner matches sit in ' + [...leadIntents].filter((intent) => !scored.has(intent)).join(', ') +
+            ', which is the one place this surface leads instead of trailing.'
+          : '')
+  };
+
+  // The strike leads with the architecture and carries the path overlap as support.
+  // No percentage heads the claim: a ratio invites a method argument before the
+  // finding has been read, and the finding here does not need one.
   const pitch =
-    absent.length || thin.length
-      ? 'Your surface publishes ' + lead.paths + ' indexable paths. The ' + winners.length + ' winner surface' +
-        (winners.length === 1 ? '' : 's') + ' read the same day serve ' + winnerIntents.length +
-        ' search intents with more than one page, and you serve ' + coveredIntents.length + ' of them (' + intentsPct + '%)' +
-        (absent.length ? ', with nothing at all in ' + absent.length + ' (' + topAbsent.join(', ') + ')' : '') +
-        (thin.length ? ', and thin coverage in ' + thin.length + ' (' + topThin.join(', ') + ')' : '') +
-        '. ' + exact + ' of their ' + union.size + ' paths exist verbatim on yours.'
-      : 'Your surface publishes ' + lead.paths + ' indexable paths and already serves all ' + winnerIntents.length +
-        ' search intents the winner surfaces serve with more than one page, so there is no intent gap to sell here. ' +
-        'The distance is inside intents you already hold: ' + exact + ' of their ' + union.size +
-        ' paths exist verbatim on yours, which is a depth and per-page question, not missing territory.';
+    architecture.verdict + ' ' + exact + ' of their ' + union.size + ' paths exist verbatim on yours, so the ' +
+    (absent.length || thin.length ? 'drift is in which families you built, not how many pages you publish.' : 'naming differs even where the territory does not.');
 
   const evidence = [
     'lead · ' + lead.host + ' · ' + lead.paths + ' paths · ' + leadIntents.size + ' intents · ' + lead.schema_types.length + ' schema types',
@@ -475,6 +527,8 @@ export async function runGapAudit(input: { lead: string; winners: string[] }) {
       return 'winner · ' + winner.host + ' · ' + winner.paths + ' paths · ' + served.size + ' intents · ' + winner.schema_types.length + ' schema types';
     }),
     'intents served by the winners · ' + winnerIntents.length + ' · served by the lead · ' + coveredIntents.length,
+    'width · you ' + lead.paths + ' paths · ' + winners.map((winner) => winner.host + ' ' + winner.paths).join(' · '),
+    'focus · ' + leadScored + ' of your ' + lead.paths + ' paths (' + focusPct + '%) sit in intents the winners also serve · ' + loose.length + ' in no shared family',
     'shared keyword gaps · ' + keywordVoids.length,
     'structured data you do not ship · ' + (schemaGaps.length ? schemaGaps.join(', ') : 'none observed')
   ];
@@ -497,6 +551,7 @@ export async function runGapAudit(input: { lead: string; winners: string[] }) {
       union_paths: union.size,
       lead_paths: lead.paths
     },
+    architecture,
     lead: summaryOf(lead),
     winners: winners.map(summaryOf),
     unread,

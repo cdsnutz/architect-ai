@@ -8,7 +8,7 @@
 import React from "react";
 import CopyButton from "@/components/analysis/CopyButton";
 
-export default function GapStrike({ strike, coverage }) {
+export default function GapStrike({ strike, coverage, auditId, recordError }) {
   if (!strike) return null;
   const text = [strike.pitch, "", ...(strike.evidence || []), "", strike.caveat].join("\n");
 
@@ -31,6 +31,15 @@ export default function GapStrike({ strike, coverage }) {
           </p>
         )}
         <p className="text-[10px] leading-relaxed text-ink-dim">{strike.caveat}</p>
+        <p className="font-mono text-[9px] uppercase tracking-[0.14em]">
+          {auditId ? (
+            <span className="text-ink-dim">record · GapAudit {auditId}</span>
+          ) : (
+            <span className="text-red-300">
+              not recorded{recordError ? " · " + recordError : ""} — do not cite this pass
+            </span>
+          )}
+        </p>
       </div>
     </div>
   );
