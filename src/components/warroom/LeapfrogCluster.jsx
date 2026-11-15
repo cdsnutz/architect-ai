@@ -26,13 +26,10 @@ export default function LeapfrogCluster({ leapfrog }) {
       {cluster.length > 0 && (
         <ul className="divide-y divide-line-soft">
           {cluster.map((row) => (
-            <li key={row.family} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+            <li key={row.intent} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="font-mono text-[11px] text-ink">/{row.family}</span>
-                <span className="border border-line bg-surface-sunken px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-ink-dim">
-                  {row.intent}
-                </span>
-                {allThree.includes(row.family) && (
+                <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink">{row.intent}</span>
+                {allThree.includes(row.intent) && (
                   <span className="border border-signal/40 bg-signal/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-signal">
                     all three
                   </span>
@@ -51,7 +48,7 @@ export default function LeapfrogCluster({ leapfrog }) {
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-dim">golden path</p>
           <ul className="mt-1.5 space-y-2">
             {golden.map((item) => (
-              <li key={item.family} className="border-l border-signal/40 pl-2">
+              <li key={item.intent} className="border-l border-signal/40 pl-2">
                 <p className="font-mono text-[11px] text-ink">{item.path}</p>
                 <p className="mt-0.5 text-[11px] leading-relaxed text-ink-muted">{item.why}</p>
                 <p className="mt-0.5 font-mono text-[10px] leading-relaxed text-ink-dim">{item.requirement}</p>

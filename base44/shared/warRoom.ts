@@ -371,22 +371,22 @@ export async function scanSurface(target: string) {
 
 // The Oracle: the intersection of what the winners publish.
 export function buildLeapfrog(audit: any) {
-  const rows: any[] = audit.families || [];
+  const rows: any[] = audit.intents || [];
   const cluster = rows.filter((row) => (row.holders || []).length >= 2);
   const absent = cluster.filter((row) => row.lead === 0);
   const thin = cluster.filter((row) => row.verdict === 'thin');
-  const briefs = new Map<string, any>((audit.briefs || []).map((brief: any) => [brief.family, brief]));
+  const briefs = new Map<string, any>((audit.briefs || []).map((brief: any) => [brief.intent, brief]));
 
   const golden = [...absent, ...thin].slice(0, 6).map((row) => {
-    const brief = briefs.get(row.family);
+    const brief = briefs.get(row.intent);
     return {
-      family: row.family,
       intent: row.intent,
+      why_held: row.why,
       held_by: row.holders,
       winners_paths: row.winners,
       you: row.lead,
-      path: brief ? brief.path : '/' + row.family,
-      why: brief ? brief.why : 'a family two or more winners publish and the lead does not',
+      path: brief ? brief.path : '/' + row.intent,
+      why: brief ? brief.why : row.why || 'an intent two or more winners serve and the lead does not',
       requirement:
         brief && brief.requirement
           ? brief.requirement
@@ -406,8 +406,8 @@ export function buildLeapfrog(audit: any) {
 
   return {
     cluster: cluster.slice(0, 10).map((row) => ({
-      family: row.family,
       intent: row.intent,
+      why: row.why,
       held_by: row.holders,
       winners_paths: row.winners,
       you: row.lead,
@@ -416,13 +416,13 @@ export function buildLeapfrog(audit: any) {
     })),
     coverage,
     golden,
-    all_three: absent.filter((row) => (row.holders || []).length >= 3).map((row) => row.family),
+    all_three: absent.filter((row) => (row.holders || []).length >= 3).map((row) => row.intent),
     schema_gaps: audit.schema_gaps || [],
     note:
       cluster.length === 0
-        ? 'No family is shared by two or more winners in this read, so there is no cluster to leapfrog and no void to claim.'
-        : 'The dominance cluster is ' + cluster.length + ' famili' + (cluster.length === 1 ? 'y' : 'ies') +
-          ' two or more winners publish; the lead holds ' + coverage.held + ' of them and ' + coverage.absent +
+        ? 'No intent is served by two or more winners in this read, so there is no cluster to leapfrog and no void to claim.'
+        : 'The dominance cluster is ' + cluster.length + ' intent famil' + (cluster.length === 1 ? 'y' : 'ies') +
+          ' two or more winners serve; the lead holds ' + coverage.held + ' of them and ' + coverage.absent +
           ' not at all.'
   };
 }
@@ -518,12 +518,13 @@ export async function runWarRoom(body: any) {
     attestation: grant.attestation,
     ran_at: nowIso(),
     symmetry: {
-      score: audit.coverage.families_pct,
-      families_pct: audit.coverage.families_pct,
+      score: audit.coverage.intents_pct,
+      intents_pct: audit.coverage.intents_pct,
+      intents_held: audit.coverage.intents_held,
       paths_pct: audit.coverage.paths_pct,
       lead_paths: audit.coverage.lead_paths,
       union_paths: audit.coverage.union_paths,
-      basis: 'path families the target holds against every family the competitors publish to an anonymous reader'
+      basis: 'search intents the target serves against every intent the competitors serve with more than one page'
     },
     dna,
     competitors: (audit.winners || []).map((winner: any) => ({

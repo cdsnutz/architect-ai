@@ -31,13 +31,13 @@ const ASSET_PATH = /\.(png|jpe?g|gif|svg|webp|avif|ico|css|js|mjs|json|xml|txt|p
 const INTENTS: { label: string; rx: RegExp; why: string }[] = [
   { label: 'guide', rx: /^(guides?|how-?to|tutorials?|learn|academy|resources?|help)$/i, why: 'task-level intent: the searcher wants the steps, not the pitch' },
   { label: 'comparison', rx: /^(compare|comparisons?|vs|versus|alternatives?|best|top|reviews?|rankings?)$/i, why: 'decision intent: the searcher is choosing between options' },
-  { label: 'article', rx: /^(blog|posts?|articles?|news|insights|journal|stories)$/i, why: 'discovery intent: topical coverage that earns the first visit' },
+  { label: 'article', rx: /^(blog|posts?|articles?|news|insights|journal)$/i, why: 'discovery intent: topical coverage that earns the first visit' },
   { label: 'offer', rx: /^(features?|solutions?|use-?cases?|products?|services?|industr(y|ies)|platform|apps?)$/i, why: 'evaluation intent: what the product does for this buyer' },
   { label: 'commercial', rx: /^(pricing|plans?|packages?|quote|demo|trial|contact)$/i, why: 'conversion intent: the page a buyer lands on to commit' },
   { label: 'docs', rx: /^(docs?|documentation|api|developers?|reference|integrations?|changelog)$/i, why: 'technical diligence, and the surface that earns links' },
   { label: 'education', rx: /^(glossary|faq|faqs|answers?|questions?|wiki|dictionary)$/i, why: 'definitional intent: cheap to win, feeds the guide cluster' },
   { label: 'local', rx: /^(locations?|cities|areas?|near|local|regions?)$/i, why: 'geo intent: one page per market the winner already serves' },
-  { label: 'proof', rx: /^(case-?studies?|customers?|testimonials?|results?|portfolio|work)$/i, why: 'trust intent: evidence that the outcome already happened' }
+  { label: 'proof', rx: /^(case-?studies?|customers?|testimonials?|results?|portfolio|work|stories)$/i, why: 'trust intent: evidence that the outcome already happened' }
 ];
 
 type Surface = {
@@ -139,9 +139,35 @@ function familyOf(path: string) {
   return (path.split('/').filter(Boolean)[0] || '').toLowerCase();
 }
 
-function intentOf(family: string) {
-  const hit = INTENTS.find((item) => item.rx.test(family));
-  return hit ? hit.label : 'page';
+// Filing scaffolding: a category, tag or author archive is the cabinet the pages sit
+// in, not a surface a buyer wants. Counting those as territory invented gaps that
+// nobody would ever ship a page to close.
+const SCAFFOLD = /^(category|categories|tag|tags|author|authors|archive|archives|page)$/i;
+
+function tokensOf(segment: string): string[] {
+  return segment.toLowerCase().split(/[-_.]+/).filter(Boolean);
+}
+
+// A path's intent, read from its own segments, leaf first: the leaf names the page,
+// the section names the shelf. Matching tokens as well as whole segments is what lets
+// /resources/best-factoring-software read as a comparison rather than a generic
+// resource, and what makes /solutions/factoring and /products/factoring the same
+// territory under two filing habits. Only a path whose own segments say nothing about
+// intent falls back to 'page'.
+function intentOfPath(path: string): string {
+  const segments = path.split('/').filter(Boolean).map((segment) => segment.toLowerCase());
+  if (!segments.length) return 'page';
+  if (segments.some((segment) => SCAFFOLD.test(segment))) return 'archive';
+  for (let index = segments.length - 1; index >= 0; index -= 1) {
+    const segment = segments[index];
+    const direct = INTENTS.find((item) => item.rx.test(segment));
+    if (direct) return direct.label;
+    for (const token of tokensOf(segment)) {
+      const hit = INTENTS.find((item) => item.rx.test(token));
+      if (hit) return hit.label;
+    }
+  }
+  return 'page';
 }
 
 function intentWhy(intent: string) {
@@ -286,54 +312,76 @@ export async function runGapAudit(input: { lead: string; winners: string[] }) {
   const union = new Set<string>();
   winners.forEach((winner) => winner.list.forEach((path) => union.add(path)));
   const exact = [...union].filter((path) => lead.list.includes(path)).length;
-  const winnerFamilies = new Set([...union].map(familyOf).filter(Boolean));
-  const coveredFamilies = [...winnerFamilies].filter((family) => lead.list.some((path) => familyOf(path) === family));
   const pathsPct = union.size ? Math.round((exact / union.size) * 100) : 0;
-  const familiesPct = winnerFamilies.size ? Math.round((coveredFamilies.length / winnerFamilies.size) * 100) : 0;
 
-  const familyRows = new Map<string, { family: string; intent: string; lead: number; winners: number; holders: string[]; examples: string[] }>();
+  // The measure is intent, not URL text. Comparing first segments reported a gap where
+  // only the taxonomy differed: a lead filing offers under /solutions and a winner under
+  // /products published the same territory and scored as absent. Intent is now read from
+  // each path independently, so the same intent counts as served wherever it is filed.
+  const leadIntents = new Set(lead.list.map(intentOfPath).filter((intent) => intent !== 'archive'));
+  // The denominator is the scored rows below, not every intent a winner mentions:
+  // an intent a winner serves with a single page is a page, not territory, and it
+  // must not count in the number while the map refuses to list it.
+
+  type IntentRow = { intent: string; lead: number; winners: number; holders: string[]; examples: string[]; yours: string[] };
+  const intentRows = new Map<string, IntentRow>();
+  const rowFor = (intent: string): IntentRow => {
+    const row = intentRows.get(intent) || { intent, lead: 0, winners: 0, holders: [], examples: [], yours: [] };
+    intentRows.set(intent, row);
+    return row;
+  };
+
   for (const winner of winners) {
     for (const path of winner.list) {
-      const family = familyOf(path);
-      if (!family) continue;
-      const row = familyRows.get(family) || { family, intent: intentOf(family), lead: 0, winners: 0, holders: [], examples: [] };
+      const intent = intentOfPath(path);
+      if (intent === 'archive') continue;
+      const row = rowFor(intent);
       row.winners += 1;
       if (!row.holders.includes(winner.host)) row.holders.push(winner.host);
       if (row.examples.length < 4 && !row.examples.includes(path)) row.examples.push(path);
-      familyRows.set(family, row);
     }
   }
   lead.list.forEach((path) => {
-    const row = familyRows.get(familyOf(path));
-    if (row) row.lead += 1;
+    const intent = intentOfPath(path);
+    if (intent === 'archive') return;
+    const row = rowFor(intent);
+    row.lead += 1;
+    if (row.yours.length < 4 && !row.yours.includes(path)) row.yours.push(path);
   });
 
-  // A family is a map only when it is more than one page: either the winners run
-  // several paths in it, or more than one winner publishes in it. A lone /love
-  // page is a page, not territory, and listing it would inflate the gap.
-  const families = [...familyRows.values()]
-    .filter((row) => row.winners >= 2 || row.holders.length >= 2)
+  // An intent is a map only when it is more than one page: a single winner page is a
+  // page, not territory, and listing it would inflate the gap.
+  const intents = [...intentRows.values()]
+    .filter((row) => row.winners >= 2)
     .map((row) => ({
       ...row,
+      why: intentWhy(row.intent),
       verdict: row.lead === 0 ? 'absent' : row.winners >= 3 && row.lead * 3 <= row.winners ? 'thin' : 'covered'
     }))
     .sort((left, right) => right.winners - left.winners);
 
-  const voids = families
+  // Scored on the same rows the map shows, so the percentage and the list agree.
+  const winnerIntents = intents.map((row) => row.intent);
+  const coveredIntents = intents.filter((row) => row.lead > 0).map((row) => row.intent);
+  const intentsPct = winnerIntents.length ? Math.round((coveredIntents.length / winnerIntents.length) * 100) : 0;
+
+  const voids = intents
     .filter((row) => row.verdict !== 'covered')
     .map((row) => ({
-      family: row.family,
       intent: row.intent,
+      why: row.why,
       kind: row.verdict,
       you: row.lead,
       winners: row.winners,
       held_by: row.holders,
       examples: row.examples,
+      yours: row.yours,
       keywords: row.examples.map(leafOf).filter(Boolean).slice(0, 4),
       note:
         row.verdict === 'absent'
-          ? 'No path on your surface lives in this family; the winners run ' + row.winners + '.'
-          : 'You hold ' + row.lead + ' path here against ' + row.winners + ' on the winner surfaces.'
+          ? 'Nothing you publish serves ' + row.intent + ' intent; the winners publish ' + row.winners + ' paths in it.'
+          : 'You publish ' + row.lead + ' path(s) in ' + row.intent + ' intent against ' + row.winners +
+            ' on the winner surfaces, so this intent is served thinly rather than not at all.'
     }))
     .sort((left, right) => (left.kind === right.kind ? right.winners - left.winners : left.kind === 'absent' ? -1 : 1));
 
@@ -379,14 +427,13 @@ export async function runGapAudit(input: { lead: string; winners: string[] }) {
         measured = null;
       }
     }
-    const keyword = gap.keywords[0] || gap.family;
+    const keyword = gap.keywords[0] || gap.intent;
     const targetWords = measured ? Math.max(600, Math.ceil(measured.words / 100) * 100) : null;
     const ship = measured && measured.schema.length ? measured.schema : ['Article', 'FAQPage'];
     briefs.push({
-      path: '/' + gap.family + '/' + (slugOf(keyword) || gap.family),
-      family: gap.family,
+      path: '/' + (slugOf(gap.intent) || 'page') + '/' + (slugOf(keyword) || gap.intent),
       intent: gap.intent,
-      why: intentWhy(gap.intent),
+      why: gap.why || intentWhy(gap.intent),
       keyword,
       evidence: measured
         ? measured.url + ' reads ' + measured.words + ' words, ' + measured.headings + ' subheads, ' +
@@ -403,19 +450,31 @@ export async function runGapAudit(input: { lead: string; winners: string[] }) {
   }
 
   const absent = voids.filter((gap) => gap.kind === 'absent');
-  const topAbsent = absent.slice(0, 3).map((gap) => '/' + gap.family);
+  const thin = voids.filter((gap) => gap.kind === 'thin');
+  const topAbsent = absent.slice(0, 3).map((gap) => gap.intent);
+  const topThin = thin.slice(0, 3).map((gap) => gap.intent);
+  // When the measure finds no intent gap, the pitch says so. A sentence asserting a
+  // missing territory the numbers deny is the defect this whole pass exists to remove.
   const pitch =
-    'Your surface publishes ' + lead.paths + ' indexable paths across ' + lead.families + ' path families. The ' +
-    winners.length + ' winner' + (winners.length === 1 ? '' : 's') + ' read here publish ' + union.size + ' across ' +
-    winnerFamilies.size + '. You hold ' + familiesPct + '% of those families' +
-    (absent.length ? ' and none of ' + absent.length + ' of them at all' + (topAbsent.length ? ' (' + topAbsent.join(', ') + ')' : '') : '') +
-    '. You are not losing to a better product; you are losing to a better map.';
+    absent.length || thin.length
+      ? 'Your surface publishes ' + lead.paths + ' indexable paths. The ' + winners.length + ' winner surface' +
+        (winners.length === 1 ? '' : 's') + ' read the same day serve ' + winnerIntents.length +
+        ' search intents with more than one page, and you serve ' + coveredIntents.length + ' of them (' + intentsPct + '%)' +
+        (absent.length ? ', with nothing at all in ' + absent.length + ' (' + topAbsent.join(', ') + ')' : '') +
+        (thin.length ? ', and thin coverage in ' + thin.length + ' (' + topThin.join(', ') + ')' : '') +
+        '. ' + exact + ' of their ' + union.size + ' paths exist verbatim on yours.'
+      : 'Your surface publishes ' + lead.paths + ' indexable paths and already serves all ' + winnerIntents.length +
+        ' search intents the winner surfaces serve with more than one page, so there is no intent gap to sell here. ' +
+        'The distance is inside intents you already hold: ' + exact + ' of their ' + union.size +
+        ' paths exist verbatim on yours, which is a depth and per-page question, not missing territory.';
 
   const evidence = [
-    'lead · ' + lead.host + ' · ' + lead.paths + ' paths · ' + lead.families + ' families · ' + lead.schema_types.length + ' schema types',
-    ...winners.map(
-      (winner) => 'winner · ' + winner.host + ' · ' + winner.paths + ' paths · ' + winner.families + ' families · ' + winner.schema_types.length + ' schema types'
-    ),
+    'lead · ' + lead.host + ' · ' + lead.paths + ' paths · ' + leadIntents.size + ' intents · ' + lead.schema_types.length + ' schema types',
+    ...winners.map((winner) => {
+      const served = new Set(winner.list.map(intentOfPath).filter((intent) => intent !== 'archive'));
+      return 'winner · ' + winner.host + ' · ' + winner.paths + ' paths · ' + served.size + ' intents · ' + winner.schema_types.length + ' schema types';
+    }),
+    'intents served by the winners · ' + winnerIntents.length + ' · served by the lead · ' + coveredIntents.length,
     'shared keyword gaps · ' + keywordVoids.length,
     'structured data you do not ship · ' + (schemaGaps.length ? schemaGaps.join(', ') : 'none observed')
   ];
@@ -423,16 +482,25 @@ export async function runGapAudit(input: { lead: string; winners: string[] }) {
   const ranAt = new Date().toISOString();
   const caveat =
     'Counts are the paths each surface publishes to an anonymous reader (sitemap plus navigation), read once on ' +
-    ranAt.slice(0, 10) + '. A surface that hides paths from both is undercounted here, so the gap is understated rather than invented.' +
+    ranAt.slice(0, 10) + '. Intent is classified from each path on its own, leaf segment first, so an intent both ' +
+    'surfaces file under different sections still counts as served, and an archive index (category, tag, author) counts as neither. ' +
+    'A surface that hides paths from both is undercounted here, so the gap is understated rather than invented.' +
     (unread.length ? ' ' + unread.length + ' winner surface(s) could not be read.' : '');
 
   return {
     ran_at: ranAt,
-    coverage: { paths_pct: pathsPct, families_pct: familiesPct, union_paths: union.size, lead_paths: lead.paths },
+    coverage: {
+      intents_pct: intentsPct,
+      intents_held: coveredIntents.length,
+      winner_intents: winnerIntents.length,
+      paths_pct: pathsPct,
+      union_paths: union.size,
+      lead_paths: lead.paths
+    },
     lead: summaryOf(lead),
     winners: winners.map(summaryOf),
     unread,
-    families: families.slice(0, 14),
+    intents: intents.slice(0, 14),
     voids: voids.slice(0, 10),
     keyword_voids: keywordVoids,
     schema_gaps: schemaGaps,
@@ -440,6 +508,7 @@ export async function runGapAudit(input: { lead: string; winners: string[] }) {
     strike: { pitch, evidence, caveat },
     limits:
       'Anonymous GET only: one homepage, robots.txt, sitemap and up to ' + MAX_BRIEFS +
-      ' sampled winner pages per run. No ranking data, no clicks, no fingerprint work, nothing re-served.'
+      ' sampled winner pages per run. Intent is inferred from path naming alone, so a page filed under a misleading slug is ' +
+      'classified by what its URL says rather than by what it contains. No ranking data, no clicks, nothing re-served.'
   };
 }

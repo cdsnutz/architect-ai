@@ -11,7 +11,7 @@ import IdeShell from "@/components/ide/IdeShell";
 import GapForm from "@/components/gap/GapForm";
 import GapStrike from "@/components/gap/GapStrike";
 import GapSurfaces from "@/components/gap/GapSurfaces";
-import GapFamilies from "@/components/gap/GapFamilies";
+import GapIntents from "@/components/gap/GapIntents";
 import GapVoids from "@/components/gap/GapVoids";
 import GapBriefs from "@/components/gap/GapBriefs";
 import CapabilityPivot from "@/components/gap/CapabilityPivot";
@@ -43,7 +43,7 @@ export default function Gap() {
       note="target → gap → execution"
       status={[
         { label: "phase", value: "target → gap → execution" },
-        { label: "families held", value: audit ? audit.coverage.families_pct + "%" : "not run" },
+        { label: "intents held", value: audit ? audit.coverage.intents_pct + "%" : "not run" },
         { label: "voids", value: audit ? String(audit.voids.length) : "—" }
       ]}
     >
@@ -51,7 +51,7 @@ export default function Gap() {
         <div className="border border-line-soft bg-surface-panel p-3">
           <h1 className="font-display text-sm text-ink">Competitive gap analyzer</h1>
           <p className="mt-1.5 text-[11px] leading-relaxed text-ink-muted">
-            Read the lead once, read the winners once, and price the distance between them in paths, families,
+            Read the lead once, read the winners once, and price the distance between them in search intent,
             structured data and depth. No clicks, no ranking tricks: the machine measures the map the winner already built.
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -82,7 +82,7 @@ export default function Gap() {
 
         {busy && !audit && (
           <p className="border border-line-soft bg-surface-panel p-2.5 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-dim">
-            reading sitemaps and navigation · counting families
+            reading sitemaps and navigation · classifying intent
           </p>
         )}
 
@@ -90,7 +90,7 @@ export default function Gap() {
           <>
             <GapStrike strike={audit.strike} coverage={audit.coverage} />
             <GapSurfaces lead={audit.lead} winners={audit.winners} unread={audit.unread} />
-            <GapFamilies families={audit.families} />
+            <GapIntents intents={audit.intents} />
             <GapVoids voids={audit.voids} keywordVoids={audit.keyword_voids} schemaGaps={audit.schema_gaps} />
             <GapBriefs briefs={audit.briefs} />
             <p className="font-mono text-[10px] leading-relaxed text-ink-dim">{audit.limits}</p>

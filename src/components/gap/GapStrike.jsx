@@ -27,7 +27,7 @@ export default function GapStrike({ strike, coverage }) {
         </div>
         {coverage && (
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-dim">
-            paths held {coverage.paths_pct}% · families held {coverage.families_pct}% · winner union {coverage.union_paths} paths
+            intents held {coverage.intents_pct}% ({coverage.intents_held}/{coverage.winner_intents}) · paths held {coverage.paths_pct}% · winner union {coverage.union_paths} paths
           </p>
         )}
         <p className="text-[10px] leading-relaxed text-ink-dim">{strike.caveat}</p>

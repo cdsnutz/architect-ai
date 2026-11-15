@@ -18,23 +18,22 @@ export default function GapVoids({ voids, keywordVoids, schemaGaps }) {
       <div className="border-b border-line-soft p-2.5">
         <h2 className="font-display text-sm text-ink">Information voids</h2>
         <p className="mt-0.5 text-[11px] leading-relaxed text-ink-muted">
-          Families the winners publish and you do not, each with the paths they use. Counted from the surfaces read, never estimated.
+          Intent families the winners serve and you do not, each with the paths they use. Classified per path, counted from the surfaces read, never estimated.
         </p>
       </div>
 
       {voids?.length > 0 ? (
         <ul className="divide-y divide-line-soft">
           {voids.map((gap) => (
-            <li key={gap.family} className="p-2.5">
+            <li key={gap.intent} className="p-2.5">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="font-mono text-[12px] text-ink">/{gap.family}</p>
+                <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink">{gap.intent}</p>
                 <span className={"border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] " + TONE[gap.kind]}>
                   {gap.kind}
                 </span>
               </div>
-              <p className="mt-1 text-[11px] leading-relaxed text-ink-muted">
-                {gap.intent} intent · {gap.note}
-              </p>
+              <p className="mt-1 text-[11px] leading-relaxed text-ink-muted">{gap.note}</p>
+              {gap.why && <p className="mt-0.5 text-[10px] leading-relaxed text-ink-dim">{gap.why}</p>}
               {gap.examples?.length > 0 && (
                 <p className="mt-1 font-mono text-[10px] leading-relaxed text-ink-dim">{gap.examples.join("  ·  ")}</p>
               )}
@@ -43,7 +42,7 @@ export default function GapVoids({ voids, keywordVoids, schemaGaps }) {
         </ul>
       ) : (
         <p className="p-2.5 text-[11px] leading-relaxed text-ink-muted">
-          No family gap: your surface already publishes something in every family the winners do.
+          No intent gap: your surface already publishes something in every intent family the winners serve.
         </p>
       )}
 

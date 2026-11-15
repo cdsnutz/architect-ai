@@ -13,27 +13,31 @@ const TONE = {
   covered: "border-signal/40 bg-signal/10 text-signal"
 };
 
-export default function GapFamilies({ families }) {
-  if (!families?.length) return null;
+export default function GapIntents({ intents }) {
+  if (!intents?.length) return null;
   return (
     <div className="border border-line-soft bg-surface-panel">
       <div className="border-b border-line-soft p-2.5">
-        <h2 className="font-display text-sm text-ink">Permeability map</h2>
+        <h2 className="font-display text-sm text-ink">Intent map</h2>
         <p className="mt-0.5 text-[11px] leading-relaxed text-ink-muted">
-          Path family by path family: what you publish against what the winners publish. Absent means zero.
+          Search intent by search intent: what you publish against what the winners publish in each. The same intent
+          counts as served wherever it is filed; an archive index counts as neither.
         </p>
       </div>
       <ul className="divide-y divide-line-soft">
-        {families.map((row) => (
-          <li key={row.family} className="flex flex-wrap items-start justify-between gap-2 p-2.5">
+        {intents.map((row) => (
+          <li key={row.intent} className="flex flex-wrap items-start justify-between gap-2 p-2.5">
             <div className="min-w-0">
-              <p className="font-mono text-[12px] text-ink">/{row.family}</p>
-              <p className="mt-0.5 font-mono text-[10px] text-ink-dim">
-                {row.intent} intent · held by {row.holders.join(", ")}
-              </p>
+              <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink">{row.intent}</p>
+              <p className="mt-0.5 text-[10px] leading-relaxed text-ink-dim">{row.why}</p>
               <p className="mt-1 font-mono text-[10px] leading-relaxed text-ink-muted">
-                {row.examples.slice(0, 3).join("  ·  ")}
+                {row.yours?.length ? "you · " + row.yours.slice(0, 2).join("  ·  ") : "you publish nothing here"}
               </p>
+              {row.examples?.length > 0 && (
+                <p className="mt-0.5 font-mono text-[10px] leading-relaxed text-ink-dim">
+                  winners · {row.examples.slice(0, 2).join("  ·  ")}
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-[11px] text-ink-muted">
