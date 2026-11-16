@@ -34,7 +34,68 @@ export type Tag = 'observed' | 'inferred';
 export type GraphNode = { id: string; url: string; kind: string; tag: Tag };
 export type GraphEdge = { from: string; to: string; trigger: string; tag: Tag };
 
-export function assertAuthorization(basis: unknown, attestation: unknown) {
+// A typed attestation is a claim, not evidence. Any account can assert authority
+// over a host it does not control, and every pass gated below then reads that host
+// and hands the caller its headers, internal hosts and shipped bundle literals. So
+// control of the target origin is proven server-side before a pass starts: a line
+// the host itself serves at /.well-known/revengine-verify.txt, or a TXT record at
+// _revengine-verify.<host>. Only that host's operator can publish either one.
+export const OWNERSHIP_TOKEN = 'revengine-verify=revengine-host-control';
+const OWNERSHIP_PATH = '/.well-known/revengine-verify.txt';
+const DNS_PROOF_PREFIX = '_revengine-verify.';
+const DNS_RESOLVER = 'https://dns.google/resolve?name=';
+
+async function provesWellKnown(origin: string) {
+  try {
+    const res = await safeFetch(origin + OWNERSHIP_PATH, {
+      method: 'GET',
+      headers: { 'User-Agent': UA, Accept: 'text/plain,*/*', 'Cache-Control': 'no-cache' },
+      signal: AbortSignal.timeout(TIMEOUT_MS)
+    });
+    if (!res.ok) return false;
+    const body = (await res.text()).slice(0, 4000).toLowerCase();
+    return body.includes(OWNERSHIP_TOKEN);
+  } catch {
+    return false;
+  }
+}
+
+async function provesDnsTxt(host: string) {
+  try {
+    const res = await safeFetch(DNS_RESOLVER + encodeURIComponent(DNS_PROOF_PREFIX + host) + '&type=TXT', {
+      method: 'GET',
+      headers: { 'User-Agent': UA, Accept: 'application/json' },
+      signal: AbortSignal.timeout(TIMEOUT_MS)
+    });
+    if (!res.ok) return false;
+    const payload = JSON.parse((await res.text()).slice(0, 8000));
+    const answers = Array.isArray(payload && payload.Answer) ? payload.Answer : [];
+    return answers.some((answer: any) => String((answer && answer.data) || '').toLowerCase().includes(OWNERSHIP_TOKEN));
+  } catch {
+    return false;
+  }
+}
+
+// Both proofs are read through safeFetch, so the verification itself cannot be
+// pointed at an internal address by the host it is verifying.
+export async function verifyTargetOwnership(targetUrl: string) {
+  const origin = new URL(assertPublicUrl(targetUrl)).origin;
+  const host = new URL(origin).hostname;
+  const checked_at = new Date().toISOString();
+  if (await provesWellKnown(origin)) {
+    return { verified: true, method: 'well_known_file', proof: origin + OWNERSHIP_PATH, checked_at };
+  }
+  if (await provesDnsTxt(host)) {
+    return { verified: true, method: 'dns_txt', proof: DNS_PROOF_PREFIX + host, checked_at };
+  }
+  throw new Error(
+    'Control of ' + host + ' is not proven, so this pass will not read it. Publish the line "' + OWNERSHIP_TOKEN +
+      '" at ' + origin + OWNERSHIP_PATH + ', or add a TXT record named ' + DNS_PROOF_PREFIX + host +
+      ' with that value, then run the pass again. A typed attestation on its own is not proof of control.'
+  );
+}
+
+export async function assertAuthorization(basis: unknown, attestation: unknown, targetUrl: unknown) {
   const key = typeof basis === 'string' ? basis.trim() : '';
   const entry = AUTH_BASES.find((item) => item.key === key);
   if (!entry) {
@@ -44,7 +105,8 @@ export function assertAuthorization(basis: unknown, attestation: unknown) {
   if (note.length < 8) {
     throw new Error('Record who authorized this target and for what. The symmetry pass will not run on an unattested target.');
   }
-  return { basis: entry.key, label: entry.label, attestation: note.slice(0, 500) };
+  const ownership = await verifyTargetOwnership(typeof targetUrl === 'string' ? targetUrl : '');
+  return { basis: entry.key, label: entry.label, attestation: note.slice(0, 500), ownership };
 }
 
 export type Doc = {

@@ -7,6 +7,7 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.61';
 import { runWarRoom, buildRoadmap } from '../../shared/warRoom.ts';
+import { verifyTargetOwnership } from '../../shared/symmetry.ts';
 import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 // One endpoint for the war room: `run` reads the surfaces and returns the
@@ -49,6 +50,14 @@ export default async function (req) {
 
     const quota = await guardQuota(base44, user, 'war_room_run', 3);
     if (!quota.allowed) return quotaRefusal(quota);
+
+    // Control of the target host is proven before a run record exists. A typed
+    // attestation is not authorization to read a surface a caller does not own.
+    try {
+      await verifyTargetOwnership(body.target_url);
+    } catch (error) {
+      return Response.json({ error: error.message }, { status: 400 });
+    }
 
     try {
       const seed = await base44.entities.WarRoomRun.create({

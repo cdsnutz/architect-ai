@@ -8,7 +8,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { extractEvidence, mapLogic } from '../../shared/analysis.ts';
 import { probeContentNegotiation, formatProbe } from '../../shared/probe.ts';
-import { assertPublicUrl } from '../../shared/readOnly.ts';
+import { assertPublicUrl, safeFetch } from '../../shared/readOnly.ts';
 import { POD_STAGES, mapDetail, startRun, markRunning, markComplete, finishRun } from '../../shared/runTracker.ts';
 import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
@@ -39,9 +39,12 @@ export default async function (req) {
     let html = '';
     await markRunning(base44, runId, 'perimeter');
     try {
-      const res = await fetch(targetUrl, {
+      // safeFetch is the app's single outbound read path: it resolves the host,
+      // refuses any non-public answer, re-resolves after connecting, and validates
+      // every redirect hop before following it. A raw fetch here would connect to
+      // whatever address the caller's DNS returns, including an internal one.
+      const res = await safeFetch(targetUrl, {
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; LogicMapper/1.0)', Accept: 'text/html,*/*' },
-        redirect: 'follow',
         signal: AbortSignal.timeout(20000)
       });
       // A redirect can leave the public surface: refuse whatever it landed on.
@@ -62,6 +65,11 @@ export default async function (req) {
       }
       html = (await res.text()).slice(0, 800000);
     } catch (fetchError) {
+      const message = (fetchError && fetchError.message) || '';
+      if (/redirected off the authorized public surface/i.test(message)) {
+        await finishRun(base44, runId, 'failed', { error: 'The target redirected off the authorized public surface.' });
+        return Response.json({ error: 'That URL redirects to a private or internal host and will not be read.' }, { status: 400 });
+      }
       const reason = fetchError && fetchError.name === 'TimeoutError' ? 'The request timed out.' : 'The site could not be reached.';
       await finishRun(base44, runId, 'failed', { error: reason });
       return Response.json({ error: 'Could not fetch that URL. ' + reason }, { status: 502 });

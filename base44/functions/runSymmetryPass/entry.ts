@@ -37,7 +37,7 @@ export default async function (req) {
 
     let grant;
     try {
-      grant = assertAuthorization(body.auth_basis, body.attestation);
+      grant = await assertAuthorization(body.auth_basis, body.attestation, target);
     } catch (error) {
       return Response.json({ error: error.message }, { status: 400 });
     }
@@ -54,7 +54,9 @@ export default async function (req) {
       auth_basis: grant.basis,
       attestation: grant.attestation,
       status: 'running',
-      notes: 'Authorized symmetry pass started by ' + (user.email || user.id) + '.'
+      notes:
+        'Authorized symmetry pass started by ' + (user.email || user.id) + '. Ownership proven server-side by ' +
+        grant.ownership.method + ' at ' + grant.ownership.proof + ' (' + grant.ownership.checked_at + ').'
     });
     runId = seed.id;
 

@@ -466,7 +466,7 @@ export function buildRadar(audit: any) {
 export async function runWarRoom(body: any) {
   const target = assertPublicUrl(body.target_url);
   const targetOrigin = new URL(target).origin;
-  const grant = assertAuthorization(body.auth_basis, body.attestation);
+  const grant = await assertAuthorization(body.auth_basis, body.attestation, target);
 
   const competitors = [...new Set(
     (Array.isArray(body.competitor_urls) ? body.competitor_urls : [])
@@ -516,6 +516,7 @@ export async function runWarRoom(body: any) {
     target_url: audit.lead.url,
     auth_basis: grant.basis,
     attestation: grant.attestation,
+    ownership: grant.ownership,
     ran_at: nowIso(),
     symmetry: {
       score: audit.coverage.intents_pct,

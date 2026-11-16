@@ -311,7 +311,7 @@ export async function runSovereignMirror(body: any) {
   const candidate = typeof body.candidate_url === 'string' && body.candidate_url.trim()
     ? assertPublicUrl(body.candidate_url)
     : '';
-  const grant = assertAuthorization(body.auth_basis, body.attestation);
+  const grant = await assertAuthorization(body.auth_basis, body.attestation, target);
 
   let stages = seedStages();
   const touch = (key: string, patch: any) => {
@@ -467,6 +467,7 @@ export async function runSovereignMirror(body: any) {
     candidate_url: candidate,
     auth_basis: grant.basis,
     attestation: grant.attestation,
+    ownership: grant.ownership,
     stages,
     pods: MIRROR_PODS,
     skills: SKILLS,

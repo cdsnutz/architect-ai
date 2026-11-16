@@ -496,7 +496,7 @@ export async function runIntel(input: { base44: any; body: any }) {
   const { base44, body } = input;
   const target = assertPublicUrl(body.target_url);
   const targetOrigin = new URL(target).origin;
-  const grant = assertAuthorization(body.auth_basis, body.attestation);
+  const grant = await assertAuthorization(body.auth_basis, body.attestation, target);
 
   const competitors = [...new Set(
     (Array.isArray(body.competitor_urls) ? body.competitor_urls : [])
@@ -572,6 +572,7 @@ export async function runIntel(input: { base44: any; body: any }) {
     target_url: lead.url,
     auth_basis: grant.basis,
     attestation: grant.attestation,
+    ownership: grant.ownership,
     ran_at: capturedAt,
     surfaces: surfaces.map((surface) => ({
       url: surface.url,

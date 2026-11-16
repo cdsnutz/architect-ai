@@ -7,6 +7,7 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { runSovereignMirror } from '../../shared/sovereignMirror.ts';
+import { verifyTargetOwnership } from '../../shared/symmetry.ts';
 import { guardQuota, quotaRefusal } from '../../shared/quota.ts';
 
 export default async function (req) {
@@ -24,6 +25,14 @@ export default async function (req) {
 
     const quota = await guardQuota(base44, user, 'mirror_run', 6);
     if (!quota.allowed) return quotaRefusal(quota);
+
+    // Control of the target host is proven before a run record exists. A typed
+    // attestation is not authorization to read a surface a caller does not own.
+    try {
+      await verifyTargetOwnership(body.target_url);
+    } catch (error) {
+      return Response.json({ error: error.message }, { status: 400 });
+    }
 
     let seed;
     try {
